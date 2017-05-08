@@ -1,5 +1,4 @@
-#include "textdrv.h"
-#include "system.h"
+#include <kernel.h>
 
 /* internal defines */
 

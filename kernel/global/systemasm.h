@@ -1,8 +1,7 @@
-#ifndef __SYSTEM_H__
-#define __SYSTEM_H__
+#ifndef __SYSTEMASM_H__
+#define __SYSTEMASM_H__
 
 #include <stdint.h>
-#include <stddef.h>
 
 #define system_halt() ({					\
 	asm volatile ("cli; hlt");				\

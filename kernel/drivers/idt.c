@@ -1,5 +1,5 @@
-#include "idt.h"
-#include "system.h"
+#include <kernel.h>
+#include <stdint.h>
 
 #define KERNEL_SELECTOR 0x08
 #define IDT_ENTRIES 0x81

@@ -1,4 +1,5 @@
-#include "memory.h"
+#include <kernel.h>
+#include <stdint.h>
 
 void memory_map(uint32_t directory_number, uint32_t phys_address, uint32_t virt_address, uint8_t access) {
 	uint32_t directory_address = 0x100000+(directory_number*1024);

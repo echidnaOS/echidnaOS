@@ -1,4 +1,5 @@
-#include "keyboard.h"
+#include <kernel.h>
+#include <stdint.h>
 
 static uint8_t capslock_active = 0;
 static uint8_t shift_active = 0;

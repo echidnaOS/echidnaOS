@@ -1,5 +1,4 @@
-#include "gdt.h"
-#include "system.h"
+#include <kernel.h>
 
 #define GDT_ENTRIES 0x05
 #define GDT_LENGTH (GDT_ENTRIES*8)

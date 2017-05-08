@@ -8,7 +8,12 @@
 void kernel_shell(void) {
     char input[256]={0};
 
-    puts("\nKernel shell: \n");
+    puts(
+        "\n"
+        "Kernel shell.\n"
+        "\n"
+        "Type `help` to get started.\n"
+    );
 
     while (1) {
         printf("> ");
@@ -22,6 +27,9 @@ void kernel_shell(void) {
 
         else if (!strcmp("panic", input))
             panic("manually triggered panic");
+
+        else if (!strcmp("help", input))
+            help_cmd();
 
         /*
         else if (!strcmp("peek", input))

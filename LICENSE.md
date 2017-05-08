@@ -1,4 +1,4 @@
-Copyright (c) 2017, Chimneysoft
+Copyright (c) 2017, Mintz, wubbalubbadubdubonline, 0xqookie and others
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

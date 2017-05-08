@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <math.h>
 #include "libs/partition.h"
 #include "libs/memory.h"
 #include <ctype.h>

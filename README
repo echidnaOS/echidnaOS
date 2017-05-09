@@ -14,9 +14,24 @@ Please, follow these instructions to build a bootable image of echidnaOS.
 - Requirements:
 
 nasm
-gcc (a cross compiler would be ideal)
+gcc (cross compiler reccomended)
 gnu make
 git
+
+- GCC cross compiler:
+
+A cross compiler is a compiler that allows you to build code on one system,
+that will run on a different one.
+You might want to build your own cross compiler, following one of the
+many tutorials out there. (The OSDev one is pretty good).
+You can also, if you don't want to compile it yourself, download a gcc
+cross compiler that we built, and that will work for sure (we hope).
+
+https://drive.google.com/open?id=0B8LlO8RIGRXmbXVkbVZIcVRIVFk
+
+It contains a zip file. Extract it somewhere where you have permissions.
+Take note of the FULL path of the "bin/i686-elf-gcc" and "bin/i686-elf-ld"
+files, as you will need them later.
 
 - Step by step:
 
@@ -30,7 +45,8 @@ Now that we're in the root of the echidnaOS tree, we're still missing a
 key component, the C library.
 Let's fetch libc:
 
-    git clone https://github.com/echidnaOS/libc.git
+    git submodule init
+    git submodule update
 
 The makefile by default will use "cc" as the C compiler, and "ld" as the
 linker.

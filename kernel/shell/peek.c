@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "shell.h"
 #include <kernel.h>
 
@@ -155,7 +157,6 @@ void peek(char *argstring)
                 repeat = newrepeat;
 
                 printf("DEBUG:\ntype = %ld;\nrepr = %ld;\nrepeat = %ld;\n\n", type, repr, repeat);
-
             }
 
             //indirection

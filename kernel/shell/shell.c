@@ -31,10 +31,8 @@ void kernel_shell(void) {
         else if (!strcmp("help", input))
             help_cmd();
 
-        /*
-        else if (!strcmp("peek", input))
+        else if (!strncmp("peek", input, 4))
             peek(&input[4]);
-        */
 
         /*
         else if (!strcmp("serial_send", input))
@@ -42,7 +40,7 @@ void kernel_shell(void) {
         */
 
         // return to prompt if no input
-        else if (input[0]==0)
+        else if (!input[0])
             continue;
 
         // if the input did not match any command

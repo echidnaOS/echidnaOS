@@ -7,8 +7,9 @@ void help_cmd(void) {
         "Available commands:\n"
         "\n"
         "clear - clears the screen.\n"
+        "help - prints this guide.\n"
         "panic - triggers a kernel panic.\n"
-        "help - prints this guide."
+        "peek - view contents of memory and registers"
     );
     return;
 }

@@ -1,4 +1,12 @@
+#ifndef __SHELL_H__
+#define __SHELL_H__
+
+
+#include "peek.h"
+
 void kernel_shell(void);
 void help_cmd(void);
-//void peek(char *);
-//void get_register_value(char *, void *);
+
+
+#endif
+

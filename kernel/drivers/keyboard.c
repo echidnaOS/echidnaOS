@@ -1,6 +1,15 @@
 #include <kernel.h>
 #include <stdint.h>
 
+#define SC_MAX 0x57
+#define SC_CAPSLOCK 0x3A
+#define SC_ENTER 0x1C
+#define SC_BACKSPACE 0x0E
+#define SC_RIGHT_SHIFT 0x36
+#define SC_LEFT_SHIFT 0x2A
+#define SC_RIGHT_SHIFT_REL 0xB6
+#define SC_LEFT_SHIFT_REL 0xAA
+
 static uint8_t capslock_active = 0;
 static uint8_t shift_active = 0;
 static char keyboard_buffer[256];
@@ -29,6 +38,16 @@ const char sc_ascii_nomod[] = { '\0', '?', '1', '2', '3', '4', '5', '6',
 				'u', 'i', 'o', 'p', '[', ']', '\n', '\0', 'a', 's', 'd', 'f', 'g', 
 				'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x', 'c', 'v', 
 				'b', 'n', 'm', ',', '.', '/', '\0', '\0', '\0', ' '};
+
+void keyboard_init(void) {
+    uint32_t index;
+    // initialise the buffer to avoid some issues if
+    // the buffer was not wiped on reset
+    for (index=0; index<256; index++) {
+        keyboard_buffer[index] = 0;
+    }
+    return;
+}
 
 void keyboard_handler(uint8_t input_byte) {
 	char c='\0';

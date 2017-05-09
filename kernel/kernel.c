@@ -22,6 +22,9 @@ void _start(void) {
     text_putstring("The kernel is ");
     text_putstring(itoa(kernel_size, buf, 10));
     text_putstring(" bytes long.\n\n");
+    
+    // initialise keyboard
+    keyboard_init();
 
     // map the PIC0 at int 0x20-0x27 and PIC1 at 0x28-0x2F
     text_putstring("Initialising PIC...");

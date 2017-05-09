@@ -1,0 +1,47 @@
+ echidnaOS
+-----------
+
+- What is echidnaOS?
+
+echidnaOS is an attempt at creating an operating system from scratch.
+The kernel is written primarily in C, with some assembly here and there.
+
+ Building instructions
+-----------------------
+
+Please, follow these instructions to build a bootable image of echidnaOS.
+
+- Requirements:
+
+nasm
+gcc (a cross compiler would be ideal)
+gnu make
+git
+
+- Step by step:
+
+After making sure that you have the aforementioned packages installed,
+proceed by cloning the echidnaOS repo:
+
+    git clone https://github.com/echidnaOS/echidnaOS.git
+    cd echidnaOS
+
+Now that we're in the root of the echidnaOS tree, we're still missing a
+key component, the C library.
+Let's fetch libc:
+
+    git clone https://github.com/echidnaOS/libc.git
+
+The makefile by default will use "cc" as the C compiler, and "ld" as the
+linker.
+You might want to point make to the correct cross compiler instead.
+To do that, open "makefile" with a text editor, and edit the first 2 lines
+accordingly, using the full path of your cross compiler and linker.
+
+Now that every requirement is satisfied, let's build the OS.
+Make sure that you have root privileges, or run "make" with sudo:
+
+    sudo make
+
+If make didn't error, congratulations, you managed to build echidnaOS.
+There should be a bootable "echidna.img" image in the project's root now.

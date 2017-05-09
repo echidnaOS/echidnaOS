@@ -6,6 +6,7 @@
 
 void kernel_shell(void);
 void help_cmd(void);
+void get_args(char *args, char *string);
 
 
 #endif

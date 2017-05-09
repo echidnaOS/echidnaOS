@@ -221,7 +221,7 @@ void peek(char *argstring)
                 if ( i == FLAGS_REGS_COUNT )
                 {
                     indirection = 0;
-                    continue;
+                    goto bad_arg;
                 }
 
                 printf("DEBUG:\nfound %s\n\n", flagsNregs[i]);

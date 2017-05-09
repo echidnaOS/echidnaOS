@@ -3,14 +3,16 @@
 #include <kernel.h>
 #include "shell/shell.h"
 
+#include "globalvars.h"
+
 void done_msg(void);
 
 void _start(void) {
     char buf[16];
 
-    uint32_t memory_size = mem_load_d(0x7DF9);
-    uint32_t kernel_size = mem_load_d(0x7DF5);
-    uint32_t available_page = (0x1000000+kernel_size)/0x400000;
+    memory_size = mem_load_d(0x7DF9);
+    kernel_size = mem_load_d(0x7DF5);
+    available_page = (0x1000000+kernel_size)/0x400000;
     if ((0x1000000+kernel_size)%0x400000) available_page++;
 
     text_clear();

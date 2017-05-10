@@ -6,9 +6,10 @@ global keyboard_isr
 global syscall
 
 extern keyboard_handler
-extern text_putchar
-extern text_putstring
-extern keyboard_fetch_char
+
+; API calls
+extern char_to_stdout
+extern char_from_stdin
 
 section .data
 
@@ -17,9 +18,8 @@ interrupted_esp                 dd      0
 
 routine_list:
         times 0x20 dd 0                 ; Reserved syscalls
-        dd      text_putchar
-        dd      text_putstring
-        dd      keyboard_fetch_char
+        dd      char_to_stdout
+        dd      char_from_stdin
 
 section .text
 

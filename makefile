@@ -1,7 +1,7 @@
 CC = cc
 LD = ld
 
-C_FILES = $(wildcard kernel/*.c wildcard libc/*.c wildcard kernel/libs/*.c wildcard kernel/drivers/*.c wildcard kernel/shell/*.c)
+C_FILES = $(wildcard kernel/*.c wildcard libc/*.c wildcard kernel/libs/*.c wildcard kernel/drivers/*.c wildcard kernel/shell/*.c wildcard kernel/syscalls/*.c)
 ASM_FILES = $(wildcard kernel/drivers/*.asm)
 C_OBJ = ${C_FILES:.c=.o}
 ASM_OBJ = ${ASM_FILES:.asm=.o}

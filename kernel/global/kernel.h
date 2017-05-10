@@ -14,8 +14,8 @@ extern uint32_t available_page;
 
 // from "io.h"
 
-void char_to_stdout(char c);
-char char_from_stdin(void);
+void char_to_stdout(int c);
+int char_from_stdin(void);
 
 // from "memory.h"
 

@@ -98,32 +98,3 @@ char keyboard_fetch_char(void) {
 		return '\0';
 	}
 }
-
-char keyboard_getchar(void) {
-	char c='\0';
-	while (c=='\0') {
-		c = keyboard_fetch_char();
-	}
-	return c;
-}
-
-void keyboard_getstring(char* string, uint32_t limit) {
-	uint32_t x=0;
-	char c='\0';
-	while (1) {
-		c = keyboard_getchar();
-		if (c=='\b') {
-			if (x) {
-				x--;
-				text_putchar(c);
-			}
-		} else if (c=='\n') {
-			break;
-		} else if (x<(limit-1)) {
-			string[x] = c;
-			x++;
-			text_putchar(c);
-		}
-	}
-	string[x] = 0x00;
-}

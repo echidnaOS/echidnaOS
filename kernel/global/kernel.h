@@ -57,10 +57,7 @@ void create_IDT(void);
 
 void keyboard_init(void);
 void keyboard_handler(uint8_t input_byte);
-
 char keyboard_fetch_char(void);
-char keyboard_getchar(void);
-void keyboard_getstring(char* string, uint32_t limit);
 
 // end
 

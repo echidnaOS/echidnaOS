@@ -20,10 +20,10 @@ void kernel_shell(void) {
     while (1) {
         printf("(%d)# ", command_count++);
 
-        keyboard_getstring(input, 256);
+        getstring(input, 256);
         get_args(args, input);
 
-        text_putchar('\n');
+        putchar('\n');
 
         if (!strcmp("clear", input))
             text_clear();
@@ -76,4 +76,25 @@ void get_args(char *args, char *string) {
     strcpy(args, &string[index]);
     
     return;
+}
+
+void getstring(char* string, uint32_t limit) {
+	uint32_t x=0;
+	char c;
+	while (1) {
+		c = getchar();
+		if (c=='\b') {
+			if (x) {
+				x--;
+				putchar(c);
+			}
+		} else if (c=='\n') {
+			break;
+		} else if (x<(limit-1)) {
+			string[x] = c;
+			x++;
+			putchar(c);
+		}
+	}
+	string[x] = 0x00;
 }

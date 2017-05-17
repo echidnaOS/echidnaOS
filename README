@@ -9,34 +9,29 @@ The kernel is written primarily in C, with some assembly here and there.
  Building instructions
 -----------------------
 
-Please, follow these instructions to build a bootable image of echidnaOS.
+Please, follow these instructions to build a bootable ISO of echidnaOS.
 
 - Requirements:
 
-nasm
-gcc (cross compiler reccomended)
-gnu make
 git
-
-- GCC cross compiler:
-
-A cross compiler is a compiler that allows you to build code on one system,
-that will run on a different one.
-You might want to build your own cross compiler, following one of the
-many tutorials out there. (The OSDev one is pretty good).
-You can also, if you don't want to compile it yourself, download a gcc
-cross compiler that we built, and that will work for sure (we hope).
-
-https://drive.google.com/open?id=0B8LlO8RIGRXmbXVkbVZIcVRIVFk
-
-It contains a zip file. Extract it somewhere where you have permissions.
-Take note of the FULL path of the "bin/i686-elf-gcc" and "bin/i686-elf-ld"
-files, as you will need them later.
+nasm
+gcc i686-elf cross-compiler (follow instructions to download it)
+gnu make
+grub-mkrescue (to build the ISO)
+xorriso (to build the ISO)
+qemu (for testing the image, non essential)
+bochs (for testing the image, non essential)
 
 - Step by step:
 
-After making sure that you have the aforementioned packages installed,
-proceed by cloning the echidnaOS repo:
+You can install all the above packages on Ubuntu/Debian with the following
+commands:
+
+    sudo apt-get update
+    sudo apt-get install git nasm build-essential
+    sudo apt-get install grub-common xorriso qemu bochs bochs-x
+
+Proceed by cloning the echidnaOS repo:
 
     git clone https://github.com/echidnaOS/echidnaOS.git
     cd echidnaOS
@@ -48,16 +43,21 @@ Let's fetch libc:
     git submodule init
     git submodule update
 
-The makefile by default will use "cc" as the C compiler, and "ld" as the
-linker.
-You might want to point make to the correct cross compiler instead.
-To do that, open "makefile" with a text editor, and edit the first 2 lines
-accordingly, using the full path of your cross compiler and linker.
+Now let's download and extract the GCC cross compiler:
 
-Now that every requirement is satisfied, let's build the OS.
-Make sure that you have root privileges, or run "make" with sudo:
+    https://drive.google.com/open?id=0B8LlO8RIGRXmbXVkbVZIcVRIVFk
 
-    sudo make
+Copy the extracted "gcc" folder to the root of the echidnaOS source tree.
+
+Now that every requirement is satisfied, let's build the kernel and create
+the ISO image:
+
+    make
+    make iso
 
 If make didn't error, congratulations, you managed to build echidnaOS.
-There should be a bootable "echidna.img" image in the project's root now.
+There should be a bootable "echidna.iso" image in the project's root now.
+
+You can test the image in qemu with:
+
+    make test-qemu-iso

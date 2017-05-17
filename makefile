@@ -1,4 +1,4 @@
-CC = cc
+CC = ./gcc/bin/i686-elf-gcc
 
 C_FILES = $(wildcard kernel/*.c wildcard libc/*.c wildcard kernel/libs/*.c wildcard kernel/drivers/*.c wildcard kernel/shell/*.c wildcard kernel/syscalls/*.c)
 ASM_FILES = $(wildcard kernel/drivers/*.asm)

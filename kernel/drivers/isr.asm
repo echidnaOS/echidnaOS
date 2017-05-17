@@ -125,7 +125,6 @@ syscall:
         sti                             ; Interrupts enabled
         call [routine_list+eax]
         cli                             ; Interrupts disabled
-xchg bx,bx
         mov dword [interrupted_esp], esp
         mov esp, dword [cpu_state_esp]
         pop ebx

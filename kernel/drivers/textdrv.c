@@ -3,9 +3,9 @@
 /* internal defines */
 
 #define VIDEO_ADDRESS 0xB8000
-#define VIDEO_BOTTOM 0x1F3F
 #define ROWS 25
 #define COLS 160
+#define VIDEO_BOTTOM (ROWS*COLS)-1
 
 /* internal functions */
 

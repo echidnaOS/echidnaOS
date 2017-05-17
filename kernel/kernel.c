@@ -7,23 +7,27 @@
 
 void done_msg(void);
 
-void _start(void) {
+void kernel_main(void) {
     char buf[16];
 
+/*
     memory_size = mem_load_d(0x7DF9);
     kernel_size = mem_load_d(0x7DF5);
     available_page = (0x1000000+kernel_size)/0x400000;
     if ((0x1000000+kernel_size)%0x400000) available_page++;
+*/
 
     text_clear();
 
     text_putstring("echidnaOS\n\n");
 
+/*
     text_putstring(itoa(memory_size, buf, 10));
     text_putstring(" bytes of memory detected.\n");
     text_putstring("The kernel is ");
     text_putstring(itoa(kernel_size, buf, 10));
     text_putstring(" bytes long.\n\n");
+*/
     
     // initialise keyboard
     keyboard_init();

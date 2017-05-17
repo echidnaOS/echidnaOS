@@ -13,13 +13,19 @@ extern char_from_stdin
 
 section .data
 
-cpu_state_esp                   dd      0xffbffff0
+cpu_state_esp                   dd      cpu_state_stack
 interrupted_esp                 dd      0
 
 routine_list:
         times 0x20 dd 0                 ; Reserved syscalls
         dd      char_to_stdout
         dd      char_from_stdin
+
+section .bss
+
+align 4
+resb 16384 ; 16 KiB
+cpu_state_stack:
 
 section .text
 
@@ -119,6 +125,7 @@ syscall:
         sti                             ; Interrupts enabled
         call [routine_list+eax]
         cli                             ; Interrupts disabled
+xchg bx,bx
         mov dword [interrupted_esp], esp
         mov esp, dword [cpu_state_esp]
         pop ebx

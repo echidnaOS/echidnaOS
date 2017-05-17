@@ -2,9 +2,10 @@ megs: 256
 
 clock: sync=realtime, time0=local
 
-floppya: 1_44=./echidna.img, status=inserted
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-master: type=cdrom, path="echidna.iso", status=inserted
 
-boot: floppy
+boot: cdrom
 
 log: ./bochsout.txt
 

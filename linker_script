@@ -1,5 +1,0 @@
-SECTIONS
-{
-  .text 0xC0000000 : { *(.text) }
-  .data : { *(.data) }
-}

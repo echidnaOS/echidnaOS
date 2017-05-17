@@ -4,7 +4,7 @@
 
 #define VIDEO_ADDRESS 0xB8000
 #define VIDEO_BOTTOM 0x1F3F
-#define ROWS 50
+#define ROWS 25
 #define COLS 160
 
 /* internal functions */

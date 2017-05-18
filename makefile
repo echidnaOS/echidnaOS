@@ -1,8 +1,9 @@
 CC = ./gcc/bin/i686-elf-gcc
 
-C_FILES = $(wildcard kernel/*.c wildcard libc/*.c wildcard kernel/libs/*.c wildcard kernel/drivers/*.c wildcard kernel/shell/*.c wildcard kernel/syscalls/*.c)
-ASM_FILES = $(wildcard kernel/drivers/*.asm)
-C_OBJ = $(C_FILES:.c=.o)
+C_FILES = $(shell find kernel/ -type f -name '*.c')
+ASM_FILES = $(shell find kernel/ -type f -name '*.asm')
+LIBC_FILES = $(shell find libc/ -type f -name '*.c')
+C_OBJ = $(C_FILES:.c=.o) $(LIBC_FILES:.c=.o)
 ASM_OBJ = $(ASM_FILES:.asm=.o)
 OBJ = boot/boot.o $(C_OBJ) $(ASM_OBJ)
 
@@ -17,6 +18,8 @@ echidna.bin: $(OBJ)
 
 %.o: %.asm
 	nasm $< $(NASMFLAGS) -o $@
+
+.PHONY: clean iso iso-clean test-qemu-bin test-qemu-iso
 
 clean:
 	rm $(OBJ)

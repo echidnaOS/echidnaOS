@@ -38,10 +38,9 @@ void kernel_main(void) {
     done_msg();
 
     // create the GDT and IDT
-    text_putstring("Building descriptor tables...");
-    create_GDT();
+    text_putstring("Loading descriptor tables...");
+    load_GDT();
     create_IDT();
-    load_segments();
     enable_ints();
     done_msg();
 

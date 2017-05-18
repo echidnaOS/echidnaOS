@@ -46,8 +46,7 @@ void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset);
 
 // from "gdt.h"
 
-void create_GDT(void);
-void load_segments(void);
+void load_GDT(void);
 
 // from "idt.h"
 

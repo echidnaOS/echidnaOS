@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <systemasm.h>
 
+void real_test(void);
+
 // from "variables.h"
 
 extern uint32_t memory_size;

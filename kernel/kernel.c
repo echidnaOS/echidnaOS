@@ -43,6 +43,9 @@ void kernel_main(void) {
     create_IDT();
     enable_ints();
     done_msg();
+    
+    // test real mode bullshit
+    real_test();
 
     // pass control to the shell
 	kernel_shell();

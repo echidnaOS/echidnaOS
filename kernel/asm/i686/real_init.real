@@ -1,0 +1,111 @@
+org 0x1000
+bits 32
+
+; Disable ints
+cli
+
+; Push CPU state
+push eax
+push ebx
+push ecx
+push edx
+push esi
+push edi
+push ebp
+
+; Save stack
+mov dword [saved_stack], esp
+
+; Save pmode IDT
+sidt [pmode_idt]
+
+; Load real mode IDT
+lidt [real_idt]
+
+; Load 16-bit segments
+jmp 0x28:pmode16
+pmode16:
+bits 16
+mov ax, 0x30
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov gs, ax
+mov ss, ax
+
+; Leave protected mode
+mov eax, cr0
+and eax, 11111110b
+mov cr0, eax
+
+; Load real mode segments
+jmp 0x0000:real_mode
+real_mode:
+xor ax, ax
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov gs, ax
+mov ax, 0x1000
+mov ss, ax
+mov sp, 0xFFF0
+
+; Restore real mode ints
+sti
+
+; Call actual routine
+call 0x0000:0x8000
+
+; Disable real mode ints
+cli
+
+; Load pmode IDT
+lidt [pmode_idt]
+
+; Enter protected mode
+mov eax, cr0
+or eax, 00000001b
+mov cr0, eax
+
+; Load pmode segments
+jmp 0x08:.pmode
+.pmode:
+bits 32
+mov ax, 0x10
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov gs, ax
+mov ss, ax
+
+; Restore stack
+mov esp, dword [saved_stack]
+
+; Restore CPU state
+pop ebp
+pop edi
+pop esi
+pop edx
+pop ecx
+pop ebx
+pop eax
+
+; Restore interrupts
+sti
+
+; Return
+retf
+
+data:
+
+align 4
+pmode_idt:
+    dw 0
+    dd 0
+
+align 4
+real_idt:
+    dw 0x3FF
+    dd 0
+
+saved_stack dd 0

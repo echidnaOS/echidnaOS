@@ -1,0 +1,8 @@
+org 0x8000
+bits 16
+
+mov ax, 0x1112
+xor bx, bx
+int 0x10
+
+ret

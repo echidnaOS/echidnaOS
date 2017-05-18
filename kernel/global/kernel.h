@@ -7,6 +7,7 @@
 #include <systemasm.h>
 
 void vga_disable_cursor(void);
+void vga_80_x_50(void);
 
 // from "variables.h"
 

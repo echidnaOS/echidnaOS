@@ -44,6 +44,9 @@ void kernel_main(void) {
     enable_ints();
     done_msg();
     
+    // use 80x50 text mode
+    vga_80_x_50();
+    
     // disable VGA cursor
     vga_disable_cursor();
 

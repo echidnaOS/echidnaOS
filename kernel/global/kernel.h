@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <systemasm.h>
 
-void real_test(void);
+void vga_disable_cursor(void);
 
 // from "variables.h"
 

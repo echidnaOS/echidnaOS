@@ -1,22 +1,19 @@
 extern real_routine
 
-;global vga_set_mode
-;global vga_disable_cursor
-global real_test
+global vga_disable_cursor
 
 section .data
 
-%define test_size   test_end - test
-test:               incbin "kernel/asm/i686/test.bin"
-test_end:
+%define vga_disable_cursor_size         vga_disable_cursor_end - vga_disable_cursor_bin
+vga_disable_cursor_bin:                 incbin "kernel/asm/i686/vga_disable_cursor.bin"
+vga_disable_cursor_end:
 
 section .text
 
 bits 32
 
-real_test:
-xchg bx, bx
-    mov esi, test
-    mov ecx, test_size
+vga_disable_cursor:
+    mov esi, vga_disable_cursor_bin
+    mov ecx, vga_disable_cursor_size
     call real_routine
     ret

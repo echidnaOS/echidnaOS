@@ -44,8 +44,8 @@ void kernel_main(void) {
     enable_ints();
     done_msg();
     
-    // test real mode bullshit
-    real_test();
+    // disable VGA cursor
+    vga_disable_cursor();
 
     // pass control to the shell
 	kernel_shell();

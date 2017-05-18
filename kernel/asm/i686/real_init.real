@@ -1,18 +1,6 @@
 org 0x1000
 bits 32
 
-; Disable ints
-cli
-
-; Push CPU state
-push eax
-push ebx
-push ecx
-push edx
-push esi
-push edi
-push ebp
-
 ; Save stack
 mov dword [saved_stack], esp
 
@@ -54,7 +42,7 @@ mov sp, 0xFFF0
 sti
 
 ; Call actual routine
-call 0x0000:0x8000
+call 0x8000
 
 ; Disable real mode ints
 cli
@@ -81,20 +69,8 @@ mov ss, ax
 ; Restore stack
 mov esp, dword [saved_stack]
 
-; Restore CPU state
-pop ebp
-pop edi
-pop esi
-pop edx
-pop ecx
-pop ebx
-pop eax
-
-; Restore interrupts
-sti
-
 ; Return
-retf
+ret
 
 data:
 

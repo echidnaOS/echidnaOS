@@ -13,7 +13,6 @@ section .text
 bits 32
 
 real_routine:
-    ; EBX, EDX = routine's arguments
     ; ESI = routine location
     ; ECX = routine size
     

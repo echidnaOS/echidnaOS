@@ -36,7 +36,7 @@ mov fs, ax
 mov gs, ax
 mov ax, 0x1000
 mov ss, ax
-mov sp, 0xFFF0
+mov esp, 0xFFF0
 
 ; Restore real mode ints
 sti

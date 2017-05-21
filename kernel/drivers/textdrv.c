@@ -103,6 +103,13 @@ void text_putstring(const char *string) {
 	}
 }
 
+void text_putascii(const char *string, uint32_t length) {
+    uint32_t x;
+    for (x=0; x<length; x++)
+        text_putchar(string[x]);
+    return;
+}
+
 void text_set_cursor_palette(char c) {
 	cursor_palette = c;
 	draw_cursor();

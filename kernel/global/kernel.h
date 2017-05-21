@@ -8,6 +8,7 @@
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
+void disk_load_sector(uint8_t drive, uint8_t* target_address, uint32_t source_sector, uint32_t count);
 
 // from "variables.h"
 
@@ -42,6 +43,7 @@ void text_clear(void);
 void text_disable_cursor(void);
 void text_enable_cursor(void);
 void text_putstring(const char *string);
+void text_putascii(const char *string, uint32_t length);
 
 // from "pic.h"
 

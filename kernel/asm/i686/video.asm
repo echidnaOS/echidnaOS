@@ -18,13 +18,29 @@ section .text
 bits 32
 
 vga_disable_cursor:
+    push ebx
+    push esi
+    push edi
+    push ebp
     mov esi, vga_disable_cursor_bin
     mov ecx, vga_disable_cursor_size
     call real_routine
+    pop ebp
+    pop edi
+    pop esi
+    pop ebx
     ret
 
 vga_80_x_50:
+    push ebx
+    push esi
+    push edi
+    push ebp
     mov esi, vga_80_x_50_bin
     mov ecx, vga_80_x_50_size
     call real_routine
+    pop ebp
+    pop edi
+    pop esi
+    pop ebx
     ret

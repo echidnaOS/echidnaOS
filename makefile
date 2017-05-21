@@ -32,22 +32,22 @@ echidna.bin: $(BINS) $(OBJ)
 %.o: %.asm
 	nasm $< $(NASMFLAGS) -o $@
 
-.PHONY: clean iso iso-clean test-qemu-bin test-qemu-iso
+.PHONY: clean img
 
 clean:
 	rm $(OBJ) $(BINS)
 
-iso:
-	mkdir -p isodir/boot/grub
-	cp echidna.bin isodir/boot/echidna.bin
-	cp boot/grub.cfg isodir/boot/grub/grub.cfg
-	grub-mkrescue -o echidna.iso isodir
-
-iso-clean:
-	rm -rf isodir/
-
-test-qemu-bin:
-	qemu-system-i386 -kernel echidna.bin
-
-test-qemu-iso:
-	qemu-system-i386 -cdrom echidna.iso
+img:
+	dd bs=512 count=131040 if=/dev/zero of=./echidna.img
+	losetup /dev/loop0 ./echidna.img
+	mkfs.vfat -F 16 -n ECHIDNA -I /dev/loop0
+	mount /dev/loop0 /mnt
+	mkdir -p /mnt/boot/grub
+	cp echidna.bin /mnt/boot/echidna.bin
+	cp boot/grub.cfg /mnt/boot/grub/grub.cfg
+	sync
+	grub-install --root-directory=/mnt --no-floppy --recheck --force /dev/loop0
+	sync
+	umount /dev/loop0
+	losetup -d /dev/loop0
+	chown `logname`:`logname` ./echidna.img

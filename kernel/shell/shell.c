@@ -34,6 +34,9 @@ void kernel_shell(void) {
         else if (!strcmp("help", input))
             help_cmd();
 
+        else if (!strcmp("sect", input))
+            sect_cmd();
+
         else if (!strcmp("peek", input))
             peek(args);
         

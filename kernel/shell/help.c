@@ -9,7 +9,7 @@ void help_cmd(void) {
         "clear - clears the screen.\n"
         "help - prints this guide.\n"
         "panic - triggers a kernel panic.\n"
-        "peek - view contents of memory and registers"
+        "peek - view contents of memory and registers."
     );
     return;
 }

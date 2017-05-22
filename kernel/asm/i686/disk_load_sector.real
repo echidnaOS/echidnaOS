@@ -2,7 +2,6 @@ org 0x8000
 bits 16
 
 ; DS:EBX --> Function struct
-xchg bx,bx
 
 ; Prepare da_struct
 mov eax, dword [ebx+4]

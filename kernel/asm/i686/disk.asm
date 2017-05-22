@@ -36,7 +36,6 @@ disk_load_sector:
     mov byte [function_struct.drive], al
 
 ; Call real mode routine
-xchg bx,bx
     mov ebx, function_struct
     mov esi, disk_load_sector_bin
     mov ecx, disk_load_sector_size

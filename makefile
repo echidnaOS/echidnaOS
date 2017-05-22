@@ -11,7 +11,7 @@ ASM_OBJ = $(ASM_FILES:.asm=.o)
 OBJ = boot/$(ARCH)/boot.o $(C_OBJ) $(ASM_OBJ)
 BINS = $(REAL_FILES:.real=.bin)
 
-CFLAGS = -std=gnu99 -O2 -Wall -Wextra -isystem libc/ -isystem kernel/global/ -masm=intel -D__ARCH_$(ARCH)__
+CFLAGS = -std=gnu99 -O2 -isystem libc/ -isystem kernel/global/ -masm=intel -D__ARCH_$(ARCH)__
 
 ifeq ($(ARCH),i686)
 	NASMFLAGS = -f elf32

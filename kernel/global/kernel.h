@@ -9,6 +9,7 @@
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
 void disk_load_sector(uint8_t drive, uint8_t* target_address, uint32_t source_sector, uint32_t count);
+uint32_t detect_mem(void);
 
 // from "variables.h"
 

@@ -39,9 +39,6 @@ void kernel_shell(void) {
 
         else if (!strcmp("peek", input))
             peek(args);
-        
-        else if (!strcmp("page", input))
-            printf("%d\n", available_page);
 
         /*
         else if (!strcmp("serial_send", input))

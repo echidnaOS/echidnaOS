@@ -3,7 +3,7 @@
 #include "shell.h"
 
 void sect_cmd(void) {
-    char test_sector[512];
+    uint8_t* test_sector=kmalloc(512);
 
     disk_load_sector(0x80, test_sector, 0, 1);
 

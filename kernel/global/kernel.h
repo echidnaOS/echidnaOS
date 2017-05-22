@@ -14,8 +14,7 @@ uint32_t detect_mem(void);
 // from "variables.h"
 
 extern uint32_t memory_size;
-extern uint32_t kernel_size;
-extern uint32_t available_page;
+extern uint32_t memory_bottom;
 
 // from "io.h"
 
@@ -24,7 +23,7 @@ int char_from_stdin(void);
 
 // from "memory.h"
 
-void memory_map(uint32_t directory_number, uint32_t phys_address, uint32_t virt_address, uint8_t access);
+void* kmalloc(uint32_t size);
 
 // from "panic.h"
 

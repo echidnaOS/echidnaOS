@@ -8,7 +8,7 @@
 void done_msg(void);
 
 void kernel_main(void) {
-    char buf[16];
+    char* buf;
 
     text_clear();
 
@@ -24,6 +24,9 @@ void kernel_main(void) {
     enable_ints();
 
     memory_size = detect_mem();
+    memory_bottom = memory_size;
+
+    buf = kmalloc(16);
     text_putstring(itoa(memory_size, buf, 10));
     text_putstring(" bytes of memory detected.\n\n");
     

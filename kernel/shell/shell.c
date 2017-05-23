@@ -3,12 +3,12 @@
 #include "shell.h"
 #include <kernel.h>
 
-// kernel side shell, internal shell, started by kernel init
+// built in shell
 
 void kernel_shell(void) {
-    uint32_t command_count=0;
-    char input[256]={0};
-    char args[256]={0};
+    char input[256];
+    int argc;
+    char* argv[128];
 
     puts(
         "\n"
@@ -18,64 +18,59 @@ void kernel_shell(void) {
     );
 
     while (1) {
-        printf("(%d)# ", command_count++);
+        printf("# ");
 
         getstring(input, 256);
-        get_args(args, input);
+        argc = get_argc(input);
+        get_argv(argv, input);
 
         putchar('\n');
 
-        if (!strcmp("clear", input))
+        if (!strcmp("clear", argv[0]))
             text_clear();
 
-        else if (!strcmp("panic", input))
-            panic("manually triggered panic");
-
-        else if (!strcmp("help", input))
+        else if (!strcmp("help", argv[0]))
             help_cmd();
 
-        else if (!strcmp("sect", input))
-            sect_cmd();
-
-        else if (!strcmp("peek", input))
-            peek(args);
-
-        /*
-        else if (!strcmp("serial_send", input))
-            message_serial(&input[11]);
-        */
-
         // return to prompt if no input
-        else if (!input[0]) {
-            command_count--;
-            continue;
-        }
+        else if (!input[0]) continue;
 
         // if the input did not match any command
-        else {
-            command_count--;
-            printf("shell: invalid command: `%s`.\n", input);
-        }
-
+        else printf("shell: invalid command: `%s`.\n", input);
     }
+
 }
 
-void get_args(char *args, char *string) {
+int get_argc(const char* string) {
     uint32_t index=0;
+    int argc=0;
     
-    while ((string[index]!=' ') && (string[index]!='\0'))
-        index++;
-    
-    if (string[index] == ' ')
-        string[index++] = 0;
-    else {
-        args[0] = 0;
-        return;
+    while (string[index]) {
+        if (string[index] == ' ') {
+            index++;
+            continue;
+        }
+        while ((string[index]!=' ') && (string[index]!='\0'))
+            index++;
+        argc++;
     }
+    return argc;
+}
+
+void get_argv(char** argv, char* string) {
+    uint32_t index=0;
+    uint8_t arg=0;
     
-    strcpy(args, &string[index]);
-    
-    return;
+    while (string[index]) {
+        if (string[index] == ' ') {
+            string[index++] = 0;
+            continue;
+        }
+        argv[arg++] = &string[index];
+        while ((string[index]!=' ') && (string[index]!='\0'))
+            index++;
+        string[index++] = 0;
+    }
 }
 
 void getstring(char* string, uint32_t limit) {

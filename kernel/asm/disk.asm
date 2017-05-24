@@ -5,7 +5,7 @@ global disk_load_sector
 section .data
 
 %define disk_load_sector_size           disk_load_sector_end - disk_load_sector_bin
-disk_load_sector_bin:                   incbin "kernel/asm/i686/disk_load_sector.bin"
+disk_load_sector_bin:                   incbin "kernel/asm/disk_load_sector.bin"
 disk_load_sector_end:
 
 function_struct:

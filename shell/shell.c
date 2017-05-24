@@ -1,18 +1,23 @@
 #include <stdio.h>
 #include <string.h>
-#include "shell.h"
-#include <kernel.h>
+#include <stdint.h>
+
+void getstring(char* string, uint32_t limit);
+int get_argc(const char* string);
+void get_argv(char** argv, char* string);
+
+void help_cmd(void);
 
 // built in shell
 
-void kernel_shell(void) {
+int main(int argc, char** argv) {
     char input[256];
-    int argc;
-    char* argv[128];
+    int s_argc;
+    char* s_argv[128];
 
     puts(
         "\n"
-        "Kernel shell.\n"
+        "echidnaOS built-in shell.\n"
         "\n"
         "Type `help` to get started.\n"
     );
@@ -21,15 +26,16 @@ void kernel_shell(void) {
         printf("# ");
 
         getstring(input, 256);
-        argc = get_argc(input);
-        get_argv(argv, input);
+        s_argc = get_argc(input);
+        get_argv(s_argv, input);
 
         putchar('\n');
 
-        if (!strcmp("clear", argv[0]))
-            text_clear();
+        if (!strcmp("clear", s_argv[0]))
+            //text_clear();
+            puts("working on it!");
 
-        else if (!strcmp("help", argv[0]))
+        else if (!strcmp("help", s_argv[0]))
             help_cmd();
 
         // return to prompt if no input
@@ -38,7 +44,8 @@ void kernel_shell(void) {
         // if the input did not match any command
         else printf("shell: invalid command: `%s`.\n", input);
     }
-
+    
+    return 0;
 }
 
 int get_argc(const char* string) {
@@ -71,25 +78,37 @@ void get_argv(char** argv, char* string) {
             index++;
         string[index++] = 0;
     }
+    return;
 }
 
 void getstring(char* string, uint32_t limit) {
-	uint32_t x=0;
-	char c;
-	while (1) {
-		c = getchar();
-		if (c=='\b') {
-			if (x) {
-				x--;
-				putchar(c);
-			}
-		} else if (c=='\n') {
-			break;
-		} else if (x<(limit-1)) {
-			string[x] = c;
-			x++;
-			putchar(c);
-		}
-	}
-	string[x] = 0x00;
+    uint32_t x=0;
+    char c;
+    while (1) {
+        c = getchar();
+        if (c=='\b') {
+            if (x) {
+                x--;
+                putchar(c);
+            }
+        } else if (c=='\n') break;
+        else if (x<(limit-1)) {
+            string[x] = c;
+            x++;
+            putchar(c);
+        }
+    }
+    string[x] = 0x00;
+    return;
+}
+
+void help_cmd(void) {
+    puts(
+        "echidnaOS built-in shell.\n"
+        "Available commands:\n"
+        "\n"
+        "clear - clears the screen.\n"
+        "help - prints this guide."
+    );
+    return;
 }

@@ -6,11 +6,11 @@ global vga_80_x_50
 section .data
 
 %define vga_disable_cursor_size         vga_disable_cursor_end - vga_disable_cursor_bin
-vga_disable_cursor_bin:                 incbin "kernel/asm/i686/vga_disable_cursor.bin"
+vga_disable_cursor_bin:                 incbin "kernel/asm/vga_disable_cursor.bin"
 vga_disable_cursor_end:
 
 %define vga_80_x_50_size                vga_80_x_50_end - vga_80_x_50_bin
-vga_80_x_50_bin:                        incbin "kernel/asm/i686/vga_80_x_50.bin"
+vga_80_x_50_bin:                        incbin "kernel/asm/vga_80_x_50.bin"
 vga_80_x_50_end:
 
 section .text

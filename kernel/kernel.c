@@ -1,14 +1,11 @@
-#include <stdlib.h>
 #include <stdint.h>
 #include <kernel.h>
-#include "shell/shell.h"
-
 #include "globalvars.h"
 
-void done_msg(void);
+void kernel_shell(void);
 
 void kernel_main(void) {
-    char* buf;
+    char buf[16];
 
     text_clear();
 
@@ -24,11 +21,9 @@ void kernel_main(void) {
     enable_ints();
 
     memory_size = detect_mem();
-    memory_bottom = memory_size;
 
-    buf = kmalloc(16);
-    text_putstring(itoa(memory_size, buf, 10));
-    text_putstring(" bytes of memory detected.\n\n");
+    //text_putstring(itoa(memory_size, buf, 10));
+    //text_putstring(" bytes of memory detected.\n\n");
     
     // use 80x50 text mode
     vga_80_x_50();

@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 // global variables declaration
 
 uint32_t memory_size;

@@ -21,9 +21,9 @@ extern uint32_t memory_bottom;
 void char_to_stdout(int c);
 int char_from_stdin(void);
 
-// from "memory.h"
+// from "alloc.c"
 
-void* kmalloc(uint32_t size);
+void* alloc(uint32_t size);
 
 // from "panic.h"
 

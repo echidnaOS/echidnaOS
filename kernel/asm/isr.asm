@@ -10,6 +10,9 @@ extern keyboard_handler
 ; API calls
 extern char_to_stdout
 extern char_from_stdin
+extern alloc
+extern freemem
+extern text_clear
 
 section .data
 
@@ -17,9 +20,12 @@ cpu_state_esp                   dd      cpu_state_stack
 interrupted_esp                 dd      0
 
 routine_list:
-        times 0x20 dd 0                 ; Reserved syscalls
-        dd      char_to_stdout
-        dd      char_from_stdin
+        times 0x20 dd 0
+        dd      char_to_stdout          ; 0x20
+        dd      char_from_stdin         ; 0x21
+        dd      alloc                   ; 0x22
+        dd      freemem                 ; 0x23
+        dd      text_clear              ; 0x24
 
 section .bss
 

@@ -32,8 +32,11 @@ int main(int argc, char** argv) {
         putchar('\n');
 
         if (!strcmp("clear", s_argv[0]))
-            //text_clear();
-            puts("working on it!");
+            asm volatile (  "mov eax, 0x24;"
+                            "int 0x80;"
+                             :
+                             :
+                             : "eax" );
 
         else if (!strcmp("help", s_argv[0]))
             help_cmd();

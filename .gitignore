@@ -1,5 +1,6 @@
 *.o
 *.bin
 *.img
+*.iso
 bochsout.txt
 gcc/

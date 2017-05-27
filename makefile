@@ -47,3 +47,11 @@ img:
 	umount /dev/loop0
 	losetup -d /dev/loop0
 	chown `logname`:`logname` ./echidna.img
+
+iso:
+	mkdir -p isodir/boot/grub
+	cp echidna.bin isodir/boot/echidna.bin
+	cp boot/grub.cfg isodir/boot/grub/grub.cfg
+	grub-mkrescue -o echidna.iso isodir
+	rm -rf isodir
+	chown `logname`:`logname` ./echidna.iso

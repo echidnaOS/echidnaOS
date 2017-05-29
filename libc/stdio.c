@@ -1,10 +1,10 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdint.h"
-#include "string.h"
-#include "stdarg.h"
-#include "ctype.h"
-#include "arch/arch.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <sys_api.h>
 
 void iputs(const char *str);
 char *_itoa(int, char *, int, int);
@@ -12,7 +12,7 @@ char *_ltoa(long, char *, int, int);
 //char *_lltoa(long long, char *, int, int);
 
 int putchar(int c) {
-    char_to_stdout(c);
+    OS_putc(c);
     return c;
 }
 
@@ -23,7 +23,7 @@ int putchar(int c) {
 int getchar(void) {
     int c=NO_INPUT;
     while (c==NO_INPUT)
-        c = char_from_stdin();
+        c = OS_getc();
     return c;
 }
 

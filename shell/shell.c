@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys_api.h>
 
 void getstring(char* string, uint32_t limit);
 int get_argc(const char* string);
@@ -32,11 +33,7 @@ int main(int argc, char** argv) {
         putchar('\n');
 
         if (!strcmp("clear", s_argv[0]))
-            asm volatile (  "mov eax, 0x24;"
-                            "int 0x80;"
-                             :
-                             :
-                             : "eax" );
+            OS_cls();          // direct call to the echidnaOS API
 
         else if (!strcmp("help", s_argv[0]))
             help_cmd();

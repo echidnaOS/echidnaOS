@@ -14,6 +14,7 @@ static uint8_t capslock_active = 0;
 static uint8_t shift_active = 0;
 static char keyboard_buffer[256];
 static uint16_t buffer_index=0;
+static uint8_t led_status=0;
 
 const char sc_ascii_capslock[] = { '\0', '?', '1', '2', '3', '4', '5', '6',     
 		'7', '8', '9', '0', '-', '=', '\b', '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 
@@ -43,16 +44,26 @@ void keyboard_init(void) {
     uint32_t index;
     // initialise the buffer to avoid some issues if
     // the buffer was not wiped on reset
-    for (index=0; index<256; index++) {
+    for (index=0; index<256; index++)
         keyboard_buffer[index] = 0;
-    }
+    port_out_b(0x60, 0xED);
+    while (port_in_b(0x64) & 0x02);
+    port_out_b(0x60, led_status);
     return;
 }
 
 void keyboard_handler(uint8_t input_byte) {
 	char c='\0';
-	if ( input_byte == SC_CAPSLOCK )
-		capslock_active = !capslock_active;
+	if ( input_byte == SC_CAPSLOCK ) {
+		if (!capslock_active)
+	    	led_status = led_status | 0b00000100;
+	    else if (capslock_active)
+	    	led_status = led_status & 0b11111011;
+	    capslock_active = !capslock_active;
+        port_out_b(0x60, 0xED);
+        while (port_in_b(0x64) & 0x02);
+        port_out_b(0x60, led_status);
+	}
 
 	else if ( input_byte == SC_LEFT_SHIFT || input_byte == SC_RIGHT_SHIFT || input_byte == SC_LEFT_SHIFT_REL || input_byte == SC_RIGHT_SHIFT_REL )
 		shift_active = !shift_active;
@@ -77,11 +88,8 @@ void keyboard_handler(uint8_t input_byte) {
 			buffer_index++;
 		}
 	}
-
-	else
-	{
-		panic("keyboard buffer overflow");
-	}
+	
+	return;
 }
 
 char keyboard_fetch_char(void) {
@@ -90,11 +98,9 @@ char keyboard_fetch_char(void) {
 	if (buffer_index) {
 		buffer_index--;
 		c = keyboard_buffer[0];
-		for (x=0; x<255; x++) {
+		for (x=0; x<255; x++)
 			keyboard_buffer[x] = keyboard_buffer[x+1];
-		}
 		return c;
-	} else {
+	} else
 		return '\0';
-	}
 }

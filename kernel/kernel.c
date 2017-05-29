@@ -14,7 +14,7 @@ void kernel_init(uint8_t boot_drive) {
     create_IDT();
     enable_ints();
     
-    // clear keyboard buffer
+    // initialise keyboard driver
     keyboard_init();
     
     // use 80x50 text mode

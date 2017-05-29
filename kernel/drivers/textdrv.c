@@ -94,7 +94,7 @@ void text_putchar(char c) {
 	} else if (c == 0x08) {
 		if (cursor_offset) {
 			clear_cursor();
-			cursor_offset = cursor_offset-2;
+			cursor_offset -= 2;
 			mem_store_b(VIDEO_ADDRESS+cursor_offset, ' ');
 			draw_cursor();
 		}
@@ -105,7 +105,7 @@ void text_putchar(char c) {
 			scroll();
 			cursor_offset = VIDEO_BOTTOM - (COLS-1);
 		} else {
-			cursor_offset = cursor_offset+2;
+			cursor_offset += 2;
 		}
 		draw_cursor();
 	}

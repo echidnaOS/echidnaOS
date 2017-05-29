@@ -15,57 +15,72 @@ void scroll(void);
 
 /* internal global variables */
 
-int cursor_offset = 0;
+uint32_t cursor_offset = 0;
 int cursor_status = 1;
-char cursor_palette = 0x70;
-char text_palette = 0x07;
+uint8_t cursor_palette = 0x70;
+uint8_t text_palette = 0x07;
 
 /* internal functions */
 
 void clear_cursor(void) {
-	mem_store_b(VIDEO_ADDRESS+cursor_offset+1, text_palette);
+    mem_store_b(VIDEO_ADDRESS+cursor_offset+1, text_palette);
+    return;
 }
 
 void draw_cursor(void) {
-	if (cursor_status) {
-		mem_store_b(VIDEO_ADDRESS+cursor_offset+1, cursor_palette);
-	}
+    if (cursor_status)
+        mem_store_b(VIDEO_ADDRESS+cursor_offset+1, cursor_palette);
+    return;
 }
 
 void scroll(void) {
-	int offset;
-	// move the text up by one row
-	for (offset=0; offset<=VIDEO_BOTTOM-COLS; offset++) {
-		mem_store_b(VIDEO_ADDRESS+offset, mem_load_b(VIDEO_ADDRESS+offset+COLS));
-	}
-	// clear the last line of the screen
-	for (offset=VIDEO_BOTTOM; offset>VIDEO_BOTTOM-COLS; offset=offset-2) {
-		mem_store_b(VIDEO_ADDRESS+offset, text_palette);
-		mem_store_b(VIDEO_ADDRESS+offset-1, ' ');
-	}
+    // move the text up by one row
+    asm volatile (  "mov edi, 0xB8000;"
+                    "mov esi, 0xB80A0;"
+                    "mov ecx, 0x7A8;"
+                    "rep movsd;"
+                     :
+                     :
+                     : "edi", "esi", "ecx" );
+    // clear the last line of the screen
+    asm volatile (  "mov edi, 0xB9EA0;"
+                    "mov ah, bl;"
+                    "mov al, 0x20;"
+                    "mov ecx, 80;"
+                    "rep stosw;"
+                     :
+                     : "b" (text_palette)
+                     : "edi", "eax", "ecx" );
+    return;
 }
 
 /* external functions */
 
 void text_clear(void) {
-	int offset;
-	clear_cursor();
-	for (offset=0; offset<VIDEO_BOTTOM; offset=offset+2) {
-		mem_store_b(VIDEO_ADDRESS+offset, ' ');
-		mem_store_b(VIDEO_ADDRESS+offset+1, text_palette);
-	}
-	cursor_offset=0;
-	draw_cursor();
+    clear_cursor();
+    asm volatile (  "mov edi, 0xB8000;"
+                    "mov ah, bl;"
+                    "mov al, 0x20;"
+                    "mov ecx, 0xFA0;"
+                    "rep stosw;"
+                     :
+                     : "b" (text_palette)
+                     : "edi", "eax", "ecx" );
+    cursor_offset=0;
+    draw_cursor();
+    return;
 }
 
 void text_enable_cursor(void) {
-	cursor_status=1;
-	draw_cursor();
+    cursor_status=1;
+    draw_cursor();
+    return;
 }
 
 void text_disable_cursor(void) {
-	cursor_status=0;
-	clear_cursor();
+    cursor_status=0;
+    clear_cursor();
+    return;
 }
 
 void text_putchar(char c) {
@@ -94,49 +109,53 @@ void text_putchar(char c) {
 		}
 		draw_cursor();
 	}
+	return;
 }
 
-void text_putstring(const char *string) {
-	int x;
-	for (x=0; string[x]!=0; x++) {
-		text_putchar(string[x]);
-	}
+void text_putstring(const char* string) {
+    uint32_t x;
+    for (x=0; string[x]!=0; x++)
+        text_putchar(string[x]);
+    return;
 }
 
-void text_putascii(const char *string, uint32_t length) {
+void text_putascii(const char* string, uint32_t length) {
     uint32_t x;
     for (x=0; x<length; x++)
         text_putchar(string[x]);
     return;
 }
 
-void text_set_cursor_palette(char c) {
-	cursor_palette = c;
-	draw_cursor();
+void text_set_cursor_palette(uint8_t c) {
+    cursor_palette = c;
+    draw_cursor();
+    return;
 }
 
-char text_get_cursor_palette(void) {
-	return cursor_palette;
+uint8_t text_get_cursor_palette(void) {
+    return cursor_palette;
 }
 
-void text_set_text_palette(char c) {
-	text_palette = c;
+void text_set_text_palette(uint8_t c) {
+    text_palette = c;
+    return;
 }
 
-char text_get_text_palette(void) {
-	return text_palette;
+uint8_t text_get_text_palette(void) {
+    return text_palette;
 }
 
-int text_get_cursor_pos_x(void) {
-	return (cursor_offset/2) % ROWS;
+uint32_t text_get_cursor_pos_x(void) {
+    return (cursor_offset/2) % ROWS;
 }
 
-int text_get_cursor_pos_y(void) {
-	return (cursor_offset/2) / (COLS/2);
+uint32_t text_get_cursor_pos_y(void) {
+    return (cursor_offset/2) / (COLS/2);
 }
 
-void text_set_cursor_pos(int x, int y) {
-	clear_cursor();
-	cursor_offset = (y*COLS)+(x*2);
-	draw_cursor();
+void text_set_cursor_pos(uint32_t x, uint32_t y) {
+    clear_cursor();
+    cursor_offset = (y*COLS)+(x*2);
+    draw_cursor();
+    return;
 }

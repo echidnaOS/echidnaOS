@@ -12,7 +12,7 @@ BINS = $(REAL_FILES:.real=.bin)
 CFLAGS = -std=gnu99 -ffreestanding -isystem kernel/global/ -masm=intel
 NASMFLAGS = -f elf32
 
-echidna.bin:  ./shell/shell.bin $(BINS) $(OBJ)
+echidna.bin: target_libc ./shell/shell.bin $(BINS) $(OBJ)
 	$(LD) -T linker.ld --oformat binary -o echidna.bin -nostdlib $(OBJ)
 
 %.o: %.c
@@ -24,13 +24,17 @@ echidna.bin:  ./shell/shell.bin $(BINS) $(OBJ)
 %.o: %.asm
 	nasm $< $(NASMFLAGS) -o $@
 
+target_libc:
+	cd libc && make
+
 ./shell/shell.bin:
 	cd shell && make
-	cd shell && make clean
 
 .PHONY: clean img
 
 clean:
+	cd libc && make clean
+	cd shell && make clean
 	rm shell/shell.bin
 	rm $(OBJ) $(BINS)
 

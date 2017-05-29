@@ -27,10 +27,8 @@ routine_list:
         dd      freemem                 ; 0x23
         dd      text_clear              ; 0x24
 
-section .bss
-
 align 4
-resb 16384 ; 16 KiB
+times 0x1000 db 0
 cpu_state_stack:
 
 section .text

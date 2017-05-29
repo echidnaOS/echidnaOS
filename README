@@ -10,6 +10,8 @@ The kernel is written primarily in C, with some assembly here and there.
 -----------------------
 
 Please, follow these instructions to build a bootable IMG of echidnaOS.
+You can then write the resulting image to a Hard Drive, a USB drive, or
+even an SSD!
 
 - Requirements:
 
@@ -17,8 +19,8 @@ git
 nasm
 gcc i686-elf cross-compiler (follow instructions to download it)
 gnu make
-grub-common
 bochs (for testing the image, non essential)
+qemu (for testing the image, non essential)
 
 - Step by step:
 
@@ -26,19 +28,12 @@ You can install all the above packages on Ubuntu/Debian with the following
 commands:
 
     sudo apt-get update
-    sudo apt-get install git nasm build-essential grub-common bochs bochs-x
+    sudo apt-get install git nasm build-essential bochs bochs-x qemu
 
 Proceed by cloning the echidnaOS repo:
 
     git clone https://github.com/echidnaOS/echidnaOS.git
     cd echidnaOS
-
-Now that we're in the root of the echidnaOS tree, we're still missing a
-key component, the C library.
-Let's fetch libc:
-
-    git submodule init
-    git submodule update
 
 Now let's download and extract the GCC cross compiler:
 
@@ -59,3 +54,7 @@ There should be a bootable "echidna.img" image in the project's root now.
 You can test the image in bochs with:
 
     bochs
+
+Or in qemu with:
+
+    qemu-system-i386 echidna.img

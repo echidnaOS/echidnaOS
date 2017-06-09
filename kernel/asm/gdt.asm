@@ -1,5 +1,8 @@
 global load_GDT
+global load_TSS
 global set_userspace
+
+extern cpu_state_esp
 
 section .data
 
@@ -36,19 +39,19 @@ GDT:
         db 0x00				; Base (high 8 bits)
 
     .UserCode:
-.llowc  dw 0xFFFF			; Limit
+.llowc  dw 0x0000			; Limit
 .blowc  dw 0x0000			; Base (low 16 bits)
 .bmidc  db 0x00				; Base (mid 8 bits)
         db 11111010b		; Access
-.granc  db 11001111b		; Granularity
+.granc  db 11000000b		; Granularity
 .bhighc db 0x00				; Base (high 8 bits)
 
     .UserData:
-.llowd  dw 0xFFFF			; Limit
+.llowd  dw 0x0000			; Limit
 .blowd  dw 0x0000			; Base (low 16 bits)
 .bmidd  db 0x00				; Base (mid 8 bits)
         db 11110010b		; Access
-.grand  db 11001111b		; Granularity
+.grand  db 11000000b		; Granularity
 .bhighd db 0x00				; Base (high 8 bits)
 
     .UnrealCode:
@@ -67,7 +70,23 @@ GDT:
         db 10001111b		; Granularity
         db 0x00				; Base (high 8 bits)
 
+    .TSS:
+.llowt  dw 0x0000			; Limit
+.blowt  dw 0x0000			; Base (low 16 bits)
+.bmidt  db 0x00				; Base (mid 8 bits)
+        db 11101001b		; Access
+        db 00000000b		; Granularity
+.bhight db 0x00				; Base (high 8 bits)
+
     .GDTEnd:
+
+align 4
+TSS:
+    dd 0
+    dd cpu_state_esp
+    dd 0x10
+    times 23 dd 0
+    .end:
 
 section .text
 
@@ -84,6 +103,21 @@ load_GDT:
     mov gs, ax
     mov ss, ax
     ret
+
+load_TSS:
+    mov eax, TSS                ; fetch base
+    mov word [GDT.blowt], ax
+    shr eax, 16
+    mov byte [GDT.bmidt], al
+    mov byte [GDT.bhight], ah
+
+    mov eax, (TSS.end - TSS)    ; fetch limit
+    mov word [GDT.llowt], ax
+    
+    mov ax, 0x3B
+    ltr ax
+    
+    ret    
 
 ; void set_userspace(uint32_t base, uint32_t page_count);
 set_userspace:

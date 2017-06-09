@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
     puts(
         "\n"
-        "echidnaOS built-in shell.\n"
+        "Kernel built-in shell.\n"
         "\n"
         "Type `help` to get started.\n"
     );

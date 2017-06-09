@@ -52,6 +52,7 @@ void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset);
 // from "gdt.h"
 
 void load_GDT(void);
+void load_TSS(void);
 void set_userspace(uint32_t base, uint32_t page_count);
 
 // from "idt.h"

@@ -4,15 +4,13 @@
 void kernel_shell(void);
 
 void kernel_init(uint8_t boot_drive) {
-    char buf[16];
-
     // setup PIC
     map_PIC(0x20, 0x28);
-
+    
     // enable desc tables
     load_GDT();
     create_IDT();
-    enable_ints();
+    load_TSS();
     
     // initialise keyboard driver
     keyboard_init();
@@ -27,7 +25,8 @@ void kernel_init(uint8_t boot_drive) {
     text_putstring("echidnaOS\n\n");
 
     // detect memory
-    memory_size = memory_bottom = detect_mem();
+    memory_size = detect_mem();
+    memory_bottom = 0x1000000;
 
     // pass control to the shell
 	kernel_shell();

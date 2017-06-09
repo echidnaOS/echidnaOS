@@ -19,9 +19,6 @@ real_routine:
     push esi
     push ecx
     
-    ; Disable ints
-    cli
-    
     ; Remap PIC for a real mode environment
     push 0x00000070
     push 0x00000008
@@ -49,6 +46,4 @@ real_routine:
     call map_PIC
     add esp, 8
     
-    ; Reenable ints and return
-    sti
     ret

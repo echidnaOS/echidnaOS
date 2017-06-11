@@ -2,8 +2,6 @@ global load_GDT
 global load_TSS
 global set_userspace
 
-extern cpu_state_esp
-
 section .data
 
 align 4
@@ -83,7 +81,7 @@ GDT:
 align 4
 TSS:
     dd 0
-    dd cpu_state_esp
+    dd 0xEFFFF0
     dd 0x10
     times 23 dd 0
     .end:

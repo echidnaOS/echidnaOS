@@ -1,9 +1,21 @@
-CC = ../gcc/bin/i686-elf-gcc
+ARCH = i386
 
-C = $(shell find ./ -type f -name '*.c')
+ifeq ($(ARCH), i386)
+CDEF = -D__IA32__
+else ifeq ($(ARCH), i686)
+CDEF = -D__IA32__
+else ifeq ($(ARCH), x86_64)
+CDEF = -D__AMD64__
+else
+$(error ARCH variable invalid, available architectures: i386, i686, x86_64)
+endif
+
+CC = ../gcc/bin/$(ARCH)-elf-gcc
+
+C = $(shell find ./ -type f,l -name '*.c')
 OBJ = $(C:.c=.o)
 
-CFLAGS = -std=gnu99 -ffreestanding -isystem ./ -masm=intel
+CFLAGS = -std=gnu99 -ffreestanding -isystem ./ -masm=intel $(CDEF)
 
 libc: $(OBJ)
 

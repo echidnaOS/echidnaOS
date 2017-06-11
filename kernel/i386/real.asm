@@ -5,7 +5,7 @@ global real_routine
 section .data
 
 %define real_init_size  real_init_end - real_init
-real_init:              incbin "kernel/asm/real_init.bin"
+real_init:              incbin "blobs/real_init.bin"
 real_init_end:
 
 section .text

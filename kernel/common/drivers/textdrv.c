@@ -84,32 +84,36 @@ void text_disable_cursor(void) {
 }
 
 void text_putchar(char c) {
-	if (c == 0x00) {
-	} else if (c == 0x0A) {
-		if (text_get_cursor_pos_y() == ROWS - 1) {
-			clear_cursor();
-			scroll();
-			text_set_cursor_pos(0,  ROWS - 1);
-		} else text_set_cursor_pos(0, (text_get_cursor_pos_y()+1));
-	} else if (c == 0x08) {
-		if (cursor_offset) {
-			clear_cursor();
-			cursor_offset -= 2;
-			mem_store_b(VIDEO_ADDRESS+cursor_offset, ' ');
-			draw_cursor();
-		}
-	} else {
-		clear_cursor();
-		mem_store_b(VIDEO_ADDRESS+cursor_offset, c);
-		if (cursor_offset >= VIDEO_BOTTOM-1) {
-			scroll();
-			cursor_offset = VIDEO_BOTTOM - (COLS-1);
-		} else {
-			cursor_offset += 2;
-		}
-		draw_cursor();
-	}
-	return;
+    switch (c) {
+        case 0x00:
+            break;
+        case 0x0A:
+            if (text_get_cursor_pos_y() == (ROWS - 1)) {
+                clear_cursor();
+                scroll();
+                text_set_cursor_pos(0, (ROWS - 1));
+            } else
+                text_set_cursor_pos(0, (text_get_cursor_pos_y() + 1));
+            break;
+        case 0x08:
+            if (cursor_offset) {
+                clear_cursor();
+                cursor_offset -= 2;
+                mem_store_b((VIDEO_ADDRESS + cursor_offset), ' ');
+                draw_cursor();
+            }
+            break;
+        default:
+            clear_cursor();
+            mem_store_b((VIDEO_ADDRESS + cursor_offset), c);
+            if (cursor_offset >= (VIDEO_BOTTOM - 1)) {
+                scroll();
+                cursor_offset = VIDEO_BOTTOM - (COLS - 1);
+            } else
+                cursor_offset += 2;
+            draw_cursor();
+    }
+    return;
 }
 
 void text_putstring(const char* string) {

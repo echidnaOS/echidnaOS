@@ -5,7 +5,7 @@ extern set_userspace
 section .data
 
 %define shell_size          shell_end - shell
-shell:                      incbin "shell/shell.bin"
+shell:                      incbin "../shell/shell.bin"
 shell_end:
 
 section .text
@@ -19,8 +19,8 @@ kernel_shell:
     mov ecx, shell_size
     rep movsb
     
-    push 0x100000
-    push 0x0
+    push 0x100
+    push 0x1000000
     call set_userspace
     add esp, 8
 
@@ -31,8 +31,8 @@ kernel_shell:
     mov gs, ax
 
     push 0x23
-    push 0x10ffff0
+    push 0xffff0
     push 0x202
     push 0x1B
-    push 0x1000000
-    iret
+    push 0x0
+    iretd

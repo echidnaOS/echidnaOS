@@ -1,49 +1,41 @@
-CC = ./gcc/bin/i686-elf-gcc
-LD = ./gcc/bin/i686-elf-ld
+ARCH = i386
 
-C_FILES = $(shell find kernel/ -type f -name '*.c')
-ASM_FILES = $(shell find kernel/ -type f -name '*.asm')
-REAL_FILES = $(shell find kernel/ -type f -name '*.real')
-C_OBJ = $(C_FILES:.c=.o)
-ASM_OBJ = $(ASM_FILES:.asm=.o)
-OBJ = $(C_OBJ) $(ASM_OBJ)
-BINS = $(REAL_FILES:.real=.bin)
+ifeq ($(ARCH), i386)
 
-CFLAGS = -std=gnu99 -ffreestanding -isystem kernel/global/ -masm=intel
-NASMFLAGS = -f elf32
+else ifeq ($(ARCH), i686)
 
-echidna.bin: target_libc ./shell/shell.bin $(BINS) $(OBJ)
-	$(LD) -T linker.ld --oformat binary -o echidna.bin -nostdlib $(OBJ)
+else ifeq ($(ARCH), x86_64)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+else
+$(error ARCH variable invalid, available architectures: i386, i686, x86_64)
+endif
 
-%.bin: %.real
-	nasm $< -f bin -o $@
-
-%.o: %.asm
-	nasm $< $(NASMFLAGS) -o $@
+kernel/echidna.bin: target_libc ./shell/shell.bin
+	cd kernel && make ARCH=$(ARCH)
 
 target_libc:
-	cd libc && make
+	cd libc && make ARCH=$(ARCH)
 
 ./shell/shell.bin:
-	cd shell && make
+	cd shell && make ARCH=$(ARCH)
 
-.PHONY: clean img
+.PHONY: clean clean-all img
 
 clean:
-	cd libc && make clean
 	cd shell && make clean
-	rm shell/shell.bin
-	rm $(OBJ) $(BINS)
+	cd libc && make clean
+	cd kernel && make clean
+
+clean-all:
+	rm ./shell/shell.bin
+	rm ./kernel/echidna.bin
 
 img:
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	mkdir mnt
 	mount ./echidna.img ./mnt
-	cp echidna.bin ./mnt/echidna.bin
+	cp ./kernel/echidna.bin ./mnt/echidna.bin
 	sync
 	umount ./mnt
 	chown `logname`:`logname` ./echidna.img

@@ -4,7 +4,6 @@ global handler_irq_pic0
 global handler_irq_pic1
 global keyboard_isr
 global syscall
-global cpu_state_esp
 
 extern keyboard_handler
 
@@ -17,9 +16,6 @@ extern text_clear
 
 section .data
 
-cpu_state_esp                   dd      cpu_state_stack
-interrupted_esp                 dd      0
-
 routine_list:
         times 0x20 dd 0
         dd      char_to_stdout          ; 0x20
@@ -27,10 +23,6 @@ routine_list:
         dd      alloc                   ; 0x22
         dd      freemem                 ; 0x23
         dd      text_clear              ; 0x24
-
-align 4
-times 0x1000 db 0
-cpu_state_stack:
 
 section .text
 

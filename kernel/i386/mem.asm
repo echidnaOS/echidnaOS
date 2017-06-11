@@ -5,7 +5,7 @@ global detect_mem
 section .data
 
 %define detect_mem_size         detect_mem_end - detect_mem_bin
-detect_mem_bin:                 incbin "kernel/asm/detect_mem.bin"
+detect_mem_bin:                 incbin "blobs/detect_mem.bin"
 detect_mem_end:
 
 align 4

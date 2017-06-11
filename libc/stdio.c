@@ -298,11 +298,13 @@ int printf(const char *format, ...)
                 switch(mod)
                 {
                     case MOD_BYTE:
-                        n = va_arg(args, unsigned char);
+                        //n = va_arg(args, unsigned char);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_SHORT:
-                        n = va_arg(args, unsigned short);
+                        //n = va_arg(args, unsigned short);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_NONE:
@@ -346,11 +348,13 @@ int printf(const char *format, ...)
                 switch(mod)
                 {
                     case MOD_BYTE:
-                        n = va_arg(args, unsigned char);
+                        //n = va_arg(args, unsigned char);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_SHORT:
-                        n = va_arg(args, unsigned short);
+                        //n = va_arg(args, unsigned short);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_NONE:
@@ -407,11 +411,13 @@ int printf(const char *format, ...)
                 switch(mod)
                 {
                     case MOD_BYTE:
-                        n = (uint8_t)va_arg(args, unsigned char);
+                        //n = (uint8_t)va_arg(args, unsigned char);
+                        n = (uint8_t)va_arg(args, unsigned int);
                         break;
 
                     case MOD_SHORT:
-                        n = (uint16_t)va_arg(args, unsigned short);
+                        //n = (uint16_t)va_arg(args, unsigned short);
+                        n = (uint16_t)va_arg(args, unsigned int);
                         break;
 
                     case MOD_NONE:
@@ -455,11 +461,13 @@ int printf(const char *format, ...)
                 switch(mod)
                 {
                     case MOD_BYTE:
-                        n = va_arg(args, unsigned char);
+                        //n = va_arg(args, unsigned char);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_SHORT:
-                        n = va_arg(args, unsigned short);
+                        //n = va_arg(args, unsigned short);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_NONE:
@@ -502,11 +510,13 @@ int printf(const char *format, ...)
                 switch ( mod )
                 {
                     case MOD_BYTE:
-                        n = va_arg(args, unsigned char);
+                        //n = va_arg(args, unsigned char);
+                        n = va_arg(args, unsigned int);
                         break;
 
                     case MOD_SHORT:
-                        n = va_arg(args, short);
+                        //n = va_arg(args, short);
+                        n = va_arg(args, int);
                         break;
 
                     case MOD_NONE:
@@ -569,7 +579,8 @@ int printf(const char *format, ...)
                 }
                 else
                 {
-                    n = va_arg(args, float);
+                    //n = va_arg(args, float);
+                    n = va_arg(args, double);
                     fp_width = fp_width > -1 ? fp_width : 8;
                 }
 

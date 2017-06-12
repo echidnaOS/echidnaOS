@@ -56,11 +56,11 @@ make_entry:
     stosw
 
     pop edi
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-	ret
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
 
 load_IDT:
     push ebx

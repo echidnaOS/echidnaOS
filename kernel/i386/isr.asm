@@ -2,10 +2,12 @@ global handler_simple
 global handler_code
 global handler_irq_pic0
 global handler_irq_pic1
+global irq0_handler
 global keyboard_isr
 global syscall
 
 extern keyboard_handler
+extern task_switch
 
 ; API calls
 extern char_to_stdout
@@ -49,6 +51,28 @@ handler_irq_pic1:
         out 0x20, al
         pop eax
         iretd
+
+irq0_handler:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax        
+        mov al, 0x20    ; acknowledge interrupt to PIC0
+        out 0x20, al
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        call task_switch
 
 keyboard_isr:
         push eax

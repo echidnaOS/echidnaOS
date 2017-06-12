@@ -4,6 +4,7 @@ extern handler_simple
 extern handler_code
 extern handler_irq_pic0
 extern handler_irq_pic1
+extern irq0_handler
 extern keyboard_isr
 extern syscall
 
@@ -142,7 +143,7 @@ load_IDT:
     call make_entry                 ; int 0x1E, security exception
     
     add di, 2
-    mov ebx, handler_irq_pic0
+    mov ebx, irq0_handler
     call make_entry
     
     inc di

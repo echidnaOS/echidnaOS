@@ -9,7 +9,7 @@ void kernel_init(uint8_t boot_drive) {
     
     // enable desc tables
     load_GDT();
-    create_IDT();
+    load_IDT();
     load_TSS();
     
     // initialise keyboard driver

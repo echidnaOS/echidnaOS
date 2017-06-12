@@ -57,7 +57,7 @@ void set_userspace(uint32_t base, uint32_t page_count);
 
 // from "idt.h"
 
-void create_IDT(void);
+void load_IDT(void);
 
 // from "keyboard.h"
 

@@ -9,31 +9,31 @@
 
 /* internal functions */
 
-void clear_cursor(void);
-void draw_cursor(void);
-void scroll(void);
+static void clear_cursor(void);
+static void draw_cursor(void);
+static void scroll(void);
 
 /* internal global variables */
 
-uint32_t cursor_offset = 0;
-int cursor_status = 1;
-uint8_t cursor_palette = 0x70;
-uint8_t text_palette = 0x07;
+static uint32_t cursor_offset = 0;
+static int cursor_status = 1;
+static uint8_t cursor_palette = 0x70;
+static uint8_t text_palette = 0x07;
 
 /* internal functions */
 
-void clear_cursor(void) {
+static void clear_cursor(void) {
     mem_store_b(VIDEO_ADDRESS+cursor_offset+1, text_palette);
     return;
 }
 
-void draw_cursor(void) {
+static void draw_cursor(void) {
     if (cursor_status)
         mem_store_b(VIDEO_ADDRESS+cursor_offset+1, cursor_palette);
     return;
 }
 
-void scroll(void) {
+static void scroll(void) {
     // move the text up by one row
     asm volatile (  "mov edi, 0xB8000;"
                     "mov esi, 0xB80A0;"

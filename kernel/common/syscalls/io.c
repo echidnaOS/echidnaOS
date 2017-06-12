@@ -17,7 +17,7 @@ void char_to_stdout(int c) {
 
 int char_from_stdin(void) {
     int c;
-    if ((c=keyboard_fetch_char())=='\0')
+    if ((c=keyboard_fetch_char()) == '\0')
         c = NO_INPUT;
     return c;
 }

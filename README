@@ -44,10 +44,7 @@ Copy the extracted "gcc" folder to the root of the echidnaOS source tree.
 Now that every requirement is satisfied, let's build the kernel and create
 the image:
 
-    make
-    make clean
-    sudo make img
-    make clean-all
+    sudo make all
 
 If make didn't error, congratulations, you managed to build echidnaOS.
 There should be a bootable "echidna.img" image in the project's root now.

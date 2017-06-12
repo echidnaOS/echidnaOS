@@ -82,8 +82,8 @@ keyboard_isr:
         iretd
 
 syscall:
-; ARGS in EAX (call code), ECX, EDX
-; return code in EAX/EDX
+; ARGS in EAX (call code), ECX, EDX, EDI, ESI
+; return value in EAX/EDX
         push ebx
         push ecx
         push esi
@@ -96,10 +96,12 @@ syscall:
         mov es, bx
         mov ebx, 4
         mul ebx
+        push esi
+        push edi
         push edx
         push ecx
         call [routine_list+eax]
-        add esp, 8
+        add esp, 16
         pop es
         pop ds
         pop ebp

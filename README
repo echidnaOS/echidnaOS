@@ -19,7 +19,6 @@ git
 nasm
 gcc cross-compiler (follow instructions to download it)
 gnu make
-bochs (for testing the image, non essential)
 qemu (for testing the image, non essential)
 
 - Step by step:
@@ -28,7 +27,7 @@ You can install all the above packages on Ubuntu/Debian with the following
 commands:
 
     sudo apt-get update
-    sudo apt-get install git nasm build-essential bochs bochs-x qemu
+    sudo apt-get install git nasm build-essential qemu
 
 Proceed by cloning the echidnaOS repo:
 
@@ -37,7 +36,9 @@ Proceed by cloning the echidnaOS repo:
 
 Now let's download and extract the GCC cross compiler:
 
-    https://drive.google.com/open?id=0B8LlO8RIGRXmZHRwcjFTRXloQWs
+    For x86_64/Linux users:
+    https://drive.google.com/open?id=0B8LlO8RIGRXmMEFFbC0xdzlPWWM
+    (sha256: 6eb04c46a874f0873e951a6685a0ebeb6548a5965366b4074ec2924c977076b8)
 
 Copy the extracted "gcc" folder to the root of the echidnaOS source tree.
 
@@ -49,10 +50,6 @@ the image:
 If make didn't error, congratulations, you managed to build echidnaOS.
 There should be a bootable "echidna.img" image in the project's root now.
 
-You can test the image in bochs with:
-
-    bochs
-
-Or in qemu with:
+You can test the image in qemu with:
 
     qemu-system-i386 echidna.img

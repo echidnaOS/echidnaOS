@@ -40,6 +40,10 @@ Now let's download and extract the GCC cross compiler:
     https://drive.google.com/open?id=0B8LlO8RIGRXmMEFFbC0xdzlPWWM
     (sha256: 6eb04c46a874f0873e951a6685a0ebeb6548a5965366b4074ec2924c977076b8)
 
+    For i386/Linux users:
+    https://drive.google.com/open?id=0B8LlO8RIGRXmVGJpX0pkTWJsZTQ
+    (sha256: 3cda50f5f2a566bd40321eaa43c8faa31455547e1a578297e15317afd0a8d921)
+
 Copy the extracted "gcc" folder to the root of the echidnaOS source tree.
 
 Now that every requirement is satisfied, let's build the kernel and create

@@ -1,15 +1,3 @@
-ARCH = i386
-
-ifeq ($(ARCH), i386)
-
-else ifeq ($(ARCH), i686)
-
-else ifeq ($(ARCH), x86_64)
-
-else
-$(error ARCH variable invalid, available architectures: i386, i686, x86_64)
-endif
-
 kernel/echidna.bin: target_libc ./shell/shell.bin
 	cd kernel && make
 
@@ -22,9 +10,9 @@ target_libc:
 .PHONY: clean clean-all img all
 
 clean:
+	cd kernel && make clean
 	cd shell && make clean
 	cd libc && make clean
-	cd kernel && make clean
 
 clean-all:
 	rm ./shell/shell.bin

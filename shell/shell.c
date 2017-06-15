@@ -108,7 +108,9 @@ void help_cmd(void) {
         "Available commands:\n"
         "\n"
         "clear - clears the screen.\n"
-        "help - prints this guide."
+        "help - prints this guide.\n"
+        "\n"
+        "Use shift+function keys to switch tty!"
     );
     return;
 }

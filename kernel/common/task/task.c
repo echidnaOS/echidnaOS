@@ -4,39 +4,12 @@
 #define DEFAULT_STACK 0x10000
 #define RUNNING_FLAG 0x12344321
 
-typedef struct {
-
-    uint32_t status;
-    uint32_t pid;
-    
-    uint32_t base;
-    uint32_t pages;
-    
-    uint32_t eax_p;
-    uint32_t ebx_p;
-    uint32_t ecx_p;
-    uint32_t edx_p;
-    uint32_t esi_p;
-    uint32_t edi_p;
-    uint32_t ebp_p;
-    uint32_t esp_p;
-    uint32_t eip_p;
-    uint32_t cs_p;
-    uint32_t ds_p;
-    uint32_t es_p;
-    uint32_t fs_p;
-    uint32_t gs_p;
-    uint32_t ss_p;
-    uint32_t eflags_p;
-
-} task_t;
-
 void task_spinup(void*);
 
-task_t* current_task;
-task_t prototype_task = {RUNNING_FLAG,0,0,0,
-                         0,0,0,0,0,0,0,DEFAULT_STACK-0x10,DEFAULT_STACK,
-                         0x1b,0x23,0x23,0x23,0x23,0x23,0x202};
+const task_t prototype_task = {RUNNING_FLAG,0,0,0,
+                               0,0,0,0,0,0,0,DEFAULT_STACK-0x10,DEFAULT_STACK,
+                               0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
+                               0};
 
 void start_tasks(void) {
     current_task = (task_t*)0x1000000;
@@ -44,7 +17,7 @@ void start_tasks(void) {
     task_spinup((void*)current_task);
 }
 
-void task_start(uint32_t task_addr, uint32_t task_size) {
+void task_start(uint32_t task_addr, uint32_t task_size, uint8_t task_tty) {
     // get task size in pages
     uint32_t task_pages = task_size / 4096;
     if (task_size % 4096) task_pages++;
@@ -60,6 +33,8 @@ void task_start(uint32_t task_addr, uint32_t task_size) {
     new_task->base = memory_bottom;
     new_task->pages = (DEFAULT_STACK / 4096) + task_pages;
     memory_bottom += DEFAULT_STACK + (task_pages * 4096);
+    
+    new_task->tty = task_tty;
     
     return;
 }

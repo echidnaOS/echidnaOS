@@ -20,9 +20,8 @@ void kernel_init(uint8_t boot_drive) {
     
     // disable VGA cursor
     vga_disable_cursor();
-
-    text_clear();
-    text_putstring("echidnaOS\n\n");
+    
+    init_textdrv();
 
     // detect memory
     memory_size = detect_mem();

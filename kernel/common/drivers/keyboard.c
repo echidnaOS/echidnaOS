@@ -59,6 +59,37 @@ void keyboard_init(void) {
 void keyboard_handler(uint8_t input_byte) {
     char c = '\0';
 
+    if (shift_active) {
+        switch (input_byte) {
+            case 0x3b:
+                current_tty = 0;
+                tty_refresh();
+                break;
+            case 0x3c:
+                current_tty = 1;
+                tty_refresh();
+                break;
+            case 0x3d:
+                current_tty = 2;
+                tty_refresh();
+                break;
+            case 0x3e:
+                current_tty = 3;
+                tty_refresh();
+                break;
+            case 0x3f:
+                current_tty = 4;
+                tty_refresh();
+                break;
+            case 0x40:
+                current_tty = 5;
+                tty_refresh();
+                break;
+            default:
+                break;
+        }
+    }
+
     if (input_byte == CAPSLOCK) {
 
         if (!capslock_active)
@@ -101,6 +132,7 @@ void keyboard_handler(uint8_t input_byte) {
 char keyboard_fetch_char(void) {
     uint16_t i;
     char c;
+    if (current_tty != current_task->tty) return '\0';
     if (buffer_index) {
         buffer_index--;
         c = keyboard_buffer[0];

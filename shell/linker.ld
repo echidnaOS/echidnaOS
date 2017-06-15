@@ -2,6 +2,6 @@ ENTRY(main)
 
 SECTIONS
 {
-  .text 0x0 : { *(.text) }
+  .text 0x10000 : { *(.text) }
   .data : { *(.data) }
 }

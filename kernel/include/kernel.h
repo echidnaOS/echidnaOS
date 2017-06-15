@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <systemasm.h>
 
+// libs
+void kmemcpy(char* dest, char* source, uint32_t count);
+
+// real
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
 void disk_load_sector(uint8_t drive, uint8_t* target_address, uint32_t source_sector, uint32_t count);

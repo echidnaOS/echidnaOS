@@ -10,9 +10,9 @@ target_libc:
 .PHONY: clean clean-all img all
 
 clean:
-	cd kernel && make clean
 	cd shell && make clean
 	cd libc && make clean
+	cd kernel && make clean
 
 clean-all:
 	rm ./shell/shell.bin

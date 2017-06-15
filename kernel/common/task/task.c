@@ -2,11 +2,11 @@
 #include <stdint.h>
 
 #define DEFAULT_STACK 0x10000
-#define PRESENT_FLAG 0x12344321
+#define RUNNING_FLAG 0x12344321
 
 typedef struct {
 
-    uint32_t present;
+    uint32_t status;
     uint32_t pid;
     
     uint32_t base;
@@ -34,39 +34,32 @@ typedef struct {
 void task_spinup(void*);
 
 task_t* current_task;
-task_t empty_task = {0};
+task_t prototype_task = {RUNNING_FLAG,0,0,0,
+                         0,0,0,0,0,0,0,DEFAULT_STACK-0x10,DEFAULT_STACK,
+                         0x1b,0x23,0x23,0x23,0x23,0x23,0x202};
+
+void start_tasks(void) {
+    current_task = (task_t*)0x1000000;
+    set_userspace(current_task->base, current_task->pages);
+    task_spinup((void*)current_task);
+}
 
 void task_start(uint32_t task_addr, uint32_t task_size) {
     // get task size in pages
     uint32_t task_pages = task_size / 4096;
     if (task_size % 4096) task_pages++;
     
-    current_task = (task_t*)memory_bottom;
+    task_t* new_task = (task_t*)memory_bottom;
     memory_bottom += sizeof(task_t);
 
-    *current_task = empty_task;  // initialise struct
-    
-    current_task->present = PRESENT_FLAG;
+    *new_task = prototype_task;  // initialise struct
 
+    // copy task code into the running location
     kmemcpy((char*)(memory_bottom + DEFAULT_STACK), (char*)task_addr, task_size);
 
-    current_task->base = memory_bottom;
-    current_task->pages = (DEFAULT_STACK / 4096) + task_pages;
+    new_task->base = memory_bottom;
+    new_task->pages = (DEFAULT_STACK / 4096) + task_pages;
     memory_bottom += DEFAULT_STACK + (task_pages * 4096);
-    
-    current_task->cs_p = 0x1b;
-    current_task->ds_p = 0x23;
-    current_task->es_p = 0x23;
-    current_task->fs_p = 0x23;
-    current_task->gs_p = 0x23;
-    current_task->ss_p = 0x23;
-    current_task->eflags_p = 0x202;
-    
-    current_task->eip_p = DEFAULT_STACK;
-    current_task->esp_p = DEFAULT_STACK - 0x10;
-
-    set_userspace(current_task->base, current_task->pages);
-    task_spinup((void*)current_task);
     
     return;
 }
@@ -91,8 +84,11 @@ void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r,
     current_task->eflags_p = eflags_r;
 
     // find next task table
-    current_task += (current_task->pages);
-    if (current_task->present != PRESENT_FLAG)
+    uint32_t int_ptr = ((current_task->pages) * 4096) + sizeof(task_t);
+    int_ptr += (uint32_t)current_task;
+    current_task = (task_t*)int_ptr;
+    if (current_task->status == RUNNING_FLAG) {
+    } else
         current_task = (task_t*)0x1000000;
     
     set_userspace(current_task->base, current_task->pages);

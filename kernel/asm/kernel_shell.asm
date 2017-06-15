@@ -1,6 +1,7 @@
 global kernel_shell
 
 extern task_start
+extern start_tasks
 
 section .data
 
@@ -16,3 +17,4 @@ kernel_shell:
     push shell_size
     push shell
     call task_start
+    call start_tasks

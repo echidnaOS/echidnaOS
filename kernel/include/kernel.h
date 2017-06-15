@@ -100,6 +100,10 @@ void text_putascii(const char* string, uint32_t length);
 
 void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset);
 
+// pit
+
+void set_pit_freq(uint32_t frequency);
+
 // gdt
 
 void load_GDT(void);

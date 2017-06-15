@@ -26,6 +26,9 @@ void kernel_init(uint8_t boot_drive) {
     // detect memory
     memory_size = detect_mem();
     memory_bottom = 0x1000000;
+    
+    // increase speed of the PIT
+    set_pit_freq(0x8000);
 
     // pass control to the shell
 	kernel_shell();

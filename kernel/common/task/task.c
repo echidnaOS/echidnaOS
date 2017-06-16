@@ -1,45 +1,58 @@
 #include <kernel.h>
 #include <stdint.h>
 
-#define DEFAULT_STACK 0x10000
-#define RUNNING_FLAG 0x12344321
+#define BASE_TASK               0x1000000
+
+#define TASK_RESERVED_SPACE     0x10000
+
+#define RUNNING_FLAG            0x12344321
+#define RESERVED_FLAG           0x12121212
+#define PAGE_SIZE               4096
 
 void task_spinup(void*);
 
 const task_t prototype_task = {RUNNING_FLAG,0,0,0,
-                               0,0,0,0,0,0,0,DEFAULT_STACK-0x10,DEFAULT_STACK,
+                               0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                0};
 
-void start_tasks(void) {
-    current_task = (task_t*)0x1000000;
-    set_userspace(current_task->base, current_task->pages);
-    task_spinup((void*)current_task);
-}
+void task_start(task_info_t* task_info) {
 
-void task_start(uint32_t task_addr, uint32_t task_size, uint8_t task_tty) {
-    // get task size in pages
-    uint32_t task_pages = task_size / 4096;
-    if (task_size % 4096) task_pages++;
+    // correct the struct pointer for kernel space
+    uint32_t task_info_ptr = (uint32_t)task_info;
+    task_info_ptr += current_task->base;
+    task_info = (task_info_t*)task_info_ptr;
+    
+    // correct the address for kernel space
+    uint32_t task_addr = task_info->addr + current_task->base;
     
     task_t* new_task = (task_t*)memory_bottom;
     memory_bottom += sizeof(task_t);
 
     *new_task = prototype_task;  // initialise struct
 
+    // get task size in pages
+    new_task->pages = (TASK_RESERVED_SPACE + task_info->size + task_info->stack + task_info->heap) / PAGE_SIZE;
+    if ((TASK_RESERVED_SPACE + task_info->size + task_info->stack + task_info->heap) % PAGE_SIZE) new_task->pages++;
+
     // copy task code into the running location
-    kmemcpy((char*)(memory_bottom + DEFAULT_STACK), (char*)task_addr, task_size);
+    kmemcpy((char*)(memory_bottom + TASK_RESERVED_SPACE), (char*)task_addr, task_info->size);
 
     new_task->base = memory_bottom;
-    new_task->pages = (DEFAULT_STACK / 4096) + task_pages;
-    memory_bottom += DEFAULT_STACK + (task_pages * 4096);
     
-    new_task->tty = task_tty;
+    new_task->esp_p = ((TASK_RESERVED_SPACE + task_info->size + task_info->stack) - 1) & 0xfffffff0;
+    new_task->eip_p = TASK_RESERVED_SPACE;
+    
+    memory_bottom += new_task->pages * PAGE_SIZE;
+    
+    new_task->tty = task_info->tty;
     
     return;
 }
 
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
+
+    uint32_t int_ptr;
 
     current_task->eax_p = eax_r;
     current_task->ebx_p = ebx_r;
@@ -59,12 +72,21 @@ void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r,
     current_task->eflags_p = eflags_r;
 
     // find next task table
-    uint32_t int_ptr = ((current_task->pages) * 4096) + sizeof(task_t);
+next_task:
+    int_ptr = ((current_task->pages) * PAGE_SIZE) + sizeof(task_t);
     int_ptr += (uint32_t)current_task;
     current_task = (task_t*)int_ptr;
-    if (current_task->status == RUNNING_FLAG) {
-    } else
-        current_task = (task_t*)0x1000000;
+
+check_task:
+    switch (current_task->status) {
+        case RUNNING_FLAG:
+            break;
+        case RESERVED_FLAG:
+            goto next_task;
+        default:
+            current_task = (task_t*)BASE_TASK;
+            goto check_task;
+    }
     
     set_userspace(current_task->base, current_task->pages);
     task_spinup((void*)current_task);

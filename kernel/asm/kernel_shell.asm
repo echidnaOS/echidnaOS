@@ -9,24 +9,32 @@ section .data
 shell:                      incbin "../shell/shell.bin"
 shell_end:
 
+task_info:
+    .addr       dd  shell
+    .size       dd  shell_size
+    .stdin      dd  0
+    .stdout     dd  0
+    .stderr     dd  0
+    .tty        dd  0
+    .stack      dd  0x10000
+    .heap       dd  0x10000
+
 section .text
 
 bits 32
 
 kernel_shell:
-    push 0
-    push shell_size
-    push shell
+    push task_info
     call task_start
-    mov dword [esp+8], 1
+    mov dword [task_info.tty], 1
     call task_start
-    mov dword [esp+8], 2
+    mov dword [task_info.tty], 2
     call task_start
-    mov dword [esp+8], 3
+    mov dword [task_info.tty], 3
     call task_start
-    mov dword [esp+8], 4
+    mov dword [task_info.tty], 4
     call task_start
-    mov dword [esp+8], 5
+    mov dword [task_info.tty], 5
     call task_start
-    add esp, 12
-    call start_tasks
+    add esp, 4
+    ret

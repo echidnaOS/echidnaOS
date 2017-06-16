@@ -8,6 +8,7 @@ int get_argc(const char* string);
 void get_argv(char** argv, char* string);
 
 void help_cmd(void);
+void echo_cmd(char** s_argv, int s_argc);
 
 // built in shell
 
@@ -37,6 +38,9 @@ int main(int argc, char** argv) {
 
         else if (!strcmp("help", s_argv[0]))
             help_cmd();
+
+        else if (!strcmp("echo", s_argv[0]))
+            echo_cmd(s_argv, s_argc);
 
         // return to prompt if no input
         else if (!input[0]) continue;
@@ -109,8 +113,21 @@ void help_cmd(void) {
         "\n"
         "clear - clears the screen.\n"
         "help - prints this guide.\n"
+        "echo - prints stuff on the screen.\n"
         "\n"
         "Use shift+function keys to switch tty!"
     );
+    return;
+}
+
+void echo_cmd(char** s_argv, int s_argc) {
+    int a = 1;
+
+    if (s_argc == 1) return;
+    do {
+        printf("%s ", s_argv[a]);
+        ++a;
+    } while (a < s_argc);
+    putchar('\n');
     return;
 }

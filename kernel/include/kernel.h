@@ -34,6 +34,8 @@ typedef struct {
     uint32_t eflags_p;
     
     uint8_t tty;
+    void* heap_begin;
+    uint32_t heap_size;
 
 } task_t;
 
@@ -50,6 +52,11 @@ typedef struct {
 
 void task_start(task_info_t* task_info);
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r);
+
+typedef struct {
+    int free;
+    uint32_t size;
+} heap_chunk_t;
 
 #define ROWS 50
 #define COLS 160

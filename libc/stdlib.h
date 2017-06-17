@@ -1,6 +1,7 @@
 #ifndef __STDLIB_H__
 #define __STDLIB_H__
 
+#include <stddef.h>
 
 char *itoa(int, char *, int);
 char *ltoa(long, char *, int);
@@ -13,6 +14,8 @@ long strtoul(char *, char **, int);
 void *endian_swap(void *, int);
 char *ftoa(float, char *, int);
 char *dtoa(double, char *, int);
+
+void* malloc(size_t size);
 
 
 #endif

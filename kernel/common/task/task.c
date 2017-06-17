@@ -14,7 +14,7 @@ void task_spinup(void*);
 const task_t prototype_task = {RUNNING_FLAG,0,0,0,
                                0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
-                               0};
+                               0,0};
 
 void task_start(task_info_t* task_info) {
 
@@ -37,6 +37,14 @@ void task_start(task_info_t* task_info) {
 
     // copy task code into the running location
     kmemcpy((char*)(memory_bottom + TASK_RESERVED_SPACE), (char*)task_addr, task_info->size);
+    
+    // build first heap chunk identifier
+    new_task->heap_begin = (void*)(memory_bottom + TASK_RESERVED_SPACE + task_info->size + task_info->stack);
+    new_task->heap_size = task_info->heap;
+    heap_chunk_t* heap_chunk = (heap_chunk_t*)new_task->heap_begin;
+    
+    heap_chunk->free = 1;
+    heap_chunk->size = task_info->heap - sizeof(heap_chunk_t);
 
     new_task->base = memory_bottom;
     

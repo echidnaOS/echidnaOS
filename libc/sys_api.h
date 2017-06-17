@@ -31,4 +31,14 @@
                      : "eax", "edx" );  \
 })
 
+#define OS_alloc(value) ({              \
+    void* addr;                         \
+    asm volatile (  "mov eax, 0x22;"    \
+                    "int 0x80;"         \
+                     : "=a" (addr)      \
+                     : "c" (value)      \
+                     : "edx" );         \
+    addr;                               \
+})
+
 #endif

@@ -2,6 +2,12 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys_api.h>
+#include <stddef.h>
+
+void* malloc(size_t size) {
+    return OS_alloc(size);
+}
 
 const char *base_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 

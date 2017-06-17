@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys_api.h>
 
 void getstring(char* string, uint32_t limit);
@@ -13,7 +14,7 @@ void echo_cmd(char** s_argv, int s_argc);
 // built in shell
 
 int main(int argc, char** argv) {
-    char input[256];
+    char* input = malloc(256);
     int s_argc;
     char* s_argv[128];
 

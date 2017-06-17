@@ -1,7 +1,7 @@
 CC = ../gcc/bin/i386-elf-gcc
 LD = ../gcc/bin/i386-elf-ld
 
-C = shell.c
+C = shell.c help.c echo.c cowsay.c
 OBJ = $(C:.c=.o)
 LIBC = $(shell find ../libc/ -type f,l -name '*.o')
 

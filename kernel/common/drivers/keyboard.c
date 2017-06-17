@@ -63,28 +63,28 @@ void keyboard_handler(uint8_t input_byte) {
         switch (input_byte) {
             case 0x3b:
                 current_tty = 0;
-                tty_refresh();
-                break;
+                tty_refresh_force();
+                return;
             case 0x3c:
                 current_tty = 1;
-                tty_refresh();
-                break;
+                tty_refresh_force();
+                return;
             case 0x3d:
                 current_tty = 2;
-                tty_refresh();
-                break;
+                tty_refresh_force();
+                return;
             case 0x3e:
                 current_tty = 3;
-                tty_refresh();
-                break;
+                tty_refresh_force();
+                return;
             case 0x3f:
                 current_tty = 4;
-                tty_refresh();
-                break;
+                tty_refresh_force();
+                return;
             case 0x40:
                 current_tty = 5;
-                tty_refresh();
-                break;
+                tty_refresh_force();
+                return;
             default:
                 break;
         }

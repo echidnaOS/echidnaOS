@@ -102,6 +102,7 @@ void panic(const char *msg);
 
 void init_textdrv(void);
 void tty_refresh(void);
+void tty_refresh_force(void);
 
 void text_putchar(char c);
 uint32_t text_get_cursor_pos_x(void);

@@ -37,12 +37,18 @@ int main(int argc, char** argv) {
             OS_cls();          // direct call to the echidnaOS API
 
         else if (!strcmp("help", s_argv[0]))
-            help_cmd();
+            help_cmd(s_argc, s_argv);
 
         else if (!strcmp("echo", s_argv[0]))
             echo_cmd(s_argv, s_argc);
 
         else if ((!strcmp("cowsay", s_argv[0])) || (!strcmp("tuxsay", s_argv[0])) || (!strcmp("daemonsay", s_argv[0])))
+            cowsay_cmd(s_argv, s_argc);
+
+        else if ((!strcmp("bcowsay", s_argv[0])) || (!strcmp("dcowsay", s_argv[0])) || (!strcmp("gcowsay", s_argv[0])))
+            cowsay_cmd(s_argv, s_argc);
+
+        else if ((!strcmp("pcowsay",s_argv[0])) || (!strcmp("scowsay", s_argv[0])) || (!strcmp("tcowsay", s_argv[0])))
             cowsay_cmd(s_argv, s_argc);
 
         // return to prompt if no input

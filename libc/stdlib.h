@@ -16,6 +16,7 @@ char *ftoa(float, char *, int);
 char *dtoa(double, char *, int);
 
 void* malloc(size_t size);
+void free(void* ptr);
 
 
 #endif

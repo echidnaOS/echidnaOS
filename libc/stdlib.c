@@ -9,6 +9,11 @@ void* malloc(size_t size) {
     return OS_alloc(size);
 }
 
+void free(void* ptr) {
+    OS_free(ptr);
+    return;
+}
+
 const char *base_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 /* converts a base 10 number in ascii to an int */

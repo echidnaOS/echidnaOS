@@ -17,7 +17,7 @@ task_info:
     .stderr     dd  0
     .tty        dd  0
     .stack      dd  0x10000
-    .heap       dd  0x10000
+    .heap       dd  0x100000
 
 section .text
 

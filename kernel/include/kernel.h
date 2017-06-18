@@ -56,6 +56,7 @@ void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r,
 typedef struct {
     int free;
     uint32_t size;
+    uint32_t prev_chunk;
 } heap_chunk_t;
 
 #define ROWS 50

@@ -10,21 +10,51 @@ extern keyboard_handler
 extern task_switch
 
 ; API calls
+extern alloc
+extern free
+extern realloc
 extern char_to_stdout
 extern char_from_stdin
-extern alloc
-extern freemem
 extern text_clear
 
 section .data
 
 routine_list:
-        times 0x20 dd 0
+        dd      0                       ; 0x00
+        dd      0                       ; 0x01
+        dd      0                       ; 0x02
+        dd      0                       ; 0x03
+        dd      0                       ; 0x04
+        dd      0                       ; 0x05
+        dd      0                       ; 0x06
+        dd      0                       ; 0x07
+        dd      0                       ; 0x08
+        dd      0                       ; 0x09
+        dd      0                       ; 0x0a
+        dd      0                       ; 0x0b
+        dd      0                       ; 0x0c
+        dd      0                       ; 0x0d
+        dd      0                       ; 0x0e
+        dd      0                       ; 0x0f
+        dd      alloc                   ; 0x10
+        dd      free                    ; 0x11
+        dd      realloc                 ; 0x12
+        dd      0                       ; 0x13
+        dd      0                       ; 0x14
+        dd      0                       ; 0x15
+        dd      0                       ; 0x16
+        dd      0                       ; 0x17
+        dd      0                       ; 0x18
+        dd      0                       ; 0x19
+        dd      0                       ; 0x1a
+        dd      0                       ; 0x1b
+        dd      0                       ; 0x1c
+        dd      0                       ; 0x1d
+        dd      0                       ; 0x1e
+        dd      0                       ; 0x1f
         dd      char_to_stdout          ; 0x20
         dd      char_from_stdin         ; 0x21
-        dd      alloc                   ; 0x22
-        dd      freemem                 ; 0x23
-        dd      text_clear              ; 0x24
+        dd      text_clear              ; 0x22
 
 section .text
 

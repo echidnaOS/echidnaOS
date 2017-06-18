@@ -45,6 +45,7 @@ void task_start(task_info_t* task_info) {
     
     heap_chunk->free = 1;
     heap_chunk->size = task_info->heap - sizeof(heap_chunk_t);
+    heap_chunk->prev_chunk = 0;
 
     new_task->base = memory_bottom;
     

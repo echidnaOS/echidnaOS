@@ -59,6 +59,15 @@ typedef struct {
     uint32_t prev_chunk;
 } heap_chunk_t;
 
+typedef struct {
+    uint16_t limit_low;
+    uint16_t base_low;
+    uint8_t base_mid;
+    uint8_t access;
+    uint8_t granularity;
+    uint8_t base_high;
+} __attribute__((packed)) GDT_entry_t;
+
 #define ROWS 50
 #define COLS 160
 
@@ -131,7 +140,7 @@ void set_pit_freq(uint32_t frequency);
 
 void load_GDT(void);
 void load_TSS(void);
-void set_userspace(uint32_t base, uint32_t page_count);
+void set_segment(uint16_t entry, uint32_t base, uint32_t page_count);
 
 // idt
 

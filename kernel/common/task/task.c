@@ -97,7 +97,8 @@ check_task:
             goto check_task;
     }
     
-    set_userspace(current_task->base, current_task->pages);
+    set_segment(0x3, current_task->base, current_task->pages);
+    set_segment(0x4, current_task->base, current_task->pages);
     task_spinup((void*)current_task);
 
 }

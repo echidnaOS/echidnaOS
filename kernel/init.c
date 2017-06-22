@@ -37,12 +37,13 @@ void kernel_init(uint8_t boot_drive) {
     *krnl_task = empty_task;
     krnl_task->status = 0x12121212;
     
-    // print intro to tty0
-    kputs("Welcome to echidnaOS!\n\n"
-          "kernel reserved tty (tty0)\n\n");
-    
     current_tty = 1;
     tty_refresh_force();
+    
+    // print intro to tty0
+    kputs("Welcome to echidnaOS!\n");
+    
+    init_disk(boot_drive);
 
     // launch the shells
     kernel_shell();

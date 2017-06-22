@@ -8,7 +8,10 @@
 
 void kputs(const char* string);
 void kuitoa(uint32_t x);
+void kxtoa(uint32_t x);
 void keyboard_wipe_buf(void);
+void init_disk(uint8_t boot_drive);
+uint8_t disk_read_b(uint8_t drive, uint32_t loc);
 
 // typedefs
 

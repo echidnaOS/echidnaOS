@@ -1,10 +1,10 @@
 CC = ../gcc/bin/i386-elf-gcc
 LD = ../gcc/bin/i386-elf-ld
 
-C_FILES = ./init.c $(shell find ./common/ -type f,l -name '*.c')
-H_FILES = $(shell find ./ -type f,l -name '*.h')
-ASM_FILES = $(shell find ./asm/ -type f,l -name '*.asm')
-REAL_FILES = $(shell find ./blobs/ -type f,l -name '*.real')
+C_FILES = ./init.c $(shell find ./common/ -type f -name '*.c')
+H_FILES = $(shell find ./ -type f -name '*.h')
+ASM_FILES = $(shell find ./asm/ -type f -name '*.asm')
+REAL_FILES = $(shell find ./blobs/ -type f -name '*.real')
 OBJ = $(C_FILES:.c=.o) $(ASM_FILES:.asm=.o)
 BINS = $(REAL_FILES:.real=.bin)
 

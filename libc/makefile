@@ -1,6 +1,6 @@
 CC = ../gcc/bin/i386-elf-gcc
 
-C = $(shell find ./ -type f,l -name '*.c')
+C = $(shell find ./ -type f -name '*.c')
 OBJ = $(C:.c=.o)
 
 CFLAGS = -std=gnu99 -ffreestanding -isystem ./ -masm=intel

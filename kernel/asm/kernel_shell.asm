@@ -15,7 +15,7 @@ task_info:
     .stdin      dd  0
     .stdout     dd  0
     .stderr     dd  0
-    .tty        dd  0
+    .tty        dd  1
     .stack      dd  0x10000
     .heap       dd  0x100000
 
@@ -26,8 +26,6 @@ bits 32
 kernel_shell:
     push task_info
     call task_start
-    mov dword [task_info.tty], 1
-    call task_start
     mov dword [task_info.tty], 2
     call task_start
     mov dword [task_info.tty], 3
@@ -35,6 +33,8 @@ kernel_shell:
     mov dword [task_info.tty], 4
     call task_start
     mov dword [task_info.tty], 5
+    call task_start
+    mov dword [task_info.tty], 6
     call task_start
     add esp, 4
     ret

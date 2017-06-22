@@ -3,7 +3,7 @@ LD = ../gcc/bin/i386-elf-ld
 
 C = shell.c help.c echo.c cowsay.c
 OBJ = $(C:.c=.o)
-LIBC = $(shell find ../libc/ -type f,l -name '*.o')
+LIBC = $(shell find ../libc/ -type f -name '*.o')
 
 ifeq ($(LIBC),  )
 $(error No libc found)

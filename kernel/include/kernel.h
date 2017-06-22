@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <systemasm.h>
 
+void kputs(const char* string);
+void kuitoa(uint32_t x);
+void keyboard_wipe_buf(void);
+
 // typedefs
 
 typedef struct {
@@ -125,8 +129,6 @@ uint8_t text_get_text_palette(void);
 void text_clear(void);
 void text_disable_cursor(void);
 void text_enable_cursor(void);
-void text_putstring(const char* string);
-void text_putascii(const char* string, uint32_t length);
 
 // pic
 

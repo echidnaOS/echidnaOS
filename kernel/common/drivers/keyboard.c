@@ -56,34 +56,56 @@ void keyboard_init(void) {
     return;
 }
 
+void keyboard_wipe_buf(void) {
+    uint16_t i;
+
+    for (i = 0; i < 256; i++)
+        keyboard_buffer[i] = 0;
+
+    buffer_index = 0;
+
+    return;
+}
+
 void keyboard_handler(uint8_t input_byte) {
     char c = '\0';
 
     if (shift_active) {
         switch (input_byte) {
-            case 0x3b:
+            case 0x58:
                 current_tty = 0;
                 tty_refresh_force();
+                keyboard_wipe_buf();
                 return;
-            case 0x3c:
+            case 0x3b:
                 current_tty = 1;
                 tty_refresh_force();
+                keyboard_wipe_buf();
                 return;
-            case 0x3d:
+            case 0x3c:
                 current_tty = 2;
                 tty_refresh_force();
+                keyboard_wipe_buf();
                 return;
-            case 0x3e:
+            case 0x3d:
                 current_tty = 3;
                 tty_refresh_force();
+                keyboard_wipe_buf();
                 return;
-            case 0x3f:
+            case 0x3e:
                 current_tty = 4;
                 tty_refresh_force();
+                keyboard_wipe_buf();
                 return;
-            case 0x40:
+            case 0x3f:
                 current_tty = 5;
                 tty_refresh_force();
+                keyboard_wipe_buf();
+                return;
+            case 0x40:
+                current_tty = 6;
+                tty_refresh_force();
+                keyboard_wipe_buf();
                 return;
             default:
                 break;

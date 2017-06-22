@@ -2,6 +2,7 @@
 
 /* internal defines */
 #define VIDEO_BOTTOM (ROWS*COLS)-1
+#define TTYS 7
 
 /* internal functions */
 
@@ -12,13 +13,13 @@ static void scroll(void);
 /* internal global variables */
 
 static char* video_mem = (char*)0xB8000;
-static tty_t tty[6];
+static tty_t tty[TTYS];
 
 /* internal functions */
 
 void init_textdrv(void) {
     uint32_t i;
-    for (i=0; i<6; i++) {
+    for (i=0; i<TTYS; i++) {
         tty[i].cursor_offset = 0;
         tty[i].cursor_status = 1;
         tty[i].cursor_palette = 0x70;
@@ -133,20 +134,6 @@ void text_putchar(char c) {
                 tty[current_task->tty].cursor_offset += 2;
             draw_cursor();
     }
-    return;
-}
-
-void text_putstring(const char* string) {
-    uint32_t x;
-    for (x=0; string[x]!=0; x++)
-        text_putchar(string[x]);
-    return;
-}
-
-void text_putascii(const char* string, uint32_t length) {
-    uint32_t x;
-    for (x=0; x<length; x++)
-        text_putchar(string[x]);
     return;
 }
 

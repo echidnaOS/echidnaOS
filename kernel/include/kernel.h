@@ -12,6 +12,7 @@ void kxtoa(uint32_t x);
 void keyboard_wipe_buf(void);
 void init_disk(uint8_t boot_drive);
 uint8_t disk_read_b(uint8_t drive, uint32_t loc);
+void disk_read_seq(uint8_t* buffer, uint8_t drive, uint32_t loc, uint32_t count);
 
 // typedefs
 

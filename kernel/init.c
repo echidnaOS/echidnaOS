@@ -43,6 +43,8 @@ void kernel_init(uint8_t boot_drive) {
     // print intro to tty0
     kputs("Welcome to echidnaOS!\n");
     
+    kputs("\n"); kuitoa(memory_size); kputs(" bytes ("); kuitoa(memory_size / 0x100000); kputs(" MiB) of memory detected.");
+    
     init_disk(boot_drive);
 
     // launch the shells

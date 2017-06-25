@@ -35,3 +35,12 @@ uint8_t disk_read_b(uint8_t drive, uint32_t loc) {
     
     return disk_cache[offset];
 }
+
+void disk_read_seq(uint8_t* buffer, uint8_t drive, uint32_t loc, uint32_t count) {
+    uint32_t x;
+
+    for (x = 0; x < count; x++)
+        buffer[x] = disk_read_b(drive, loc++);
+
+    return;
+}

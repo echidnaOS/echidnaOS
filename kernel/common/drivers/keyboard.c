@@ -1,5 +1,6 @@
 #include <kernel.h>
 #include <stdint.h>
+#include <cio.h>
 
 #define MAX_CODE 0x57
 #define CAPSLOCK 0x3A

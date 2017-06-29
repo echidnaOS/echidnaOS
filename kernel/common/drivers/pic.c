@@ -1,5 +1,6 @@
 #include <kernel.h>
 #include <stdint.h>
+#include <cio.h>
 
 void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset) {
 	uint8_t mask0;

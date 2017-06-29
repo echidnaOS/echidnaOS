@@ -1,6 +1,6 @@
 #include <kernel.h>
 #include <stdint.h>
-#include <systemasm.h>
+#include <cio.h>
 
 void set_pit_freq(uint32_t frequency) {
     uint16_t x = 1193182 / frequency;

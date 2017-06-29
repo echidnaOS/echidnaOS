@@ -4,9 +4,10 @@
 #define __KERNEL_H__
 
 #include <stdint.h>
-#include <systemasm.h>
 
 // kernel tunables
+
+//#define _BIG_FONTS_
 
 #ifdef _BIG_FONTS_
   #define VD_ROWS 25

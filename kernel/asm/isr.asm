@@ -15,7 +15,6 @@ extern free
 extern realloc
 extern char_to_stdout
 extern char_from_stdin
-extern text_clear
 
 section .data
 
@@ -54,7 +53,6 @@ routine_list:
         dd      0                       ; 0x1f
         dd      char_to_stdout          ; 0x20
         dd      char_from_stdin         ; 0x21
-        dd      text_clear              ; 0x22
 
 section .text
 

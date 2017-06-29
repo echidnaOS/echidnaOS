@@ -9,6 +9,8 @@
 #define RESERVED_FLAG           0x12121212
 #define PAGE_SIZE               4096
 
+task_t* current_task = (task_t*)BASE_TASK;
+
 void task_spinup(void*);
 
 const task_t prototype_task = {RUNNING_FLAG,0,0,0,

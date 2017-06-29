@@ -1,6 +1,9 @@
 #include <stdint.h>
 #include <kernel.h>
 
+uint32_t memory_size;
+uint32_t memory_bottom = 0x1000000;
+
 void kernel_shell(void);
 
 void kernel_init(uint8_t boot_drive) {
@@ -18,27 +21,26 @@ void kernel_init(uint8_t boot_drive) {
     // initialise keyboard driver
     keyboard_init();
     
-    // use 80x50 text mode
-    vga_80_x_50();
+    #ifndef _BIG_FONTS_
+      vga_80_x_50();
+    #endif
     
     // disable VGA cursor
     vga_disable_cursor();
     
-    init_textdrv();
+    init_tty();
+    switch_tty(1);
 
     // detect memory
     memory_size = detect_mem();
     
     // increase speed of the PIT
-    set_pit_freq(0x8000);
+    set_pit_freq(KRNL_PIT_FREQ);
     
     // create dummy kernel task
     memory_bottom += sizeof(task_t);
     *krnl_task = empty_task;
     krnl_task->status = 0x12121212;
-    
-    current_tty = 1;
-    tty_refresh_force();
     
     // print intro to tty0
     kputs("Welcome to echidnaOS!\n");

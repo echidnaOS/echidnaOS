@@ -110,11 +110,27 @@ void keyboard_handler(uint8_t input_byte) {
             else
                 c = ascii_capslock[input_byte];
             
-            if (c == '\b' && !tty[current_tty].kb_l1_buffer_index) goto skip_print;
-            text_putchar(c, current_tty);
-skip_print:
-
-            tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index++] = c;
+            if (c == '\b') {
+                if (!tty[current_tty].kb_l1_buffer_index) return;
+                text_putchar(c, current_tty);
+                tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index--] = 0;
+            }
+            
+            else if (c == '\n') {
+                text_putchar(c, current_tty);
+                tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index++] = c;
+                kmemcpy(&tty[current_tty].kb_l2_buffer[tty[current_tty].kb_l2_buffer_index],
+                        tty[current_tty].kb_l1_buffer,
+                        tty[current_tty].kb_l1_buffer_index + 1);
+                tty[current_tty].kb_l2_buffer_index += tty[current_tty].kb_l1_buffer_index;
+                tty[current_tty].kb_l1_buffer[0] = 0;
+                tty[current_tty].kb_l1_buffer_index = 0;
+            }
+            
+            else {
+                text_putchar(c, current_tty);
+                tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index++] = c;
+            }
 
         }
 
@@ -123,15 +139,15 @@ skip_print:
     return;
 }
 
-char keyboard_fetch_char(void) {
+char keyboard_fetch_char(uint8_t which_tty) {
     uint16_t i;
     char c;
-    if (current_tty != current_task->tty) return '\0';
-    if (tty[current_tty].kb_l1_buffer_index) {
-        tty[current_tty].kb_l1_buffer_index--;
-        c = tty[current_tty].kb_l1_buffer[0];
-        for (i = 0; i < 255; i++)
-            tty[current_tty].kb_l1_buffer[i] = tty[current_tty].kb_l1_buffer[i + 1];
+
+    if (tty[which_tty].kb_l2_buffer_index) {
+        tty[which_tty].kb_l2_buffer_index--;
+        c = tty[which_tty].kb_l2_buffer[0];
+        for (i = 0; i < (KB_L2_SIZE - 1); i++)
+            tty[which_tty].kb_l2_buffer[i] = tty[which_tty].kb_l2_buffer[i + 1];
         return c;
     } else
         return '\0';

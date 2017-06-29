@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys_api.h>
 
 #include "cmds.h"
 
@@ -31,12 +30,7 @@ int main(int argc, char** argv) {
         s_argc = get_argc(input);
         get_argv(s_argv, input);
 
-        putchar('\n');
-
-        if (!strcmp("clear", s_argv[0]))
-            OS_cls();          // direct call to the echidnaOS API
-
-        else if (!strcmp("help", s_argv[0]))
+        if (!strcmp("help", s_argv[0]))
             help_cmd(s_argc, s_argv);
 
         else if (!strcmp("echo", s_argv[0]))
@@ -96,19 +90,17 @@ void get_argv(char** argv, char* string) {
 
 void getstring(char* string, uint32_t limit) {
     uint32_t x=0;
-    char c;
+    int c;
     while (1) {
         c = getchar();
         if (c=='\b') {
             if (x) {
                 x--;
-                putchar(c);
             }
         } else if (c=='\n') break;
         else if (x<(limit-1)) {
             string[x] = c;
             x++;
-            putchar(c);
         }
     }
     string[x] = 0x00;

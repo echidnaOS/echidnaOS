@@ -41,12 +41,4 @@
     c;                                  \
 })
 
-#define OS_cls() ({                     \
-    asm volatile (  "mov eax, 0x22;"    \
-                    "int 0x80;"         \
-                     :                  \
-                     :                  \
-                     : "eax", "edx" );  \
-})
-
 #endif

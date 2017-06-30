@@ -1,19 +1,14 @@
 #include <kernel.h>
 #include <stdint.h>
 
-#define BASE_TASK               0x1000000
-
 #define TASK_RESERVED_SPACE     0x10000
-
-#define RUNNING_FLAG            0x12344321
-#define RESERVED_FLAG           0x12121212
 #define PAGE_SIZE               4096
 
-task_t* current_task = (task_t*)BASE_TASK;
+task_t* current_task = (task_t*)KRNL_MEMORY_BASE;
 
 void task_spinup(void*);
 
-const task_t prototype_task = {RUNNING_FLAG,0,0,0,
+const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                0,0};
@@ -58,6 +53,13 @@ void task_start(task_info_t* task_info) {
     
     new_task->tty = task_info->tty;
     
+    // debug logging
+    kputs("\n\nNew task startup request completed with:\n");
+    kputs("\npid:    "); kuitoa((uint32_t)new_task->pid);
+    kputs("\nbase:   "); kxtoa(new_task->base);
+    kputs("\npages:  "); kxtoa(new_task->pages);
+    kputs("\ntty:    "); kuitoa((uint32_t)new_task->tty);
+    
     return;
 }
 
@@ -90,12 +92,12 @@ next_task:
 
 check_task:
     switch (current_task->status) {
-        case RUNNING_FLAG:
+        case KRN_STAT_ACTIVE_TASK:
             break;
-        case RESERVED_FLAG:
+        case KRN_STAT_RES_TASK:
             goto next_task;
         default:
-            current_task = (task_t*)BASE_TASK;
+            current_task = (task_t*)KRNL_MEMORY_BASE;
             goto check_task;
     }
     

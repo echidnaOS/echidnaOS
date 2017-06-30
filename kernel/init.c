@@ -2,13 +2,13 @@
 #include <kernel.h>
 
 uint32_t memory_size;
-uint32_t memory_bottom = 0x1000000;
+uint32_t memory_bottom = KRNL_MEMORY_BASE;
 
 void kernel_shell(void);
 
 void kernel_init(uint8_t boot_drive) {
     task_t empty_task = {0};
-    task_t* krnl_task = (task_t*)0x1000000;
+    task_t* krnl_task = (task_t*)KRNL_MEMORY_BASE;
 
     // setup the PIC's mask
     set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
@@ -44,7 +44,7 @@ void kernel_init(uint8_t boot_drive) {
     // create dummy kernel task
     memory_bottom += sizeof(task_t);
     *krnl_task = empty_task;
-    krnl_task->status = 0x12121212;
+    krnl_task->status = KRN_STAT_RES_TASK;
     
     // print intro to tty0
     kputs("Welcome to echidnaOS!\n");

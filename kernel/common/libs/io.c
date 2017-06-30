@@ -4,7 +4,7 @@
 void kputs(const char* string) {
     uint32_t i;
     for (i = 0; string[i]; i++)
-        char_to_stdout(string[i]);
+        text_putchar(string[i], 0);
     return;
 }
 

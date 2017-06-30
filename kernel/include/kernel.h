@@ -25,6 +25,16 @@
 #define TTY_DEF_CUR_PAL 0x70
 #define TTY_DEF_TXT_PAL 0x07
 
+#define KRNL_MEMORY_BASE 0x1000000
+
+// memory statuses
+
+#define KRN_STAT_NOT_PRESENT    0
+#define KRN_STAT_ACTIVE_TASK    1
+#define KRN_STAT_RES_TASK       2
+
+// prototypes
+
 void kputs(const char* string);
 void kuitoa(uint32_t x);
 void kxtoa(uint32_t x);
@@ -37,8 +47,8 @@ void init_tty(void);
 
 typedef struct {
 
-    uint32_t status;
-    uint32_t pid;
+    int status;
+    uint16_t pid;
     
     uint32_t base;
     uint32_t pages;

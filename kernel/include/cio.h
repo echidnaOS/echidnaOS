@@ -3,13 +3,6 @@
 
 #include <stdint.h>
 
-#define io_wait() ({						\
-	asm volatile (	"out 0x80, al"			\
-					:						\
-					: "a" (0)				\
-					: );					\
-})
-
 #define port_out_b(port, value) ({				\
 	asm volatile (	"out dx, al"				\
 					:							\

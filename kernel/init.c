@@ -10,6 +10,10 @@ void kernel_init(uint8_t boot_drive) {
     task_t empty_task = {0};
     task_t* krnl_task = (task_t*)0x1000000;
 
+    // setup the PIC's mask
+    set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
+    set_PIC1_mask(0b11111111);
+
     // setup PIC
     map_PIC(0x20, 0x28);
     

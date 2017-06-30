@@ -141,6 +141,10 @@ void text_disable_cursor(uint8_t which_tty);
 void text_enable_cursor(uint8_t which_tty);
 
 void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset);
+void set_PIC0_mask(uint8_t mask);
+void set_PIC1_mask(uint8_t mask);
+uint8_t get_PIC0_mask(void);
+uint8_t get_PIC1_mask(void);
 
 void set_pit_freq(uint32_t frequency);
 

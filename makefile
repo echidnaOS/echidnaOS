@@ -7,7 +7,7 @@ target_libc:
 ./shell/shell.bin:
 	cd shell && make
 
-.PHONY: clean clean-all img all
+.PHONY: clean clean-all img all compiler
 
 clean:
 	cd shell && make clean
@@ -34,3 +34,16 @@ all:
 	make clean
 	make img
 	make clean-all
+
+compiler:
+	wget ftp://ftp.gnu.org/gnu/gcc/gcc-6.3.0/gcc-6.3.0.tar.bz2
+	wget ftp://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2
+	sha256sum -c sha256packages
+	tar -vxf gcc-6.3.0.tar.bz2
+	tar -vxf binutils-2.28.tar.bz2
+	export MAKEFLAGS='-j `grep -c ^processor /proc/cpuinfo`' && export PREFIX="`pwd`/gcc" && export TARGET=i386-elf && export PATH="$$PREFIX/bin:$$PATH" && mkdir build-binutils && cd build-binutils && ../binutils-2.28/configure --target=$$TARGET --prefix="$$PREFIX" --with-sysroot --disable-nls --disable-werror && make && make install && cd ../gcc-6.3.0 && contrib/download_prerequisites && cd .. && mkdir build-gcc && cd build-gcc && ../gcc-6.3.0/configure --target=$$TARGET --prefix="$$PREFIX" --disable-nls --enable-languages=c --without-headers && make all-gcc && make all-target-libgcc && make install-gcc && make install-target-libgcc
+	rm -rf gcc-6.3.0
+	rm -rf binutils-2.28
+	rm -rf build-gcc
+	rm -rf build-binutils
+	rm gcc-6.3.0.tar.bz2 binutils-2.28.tar.bz2

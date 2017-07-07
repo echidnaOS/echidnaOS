@@ -402,13 +402,43 @@ void mkdir_cmd(int argc, char** argv) {
 
 void import_cmd(int argc, char** argv) {
     FILE* source;
-
+    entry_t entry = {0};
+    uint64_t i;
+    
+    if (argc < 4) {
+        fprintf(stderr, "%s: %s: missing argument: source file.\n", argv[0], argv[2]);
+        return;
+    }
+    if (argc < 5) {
+        fprintf(stderr, "%s: %s: missing argument: destination file.\n", argv[0], argv[2]);
+        return;
+    }
+    
+    // check if the file exists
+    if (!path_resolver(argv[4], FILE_TYPE).not_found) {
+        fprintf(stderr, "%s: %s: error: file `%s` already exists.\n", argv[0], argv[2], argv[4]);
+        return;
+    }
+    
     if ((source = fopen(argv[3], "r")) == NULL) {
         fprintf(stderr, "%s: %s: error: couldn't access `%s`.\n", argv[0], argv[2], argv[3]);
         return;
     }
 
-    import_chain(source);
+    entry.parent_id = path_resolver(argv[4], FILE_TYPE).parent.payload;
+    entry.type = FILE_TYPE;
+    strcpy(entry.name, path_resolver(argv[4], FILE_TYPE).name);
+    entry.payload = import_chain(source);
+    fseek(source, 0L, SEEK_END);
+    entry.size = (uint64_t)ftell(source);
+    
+    // find empty entry
+    for (i = 0; ; i++) {
+        if ((rd_entry(i).parent_id == 0) || (rd_entry(i).parent_id == DELETED_ENTRY))
+            break;
+    }
+    wr_entry(i, entry);
+    
     fclose(source);
     return;
 }

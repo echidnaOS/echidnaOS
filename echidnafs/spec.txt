@@ -1,0 +1,47 @@
+echidnaFS specification
+
+512 byte-long blocks
+
+blocks start with block 0 (master boot record) and are addressed as quad-words
+
+block 0 ----> block 15
+    Reserved blocks.
+
+block 0 contains the identity table as follows:
+    byte 0-->3          reserved for jump instruction
+    db '_ECH_FS_'       echidnaFS signature
+    qword               total block count
+    qword               length of the main directory in blocks (usually 5% of the total blocks)
+
+Allocation table. Starts at block 16.
+    Contains a chain of qwords. One per physical block, hence the size of the table (in blocks)
+    can be calculated as: (total_blocks * sizeof(uint64_t)) / 512
+    Adjusting for an eventual remainder.
+
+    A value of 0x00000000_00000000 means "Free-for-use block"
+    Values from 0x00000000_00000001 to 0xFFFFFFFE_FFFFFFFF mark the next block in the chain.
+    A value of 0xFFFFFFFF_00000000 means "Reserved block" (the first 16 blocks are always marked as reserved,
+                                                           along with the directory blocks)
+    A value of 0xFFFFFFFF_FFFFFFFF means "End-of-chain"
+
+Main directory. From end of allocation table, size specified in the ID table in block 0.
+    Contains entries representing files, directories, or other objects.
+
+Directory entry structure:
+    qword               directory ID of the entry (0 stands for end-of-directory,
+                                                   0xFFFFFFFF_FFFFFFFF stands for root,
+                                                   0xFFFFFFFF_EEEEEEEE stands for deleted entry)
+    byte                object type (0=file 1=dir)
+    times 218 db        zero-terminated ascii string containing the name of the object. max. 217 chars+0
+    byte                permissions
+    word                owner ID
+    word                group ID
+    byte                hundreths
+    byte                seconds
+    byte                minutes
+    byte                hours
+    byte                day
+    byte                month
+    word                year
+    qword               starting block (if file), directory ID (if directory)
+    qword               file size in bytes (0 if directory)

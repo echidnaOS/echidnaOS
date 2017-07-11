@@ -5,7 +5,7 @@ read_sector:
 ; ***********************************************
 
 ; IN:
-; AX = LBA sector to load
+; EAX = LBA sector to load
 ; DL = Drive number
 ; ES = Buffer segment
 ; BX = Buffer offset
@@ -23,7 +23,6 @@ push edi
 push es
 pop word [.target_segment]
 mov word [.target_offset], bx
-and eax, 0x0000FFFF
 mov dword [.lba_address_low], eax
 
 xor esi, esi
@@ -57,12 +56,12 @@ align 4
 
 read_sectors:
 
-; **********************************************************
-;     Reads multiple LBA addressed sectors from a floppy
-; **********************************************************
+; ********************************************
+;     Reads multiple LBA addressed sectors
+; ********************************************
 
 ; IN:
-; AX = LBA starting sector
+; EAX = LBA starting sector
 ; DL = Drive number
 ; ES = Buffer segment
 ; EBX = Buffer offset
@@ -108,7 +107,7 @@ pop ecx
 
 pop ds
 
-inc ax									; Increment sector
+inc eax									; Increment sector
 add ebx, 512							; Add 512 to the buffer
 
 loop .loop								; Loop!

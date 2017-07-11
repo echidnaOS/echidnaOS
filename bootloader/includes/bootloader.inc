@@ -33,7 +33,7 @@ call simple_print				; Display done message
 mov si, KernelMsg				; Show loading kernel message
 call simple_print
 
-mov si, kernel_name
+mov esi, kernel_name
 mov ebx, 0x100000				; Load to offset 0x100000
 call load_file
 
@@ -46,13 +46,14 @@ jmp arch_specific
 
 ;Data
 
-kernel_name		db 'ECHIDNA BIN'
+kernel_name		db 'echidna.bin', 0x00
 A20Msg			db 'Enabling A20 line...', 0x00
 UnrealMsg		db 'Entering Unreal Mode...', 0x00
 KernelMsg		db 'Loading kernel...', 0x00
 
 ;Includes
 
-%include 'bootloader/includes/fat16.inc'
+%include 'bootloader/includes/echfs.inc'
+%include 'bootloader/includes/disk2.inc'
 %include 'bootloader/includes/a20_enabler.inc'
 %include 'bootloader/includes/gdt.inc'

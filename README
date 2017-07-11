@@ -48,7 +48,7 @@ This step will take a while, especially on slower systems.
 Now that every requirement is satisfied, let's build the kernel and create
 the image:
 
-    sudo make all
+    make all
 
 If make didn't error, congratulations, you managed to build echidnaOS.
 There should be a bootable "echidna.img" image in the project's root now.

@@ -1,10 +1,8 @@
 jmp short code_start			; Jump to the start of the code
-nop								; Pad with NOP instruction
-times 3-($-$$) db 0x00			; Make sure this is the start of the BPB
 
-%include 'bootloader/includes/bpb.inc'
+times 64-($-$$) db 0x00			; Pad some space for the echidnaFS header
 
-; End of BPB, start of main bootloader code
+; Start of main bootloader code
 
 code_start:
 

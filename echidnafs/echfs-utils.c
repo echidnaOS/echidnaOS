@@ -43,6 +43,8 @@ typedef struct {
     int not_found;
 } path_result_t;
 
+int verbose = 0;
+
 FILE* image;
 uint64_t imgsize;
 uint64_t blocks;
@@ -220,13 +222,13 @@ uint64_t import_chain(FILE* source) {
     uint64_t source_size_blocks = source_size / BYTES_PER_BLOCK;
     if (source_size % BYTES_PER_BLOCK) source_size_blocks++;
     
-    fprintf(stdout, "file size: %" PRIu64 "\n", source_size);
-    fprintf(stdout, "file size in blocks: %" PRIu64 "\n", source_size_blocks);
+    if (verbose) fprintf(stdout, "file size: %" PRIu64 "\n", source_size);
+    if (verbose) fprintf(stdout, "file size in blocks: %" PRIu64 "\n", source_size_blocks);
     
     // find first block
     for (block = 0; rd_qword(loc); block++) loc += 8;    
     start_block = block;
-    fprintf(stdout, "first block of chain is #%" PRIu64 "\n", start_block);    
+    if (verbose) fprintf(stdout, "first block of chain is #%" PRIu64 "\n", start_block);    
     
     for (uint64_t x = 0; ; x++) {
         prev_block = (fatstart * BYTES_PER_BLOCK) + (block * sizeof(uint64_t));
@@ -379,16 +381,16 @@ void mkdir_cmd(int argc, char** argv) {
     }
     
     entry.parent_id = path_resolver(argv[3], DIRECTORY_TYPE).parent.payload;
-    fprintf(stdout, "new directory's parent ID: %" PRIu64 "\n", entry.parent_id);
+    if (verbose) fprintf(stdout, "new directory's parent ID: %" PRIu64 "\n", entry.parent_id);
     entry.type = DIRECTORY_TYPE;
     strcpy(entry.name, path_resolver(argv[3], DIRECTORY_TYPE).name);
     entry.payload = get_free_id();
-    fprintf(stdout, "new directory's ID: %" PRIu64 "\n", entry.payload);
-    fprintf(stdout, "writing to entry #%" PRIu64 "\n", i);
+    if (verbose) fprintf(stdout, "new directory's ID: %" PRIu64 "\n", entry.payload);
+    if (verbose) fprintf(stdout, "writing to entry #%" PRIu64 "\n", i);
     
     wr_entry(i, entry);
     
-    fprintf(stdout, "creating `.` entry\n");
+    if (verbose) fprintf(stdout, "creating `.` entry\n");
     // find empty entry
     for (i = 0; ; i++) {
         if ((rd_entry(i).parent_id == 0) || (rd_entry(i).parent_id == DELETED_ENTRY))
@@ -400,7 +402,7 @@ void mkdir_cmd(int argc, char** argv) {
     strcpy(extra_entry.name, ".");
     wr_entry(i, extra_entry);
     
-    fprintf(stdout, "creating `..` entry\n");
+    if (verbose) fprintf(stdout, "creating `..` entry\n");
     // find empty entry
     for (i = 0; ; i++) {
         if ((rd_entry(i).parent_id == 0) || (rd_entry(i).parent_id == DELETED_ENTRY))
@@ -412,7 +414,7 @@ void mkdir_cmd(int argc, char** argv) {
     strcpy(extra_entry.name, "..");
     wr_entry(i, extra_entry);    
     
-    fprintf(stdout, "created directory `%s`\n", argv[3]);
+    if (verbose) fprintf(stdout, "created directory `%s`\n", argv[3]);
 
     return;
 }
@@ -457,7 +459,7 @@ void import_cmd(int argc, char** argv) {
     wr_entry(i, entry);
     
     fclose(source);
-    fprintf(stdout, "imported file `%s` as `%s`\n", argv[3], argv[4]);
+    if (verbose) fprintf(stdout, "imported file `%s` as `%s`\n", argv[3], argv[4]);
     return;
 }
 
@@ -487,7 +489,7 @@ void export_cmd(int argc, char** argv) {
     export_chain(dest, path_resolver(argv[3], FILE_TYPE).target);
     
     fclose(dest);
-    fprintf(stdout, "exported file `%s` as `%s`\n", argv[3], argv[4]);
+    if (verbose) fprintf(stdout, "exported file `%s` as `%s`\n", argv[3], argv[4]);
     return;
 }
 
@@ -504,7 +506,7 @@ void ls_cmd(int argc, char** argv) {
             id = path_resolver(argv[3], DIRECTORY_TYPE).target.payload;
     }
 
-    fprintf(stdout, "  ---- ls ----\n");
+    if (verbose) fprintf(stdout, "  ---- ls ----\n");
     
     for (uint64_t i = 0; rd_entry(i).parent_id; i++) {
         if (rd_entry(i).parent_id != id) continue;
@@ -519,7 +521,7 @@ void ls_cmd(int argc, char** argv) {
 
 void format_pass1(void) {
 
-    fprintf(stdout, "formatting...\n");
+    if (verbose) fprintf(stdout, "formatting...\n");
 
     // write signature
     fstrcpy_out(4, "_ECH_FS_");
@@ -529,16 +531,16 @@ void format_pass1(void) {
     wr_qword(20, blocks / 20); // blocks / 20 (roughly 5% of the total)
     
     fseek(image, (RESERVED_BLOCKS * BYTES_PER_BLOCK), SEEK_SET);
-    fprintf(stdout, "zeroing");
+    if (verbose) fprintf(stdout, "zeroing");
     
     // zero out the rest of the image
     for (uint64_t i = (RESERVED_BLOCKS * BYTES_PER_BLOCK); i < imgsize; i++) {
         fputc(0, image);
         if (!(i % 65536))
-            fputc('.', stdout);
+            if (verbose) fputc('.', stdout);
     }
     
-    fputc('\n', stdout);
+    if (verbose) fputc('\n', stdout);
     
     return;
 
@@ -553,15 +555,22 @@ void format_pass2(void) {
         loc += sizeof(uint64_t);
     }
     
-    fprintf(stdout, "format complete!\n");
+    if (verbose) fprintf(stdout, "format complete!\n");
 
     return;
 }
 
 int main(int argc, char** argv) {
+    
+    if ((argc > 1) && (!strcmp(argv[1], "-v"))) {
+        verbose = 1;
+        argv[1] = argv[0];
+        argv++;
+        argc--;
+    }
 
     if (argc == 1) {
-        fprintf(stderr, "Usage: %s [image] <action> <args...>\n", argv[0]);
+        fprintf(stderr, "Usage: %s (-v) [image] <action> <args...>\n", argv[0]);
         return EXIT_SUCCESS;
     }
 
@@ -574,7 +583,7 @@ int main(int argc, char** argv) {
     imgsize = (uint64_t)ftell(image);    
     rewind(image);
     
-    fprintf(stdout, "image size: %" PRIu64 " bytes\n", imgsize);
+    if (verbose) fprintf(stdout, "image size: %" PRIu64 " bytes\n", imgsize);
     
     if (imgsize % BYTES_PER_BLOCK) {
         fprintf(stderr, "%s: error: image is not block-aligned.\n", argv[0]);
@@ -584,7 +593,7 @@ int main(int argc, char** argv) {
     
     blocks = imgsize / BYTES_PER_BLOCK;
     
-    fprintf(stdout, "block count: %" PRIu64 "\n", blocks);
+    if (verbose) fprintf(stdout, "block count: %" PRIu64 "\n", blocks);
     
     if ((argc > 2) && (!strcmp(argv[2], "format"))) format_pass1();
     
@@ -593,9 +602,9 @@ int main(int argc, char** argv) {
         fclose(image);
         return EXIT_FAILURE;
     }
-    fprintf(stdout, "echidnaFS signature found\n");
+    if (verbose) fprintf(stdout, "echidnaFS signature found\n");
     
-    fprintf(stdout, "declared block count: %" PRIu64 "\n", rd_qword(12));
+    if (verbose) fprintf(stdout, "declared block count: %" PRIu64 "\n", rd_qword(12));
     if (rd_qword(12) != blocks) {
         fprintf(stderr, "%s: error: declared block count mismatch.\n", argv[0]);
         fclose(image);
@@ -604,25 +613,25 @@ int main(int argc, char** argv) {
     
     fatsize = (blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
     if ((blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) fatsize++;    
-    fprintf(stdout, "expected allocation table size: %" PRIu64 " blocks\n", fatsize);
+    if (verbose) fprintf(stdout, "expected allocation table size: %" PRIu64 " blocks\n", fatsize);
     
-    fprintf(stdout, "expected allocation table start: block %" PRIu64 "\n", fatstart);
+    if (verbose) fprintf(stdout, "expected allocation table start: block %" PRIu64 "\n", fatstart);
     
     dirsize = rd_qword(20);
-    fprintf(stdout, "declared directory size: %" PRIu64 " blocks\n", dirsize);
+    if (verbose) fprintf(stdout, "declared directory size: %" PRIu64 " blocks\n", dirsize);
     
     dirstart = fatstart + fatsize;
-    fprintf(stdout, "expected directory start: block %" PRIu64 "\n", dirstart);
+    if (verbose) fprintf(stdout, "expected directory start: block %" PRIu64 "\n", dirstart);
     
     datastart = RESERVED_BLOCKS + fatsize + dirsize;
-    fprintf(stdout, "expected reserved blocks: %" PRIu64 "\n", datastart);
+    if (verbose) fprintf(stdout, "expected reserved blocks: %" PRIu64 "\n", datastart);
     
-    fprintf(stdout, "expected usable blocks: %" PRIu64 "\n", blocks - datastart);
+    if (verbose) fprintf(stdout, "expected usable blocks: %" PRIu64 "\n", blocks - datastart);
     
     if (rd_word(510) == 0xaa55)
-        fprintf(stdout, "the image is bootable\n");
+        if (verbose) fprintf(stdout, "the image is bootable\n");
     else
-        fprintf(stdout, "the image is NOT bootable\n");
+        if (verbose) fprintf(stdout, "the image is NOT bootable\n");
     
     if (argc > 2) {
         if (!strcmp(argv[2], "mkdir")) mkdir_cmd(argc, argv);
@@ -632,9 +641,10 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[2], "export")) export_cmd(argc, argv);
     
         else fprintf(stderr, "%s: error: invalid action: `%s`.\n", argv[0], argv[2]);
-    }
+    } else
+        fprintf(stderr, "%s: no action specified, exiting.\n", argv[0]);
 
     fclose(image);
 
-    return 0;
+    return EXIT_SUCCESS;
 }

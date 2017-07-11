@@ -7,7 +7,7 @@ target_libc:
 ./shell/shell.bin:
 	cd shell && make
 
-echfs-utils:
+echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils
 
 .PHONY: clean clean-all img all compiler
@@ -21,7 +21,7 @@ clean-all:
 	rm ./shell/shell.bin
 	rm ./kernel/echidna.bin
 
-img: echfs-utils
+img: echidnafs/echfs-utils
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format

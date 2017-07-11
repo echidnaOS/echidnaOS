@@ -12,8 +12,8 @@
 #define BYTES_PER_BLOCK         512
 #define FILE_TYPE               0
 #define DIRECTORY_TYPE          1
-#define DELETED_ENTRY           0xffffffffeeeeeeee
-#define RESERVED_BLOCK          0xffffffff00000000
+#define DELETED_ENTRY           0xfffffffffffffffe
+#define RESERVED_BLOCK          0xfffffffffffffff0
 #define END_OF_CHAIN            0xffffffffffffffff
 
 typedef struct {
@@ -232,9 +232,9 @@ uint64_t import_chain(FILE* source) {
         prev_block = (fatstart * BYTES_PER_BLOCK) + (block * sizeof(uint64_t));
         wr_qword(loc, END_OF_CHAIN);
         
-        fseek(image, (long)(block * 512), SEEK_SET);    
+        fseek(image, (long)(block * BYTES_PER_BLOCK), SEEK_SET);    
         // copy block
-        for (int i = 0; i < 512; i++) {
+        for (int i = 0; i < BYTES_PER_BLOCK; i++) {
             if (ftell(source) == source_size) goto out;
             fputc(fgetc(source), image);
         }
@@ -243,7 +243,7 @@ uint64_t import_chain(FILE* source) {
         
         // find next block
         loc = (fatstart * BYTES_PER_BLOCK);
-        for (block = 0; rd_qword(loc); block++) loc += 8;
+        for (block = 0; rd_qword(loc); block++) loc += sizeof(uint64_t);
         
         wr_qword(prev_block, block);
     }
@@ -440,6 +440,7 @@ void import_cmd(int argc, char** argv) {
     wr_entry(i, entry);
     
     fclose(source);
+    fprintf(stdout, "imported file `%s` as `%s`\n", argv[3], argv[4]);
     return;
 }
 
@@ -450,7 +451,7 @@ void ls_cmd(int argc, char** argv) {
         id = ROOT_ID;
     else {
         if (path_resolver(argv[3], DIRECTORY_TYPE).not_found) {
-            fprintf(stdout, "%s: %s: error: invalid directory `%s`.\n", argv[0], argv[2], argv[3]);
+            fprintf(stderr, "%s: %s: error: invalid directory `%s`.\n", argv[0], argv[2], argv[3]);
             return;
         } else
             id = path_resolver(argv[3], DIRECTORY_TYPE).target.payload;
@@ -460,9 +461,9 @@ void ls_cmd(int argc, char** argv) {
     
     for (uint64_t i = 0; rd_entry(i).parent_id; i++) {
         if (rd_entry(i).parent_id != id) continue;
-        if (rd_entry(i).type == DIRECTORY_TYPE) fputs("[", stdout);
+        if (rd_entry(i).type == DIRECTORY_TYPE) fputc('[', stdout);
         fputs(rd_entry(i).name, stdout);
-        if (rd_entry(i).type == DIRECTORY_TYPE) fputs("]", stdout);
+        if (rd_entry(i).type == DIRECTORY_TYPE) fputc(']', stdout);
         fputc('\n', stdout);
     }
 
@@ -480,11 +481,11 @@ void format_pass1(void) {
     // directory size
     wr_qword(20, blocks / 20); // blocks / 20 (roughly 5% of the total)
     
-    fseek(image, (16 * 512), SEEK_SET);
+    fseek(image, (RESERVED_BLOCKS * BYTES_PER_BLOCK), SEEK_SET);
     fprintf(stdout, "zeroing");
     
     // zero out the rest of the image
-    for (uint64_t i = (16 * 512); i < imgsize; i++) {
+    for (uint64_t i = (RESERVED_BLOCKS * BYTES_PER_BLOCK); i < imgsize; i++) {
         fputc(0, image);
         if (!(i % 65536))
             fputc('.', stdout);
@@ -498,11 +499,11 @@ void format_pass1(void) {
 
 void format_pass2(void) {
     // mark reserved blocks
-    uint64_t loc = fatstart * 512;
+    uint64_t loc = fatstart * BYTES_PER_BLOCK;
     
-    for (uint64_t i = 0; i < (16 + fatsize + dirsize); i++) {
+    for (uint64_t i = 0; i < (RESERVED_BLOCKS + fatsize + dirsize); i++) {
         wr_qword(loc, RESERVED_BLOCK);
-        loc += 8;
+        loc += sizeof(uint64_t);
     }
     
     fprintf(stdout, "format complete!\n");
@@ -528,13 +529,13 @@ int main(int argc, char** argv) {
     
     fprintf(stdout, "image size: %" PRIu64 " bytes\n", imgsize);
     
-    if (imgsize % 512) {
+    if (imgsize % BYTES_PER_BLOCK) {
         fprintf(stderr, "%s: error: image is not block-aligned.\n", argv[0]);
         fclose(image);
         return EXIT_FAILURE;
     }
     
-    blocks = imgsize / 512;
+    blocks = imgsize / BYTES_PER_BLOCK;
     
     fprintf(stdout, "block count: %" PRIu64 "\n", blocks);
     
@@ -554,8 +555,8 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
     
-    fatsize = (blocks * 4) / 512;
-    if ((blocks * 4) % 512) fatsize++;    
+    fatsize = (blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
+    if ((blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) fatsize++;    
     fprintf(stdout, "expected allocation table size: %" PRIu64 " blocks\n", fatsize);
     
     fprintf(stdout, "expected allocation table start: block %" PRIu64 "\n", fatstart);
@@ -566,7 +567,7 @@ int main(int argc, char** argv) {
     dirstart = fatstart + fatsize;
     fprintf(stdout, "expected directory start: block %" PRIu64 "\n", dirstart);
     
-    datastart = 16 + fatsize + dirsize;
+    datastart = RESERVED_BLOCKS + fatsize + dirsize;
     fprintf(stdout, "expected reserved blocks: %" PRIu64 "\n", datastart);
     
     fprintf(stdout, "expected usable blocks: %" PRIu64 "\n", blocks - datastart);

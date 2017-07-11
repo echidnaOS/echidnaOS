@@ -252,6 +252,23 @@ out:
     return start_block;
 }
 
+void export_chain(FILE* dest, entry_t src) {
+    uint64_t cur_block;
+    
+    for (cur_block = src.payload; cur_block != END_OF_CHAIN; ) {
+        fseek(image, (long)(cur_block * BYTES_PER_BLOCK), SEEK_SET);
+        // copy block
+        for (int i = 0; i < BYTES_PER_BLOCK; i++) {
+            if (ftell(dest) == src.size) goto out;
+            fputc(fgetc(image), dest);
+        }
+        cur_block = rd_qword((fatstart * BYTES_PER_BLOCK) + (cur_block * sizeof(uint64_t)));
+    }
+
+out:
+    return;        
+}
+
 uint64_t search(const char* name, uint64_t parent, uint8_t type) {
     // returns unique entry #, SEARCH_FAILURE upon failure/not found
     for (uint64_t i = 0; ; i++) {
@@ -444,6 +461,36 @@ void import_cmd(int argc, char** argv) {
     return;
 }
 
+void export_cmd(int argc, char** argv) {
+    FILE* dest;
+    
+    if (argc < 4) {
+        fprintf(stderr, "%s: %s: missing argument: source file.\n", argv[0], argv[2]);
+        return;
+    }
+    if (argc < 5) {
+        fprintf(stderr, "%s: %s: missing argument: destination file.\n", argv[0], argv[2]);
+        return;
+    }
+    
+    // check if the file doesn't exist
+    if (path_resolver(argv[3], FILE_TYPE).not_found) {
+        fprintf(stderr, "%s: %s: error: file `%s` not found.\n", argv[0], argv[2], argv[3]);
+        return;
+    }
+    
+    if ((dest = fopen(argv[4], "w")) == NULL) {
+        fprintf(stderr, "%s: %s: error: couldn't access `%s`.\n", argv[0], argv[2], argv[4]);
+        return;
+    }
+
+    export_chain(dest, path_resolver(argv[3], FILE_TYPE).target);
+    
+    fclose(dest);
+    fprintf(stdout, "exported file `%s` as `%s`\n", argv[3], argv[4]);
+    return;
+}
+
 void ls_cmd(int argc, char** argv) {
     uint64_t id;
     
@@ -582,6 +629,7 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[2], "ls")) ls_cmd(argc, argv);
         else if (!strcmp(argv[2], "format")) format_pass2();
         else if (!strcmp(argv[2], "import")) import_cmd(argc, argv);
+        else if (!strcmp(argv[2], "export")) export_cmd(argc, argv);
     
         else fprintf(stderr, "%s: error: invalid action: `%s`.\n", argv[0], argv[2]);
     }

@@ -1,4 +1,4 @@
-CC = ../gcc/bin/i386-elf-gcc
+CC = ../tools/bin/i386-elf-gcc
 
 C = $(shell find ./ -type f -name '*.c')
 OBJ = $(C:.c=.o)

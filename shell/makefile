@@ -1,5 +1,4 @@
-CC = ../gcc/bin/i386-elf-gcc
-LD = ../gcc/bin/i386-elf-ld
+CC = ../tools/bin/i386-elf-gcc
 
 C = shell.c help.c echo.c cowsay.c
 OBJ = $(C:.c=.o)
@@ -12,7 +11,7 @@ endif
 CFLAGS = -std=gnu99 -ffreestanding -isystem ../libc/ -masm=intel
 
 shell.bin: $(OBJ) $(LIBC)
-	$(LD) -T linker.ld --oformat binary -o shell.bin -nostdlib $(OBJ) $(LIBC)
+	$(CC) -T linker.ld -o shell.bin -nostdlib $(OBJ) $(LIBC) -Xlinker --oformat=binary
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

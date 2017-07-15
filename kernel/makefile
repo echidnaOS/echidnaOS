@@ -1,5 +1,4 @@
-CC = ../gcc/bin/i386-elf-gcc
-LD = ../gcc/bin/i386-elf-ld
+CC = ../tools/bin/i386-elf-gcc
 
 C_FILES = ./init.c $(shell find ./common/ -type f -name '*.c')
 H_FILES = $(shell find ./ -type f -name '*.h')
@@ -11,7 +10,7 @@ BINS = $(REAL_FILES:.real=.bin)
 CFLAGS = -std=gnu99 -ffreestanding -isystem ./include -masm=intel
 
 echidna.bin: ../shell/shell.bin $(BINS) $(OBJ) $(H_FILES)
-	$(LD) -T linker.ld --oformat binary -o echidna.bin -nostdlib $(OBJ)
+	$(CC) -T linker.ld -o echidna.bin -nostdlib $(OBJ) -Xlinker --oformat=binary
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

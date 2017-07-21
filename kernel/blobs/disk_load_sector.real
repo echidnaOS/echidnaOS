@@ -4,34 +4,23 @@ bits 16
 ; DS:EBX --> Function struct
 
 ; Prepare da_struct
-mov eax, dword [ebx+4]
+mov eax, dword [ebx]
 mov dword [da_struct.lba_address_low], eax
+mov eax, dword [ebx+4]
+mov dword [da_struct.lba_address_high], eax
 
 ; Target drive
 mov dl, byte [ebx+12]
-
-; Prepare loop
-mov ecx, dword [ebx+8]
-
-main_loop:
 
 xor esi, esi
 mov si, da_struct
 mov ah, 0x42
 int 0x13
 
-; Copy loaded sector to target
-push ecx
 mov esi, sector_buffer
-mov edi, dword [ebx]
+mov edi, dword [ebx+8]
 mov ecx, 512
 a32 o32 rep movsb
-pop ecx
-
-add dword [ebx], 512
-inc dword [da_struct.lba_address_low]
-
-loop main_loop
 
 ; Return
 ret

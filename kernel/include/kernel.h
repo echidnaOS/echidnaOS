@@ -38,8 +38,12 @@
 void kputs(const char* string);
 void kuitoa(uint32_t x);
 void kxtoa(uint32_t x);
+uint64_t power(uint64_t x, uint64_t y);
 void init_disk(uint8_t boot_drive);
-uint8_t disk_read_b(uint8_t drive, uint32_t loc);
+uint8_t disk_read_b(uint8_t drive, uint64_t loc);
+uint16_t disk_read_w(uint8_t drive, uint64_t loc);
+uint32_t disk_read_d(uint8_t drive, uint64_t loc);
+uint64_t disk_read_q(uint8_t drive, uint64_t loc);
 void disk_read_seq(uint8_t* buffer, uint8_t drive, uint32_t loc, uint32_t count);
 
 void switch_tty(uint8_t which_tty);
@@ -128,7 +132,7 @@ void kmemcpy(char* dest, char* source, uint32_t count);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
-void disk_load_sector(uint8_t drive, uint8_t* target_address, uint32_t source_sector, uint32_t count);
+void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_sector);
 uint32_t detect_mem(void);
 
 void char_to_stdout(int c);

@@ -9,17 +9,18 @@ disk_load_sector_bin:                   incbin "blobs/disk_load_sector.bin"
 disk_load_sector_end:
 
 function_struct:
-    .target_address     dd  0
-    .source_sector      dd  0
-    .count              dd  0
-    .drive              db  0
+    .source_sector_low      dd  0
+    .source_sector_high     dd  0
+    .target_address         dd  0
+    .drive                  db  0
 
 section .text
 
 bits 32
 
 disk_load_sector:
-; void disk_load_sector(uint8_t drive, uint8_t* target_address, uint32_t source_sector, uint32_t count);
+xchg bx,bx
+; void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_sector);
     push ebx
     push esi
     push edi
@@ -27,9 +28,9 @@ disk_load_sector:
 
 ; Prepare the struct
     mov eax, dword [esp+32]
-    mov dword [function_struct.count], eax
+    mov dword [function_struct.source_sector_high], eax
     mov eax, dword [esp+28]
-    mov dword [function_struct.source_sector], eax
+    mov dword [function_struct.source_sector_low], eax
     mov eax, dword [esp+24]
     mov dword [function_struct.target_address], eax
     mov eax, dword [esp+20]

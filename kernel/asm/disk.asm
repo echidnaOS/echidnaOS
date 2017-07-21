@@ -19,7 +19,6 @@ section .text
 bits 32
 
 disk_load_sector:
-xchg bx,bx
 ; void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_sector);
     push ebx
     push esi

@@ -77,6 +77,8 @@ typedef struct {
     uint8_t tty;
     void* heap_begin;
     uint32_t heap_size;
+    
+    char pwd[2048];
 
 } task_t;
 
@@ -89,6 +91,7 @@ typedef struct {
     uint8_t tty;
     uint32_t stack;
     uint32_t heap;
+    char* pwd;
 } task_info_t;
 
 void task_start(task_info_t* task_info);
@@ -129,6 +132,7 @@ extern uint8_t current_tty;
 extern tty_t tty[KRNL_TTY_COUNT];
 
 void kmemcpy(char* dest, char* source, uint32_t count);
+void kstrcpy(char* dest, char* source);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);

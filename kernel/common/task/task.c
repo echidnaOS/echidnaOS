@@ -11,7 +11,8 @@ void task_spinup(void*);
 const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
-                               0,0};
+                               0,0,0,
+                               ""};
 
 void task_start(task_info_t* task_info) {
 
@@ -53,12 +54,15 @@ void task_start(task_info_t* task_info) {
     
     new_task->tty = task_info->tty;
     
+    kstrcpy(new_task->pwd, task_info->pwd);
+    
     // debug logging
     kputs("\n\nNew task startup request completed with:\n");
     kputs("\npid:    "); kuitoa((uint32_t)new_task->pid);
     kputs("\nbase:   "); kxtoa(new_task->base);
     kputs("\npages:  "); kxtoa(new_task->pages);
     kputs("\ntty:    "); kuitoa((uint32_t)new_task->tty);
+    kputs("\npwd:    "); kputs(new_task->pwd);
     
     return;
 }

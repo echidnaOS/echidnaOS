@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <sys_api.h>
+
 #include "cmds.h"
 
 void getstring(char* string, uint32_t limit);
@@ -15,6 +17,7 @@ int main(int argc, char** argv) {
     char* input = malloc(256);
     int s_argc;
     char* s_argv[128];
+    char pwd[2048];
 
     puts(
         "\n"
@@ -24,7 +27,8 @@ int main(int argc, char** argv) {
     );
 
     while (1) {
-        printf("# ");
+        OS_pwd(pwd);
+        printf("%s# ", pwd);
 
         getstring(input, 256);
         s_argc = get_argc(input);

@@ -15,6 +15,7 @@ extern free
 extern realloc
 extern char_to_stdout
 extern char_from_stdin
+extern pwd
 
 section .data
 
@@ -45,7 +46,7 @@ routine_list:
         dd      0                       ; 0x17
         dd      0                       ; 0x18
         dd      0                       ; 0x19
-        dd      0                       ; 0x1a
+        dd      pwd                     ; 0x1a
         dd      0                       ; 0x1b
         dd      0                       ; 0x1c
         dd      0                       ; 0x1d

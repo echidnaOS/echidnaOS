@@ -18,6 +18,9 @@ task_info:
     .tty        dd  1
     .stack      dd  0x10000
     .heap       dd  0x100000
+    .pwd        dd  pwd
+
+pwd db "/", 0
 
 section .text
 
@@ -28,13 +31,13 @@ kernel_shell:
     call task_start
     mov dword [task_info.tty], 2
     call task_start
-    mov dword [task_info.tty], 3
-    call task_start
-    mov dword [task_info.tty], 4
-    call task_start
-    mov dword [task_info.tty], 5
-    call task_start
-    mov dword [task_info.tty], 6
-    call task_start
+    ;mov dword [task_info.tty], 3
+    ;call task_start
+    ;mov dword [task_info.tty], 4
+    ;call task_start
+    ;mov dword [task_info.tty], 5
+    ;call task_start
+    ;mov dword [task_info.tty], 6
+    ;call task_start
     add esp, 4
     ret

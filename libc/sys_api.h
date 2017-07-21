@@ -41,4 +41,12 @@
     c;                                  \
 })
 
+#define OS_pwd(value) ({                \
+    asm volatile (  "mov eax, 0x1a;"    \
+                    "int 0x80;"         \
+                     :                  \
+                     : "c" (value)      \
+                     : "eax", "edx" );  \
+})
+
 #endif

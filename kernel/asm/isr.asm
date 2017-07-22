@@ -2,12 +2,14 @@ global handler_simple
 global handler_code
 global handler_irq_pic0
 global handler_irq_pic1
+global handler_div0
 global irq0_handler
 global keyboard_isr
 global syscall
 
 extern keyboard_handler
 extern task_switch
+extern except_div0
 
 ; API calls
 extern alloc
@@ -80,6 +82,12 @@ handler_irq_pic1:
         out 0x20, al
         pop eax
         iretd
+
+handler_div0:
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        call except_div0
 
 irq0_handler:
         ; save task status

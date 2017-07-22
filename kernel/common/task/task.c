@@ -100,6 +100,8 @@ check_task:
             break;
         case KRN_STAT_RES_TASK:
             goto next_task;
+        case KRN_STAT_TERM_TASK:
+            goto next_task;
         default:
             current_task = (task_t*)KRNL_MEMORY_BASE;
             goto check_task;

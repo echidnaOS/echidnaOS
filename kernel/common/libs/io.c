@@ -2,9 +2,15 @@
 #include <kernel.h>
 
 void kputs(const char* string) {
+    tty_kputs(string, 0);
+    
+    return;
+}
+
+void tty_kputs(const char* string, uint8_t which_tty) {
     uint32_t i;
     for (i = 0; string[i]; i++)
-        text_putchar(string[i], 0);
+        text_putchar(string[i], which_tty);
     return;
 }
 
@@ -33,11 +39,17 @@ static const char hex_to_ascii_tab[] = {
 };
 
 void kxtoa(uint32_t x) {
+    tty_kxtoa(x, 0);
+
+    return;
+}
+
+void tty_kxtoa(uint32_t x, uint8_t which_tty) {
     uint8_t i;
     char buf[9] = {0};
 
     if (!x) {
-        kputs("0x0");
+        tty_kputs("0x0", which_tty);
         return;
     }
 
@@ -47,8 +59,8 @@ void kxtoa(uint32_t x) {
     }
 
     i++;
-    kputs("0x");
-    kputs(buf + i);
+    tty_kputs("0x", which_tty);
+    tty_kputs(buf + i, which_tty);
 
     return;
 }

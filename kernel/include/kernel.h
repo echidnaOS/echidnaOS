@@ -32,12 +32,15 @@
 #define KRN_STAT_NOT_PRESENT    0
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
+#define KRN_STAT_TERM_TASK      3
 
 // prototypes
 
 void kputs(const char* string);
+void tty_kputs(const char* string, uint8_t which_tty);
 void kuitoa(uint32_t x);
 void kxtoa(uint32_t x);
+void tty_kxtoa(uint32_t x, uint8_t which_tty);
 uint64_t power(uint64_t x, uint64_t y);
 void init_disk(uint8_t boot_drive);
 uint8_t disk_read_b(uint8_t drive, uint64_t loc);

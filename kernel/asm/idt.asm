@@ -4,6 +4,7 @@ extern handler_simple
 extern handler_code
 extern handler_irq_pic0
 extern handler_irq_pic1
+extern handler_div0
 extern irq0_handler
 extern keyboard_isr
 extern syscall
@@ -72,10 +73,11 @@ load_IDT:
     xor di, di
     mov dl, 10001110b
     mov cx, 0x08
-    mov ebx, handler_simple
+    mov ebx, handler_div0
     call make_entry                 ; int 0x00, divide by 0
 
     inc di
+    mov ebx, handler_simple
     call make_entry                 ; int 0x01, debug
     
     inc di

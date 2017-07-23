@@ -33,6 +33,7 @@
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
 #define KRN_STAT_TERM_TASK      3
+#define KRN_STAT_IOWAIT_TASK    4
 
 // prototypes
 

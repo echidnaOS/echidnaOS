@@ -6,6 +6,8 @@
 
 task_t* current_task = (task_t*)KRNL_MEMORY_BASE;
 
+int idle_cpu = 1;
+
 void task_spinup(void*);
 
 const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
@@ -97,13 +99,25 @@ next_task:
 check_task:
     switch (current_task->status) {
         case KRN_STAT_ACTIVE_TASK:
+            idle_cpu = 0;
             break;
         case KRN_STAT_RES_TASK:
-            goto next_task;
         case KRN_STAT_TERM_TASK:
+        case KRN_STAT_IOWAIT_TASK:
             goto next_task;
         default:
             current_task = (task_t*)KRNL_MEMORY_BASE;
+            if (idle_cpu) {
+                // if no process took CPU time, wait for the next
+                // context switch idling
+                asm volatile (
+                                "sti;"
+                                "1:"
+                                "hlt;"
+                                "jmp 1b;"
+                             );
+            }
+            idle_cpu = 1;
             goto check_task;
     }
     

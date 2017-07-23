@@ -43,9 +43,11 @@ static const char ascii_nomod[] = {
 
 void keyboard_init(void) {
     // reset keyboard LEDs
+    /*
     port_out_b(0x60, 0xED);
     while (port_in_b(0x64) & 0x02);
     port_out_b(0x60, led_status);
+    */
     return;
 }
 
@@ -88,9 +90,11 @@ void keyboard_handler(uint8_t input_byte) {
         else if (capslock_active)
             led_status = led_status & 0b11111011;
         capslock_active = !capslock_active;
+        /*
         port_out_b(0x60, 0xED);
         while (port_in_b(0x64) & 0x02);
         port_out_b(0x60, led_status);
+        */
 
     } else if (input_byte == LEFT_SHIFT || input_byte == RIGHT_SHIFT || input_byte == LEFT_SHIFT_REL || input_byte == RIGHT_SHIFT_REL)
 		shift_active = !shift_active;

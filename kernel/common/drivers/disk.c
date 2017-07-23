@@ -3,7 +3,17 @@
 
 #define BYTES_PER_SECT 512
 
-static uint8_t drive_tab[256];
+typedef struct {
+    uint8_t number;
+    uint64_t blocks;
+    uint64_t fatsize;
+    uint64_t fatstart;
+    uint64_t dirsize;
+    uint64_t dirstart;
+    uint64_t datastart;
+} drive_t;
+
+drive_t drive_tab[64];
 
 static int cache_status = 0;
 static char cached_drive;
@@ -13,11 +23,15 @@ static uint8_t disk_cache[512];
 void init_disk(uint8_t boot_drive) {
     uint8_t x = 0;
 
-    kputs("\nBIOS drive "); kxtoa((uint32_t)boot_drive); kputs(" is the boot drive.");
-    kputs("\nUsing boot drive as drive :"); kuitoa(x);
-    drive_tab[x] = boot_drive;
-    kputs("\nBIOS signature: "); kxtoa((uint32_t)disk_read_w(0, 510));
-    x++;
+    kputs("\nBIOS drive "); kxtoa(boot_drive); kputs(" is the boot drive.");
+    kputs("\nUsing boot drive as root partition (drive 0).");
+    kputs("\nDrive 0 parameters:");
+    drive_tab[x].number = boot_drive;
+    drive_tab[x].blocks = disk_read_q(x, 12);
+    kputs("\nTotal blocks: "); kuitoa(drive_tab[x].blocks);
+    drive_tab[x].fatsize = (drive_tab[x].blocks * sizeof(uint64_t)) / 512;
+    if ((drive_tab[x].blocks * sizeof(uint64_t)) % 512) drive_tab[x].fatsize++;
+    kputs("\nAllocation table size in blocks: "); kuitoa(drive_tab[x].fatsize);
 
     return;
 }
@@ -29,7 +43,7 @@ uint8_t disk_read_b(uint8_t drive, uint64_t loc) {
     if ((sect == cached_sector) && (drive == cached_drive) && (cache_status))
         return disk_cache[offset];
 
-    disk_load_sector(drive_tab[drive], disk_cache, sect);
+    disk_load_sector(drive_tab[drive].number, disk_cache, sect);
     cached_drive = drive;
     cached_sector = sect;
     cache_status = 1;

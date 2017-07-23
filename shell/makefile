@@ -11,7 +11,7 @@ endif
 CFLAGS = -std=gnu99 -ffreestanding -isystem ../libc/ -masm=intel
 
 shell.bin: $(OBJ) $(LIBC)
-	$(CC) -T linker.ld -o shell.bin -nostdlib $(OBJ) $(LIBC) -Xlinker --oformat=binary
+	$(CC) -T linker.ld -o shell.bin -nostdlib $(OBJ) $(LIBC) -static-libgcc -lgcc -Xlinker --oformat=binary
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -14,22 +14,28 @@ void tty_kputs(const char* string, uint8_t which_tty) {
     return;
 }
 
-void kuitoa(uint32_t x) {
+void kuitoa(uint64_t x) {
+    tty_kuitoa(x, 0);
+
+    return;
+}
+
+void tty_kuitoa(uint64_t x, uint8_t which_tty) {
     uint8_t i;
-    char buf[11] = {0};
+    char buf[21] = {0};
 
     if (!x) {
-        kputs("0");
+        tty_kputs("0", which_tty);
         return;
     }
 
-    for (i = 9; x; i--) {
+    for (i = 19; x; i--) {
         buf[i] = (x % 10) + 0x30;
         x = x / 10;
     }
 
     i++;
-    kputs(buf + i);
+    tty_kputs(buf + i, which_tty);
 
     return;
 }
@@ -38,22 +44,22 @@ static const char hex_to_ascii_tab[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
 
-void kxtoa(uint32_t x) {
+void kxtoa(uint64_t x) {
     tty_kxtoa(x, 0);
 
     return;
 }
 
-void tty_kxtoa(uint32_t x, uint8_t which_tty) {
+void tty_kxtoa(uint64_t x, uint8_t which_tty) {
     uint8_t i;
-    char buf[9] = {0};
+    char buf[17] = {0};
 
     if (!x) {
         tty_kputs("0x0", which_tty);
         return;
     }
 
-    for (i = 7; x; i--) {
+    for (i = 15; x; i--) {
         buf[i] = hex_to_ascii_tab[(x % 16)];
         x = x / 16;
     }

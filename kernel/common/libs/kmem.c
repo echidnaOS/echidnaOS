@@ -19,3 +19,12 @@ void kstrcpy(char* dest, char* source) {
 
     return;
 }
+
+int kstrcmp(char* dest, char* source) {
+    uint32_t i = 0;
+
+    for ( ; dest[i] == source[i]; i++)
+        if ((!dest[i]) && (!source[i])) return 0;
+
+    return 1;
+}

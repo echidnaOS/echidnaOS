@@ -10,7 +10,7 @@ BINS = $(REAL_FILES:.real=.bin)
 CFLAGS = -std=gnu99 -ffreestanding -isystem ./include -masm=intel
 
 echidna.bin: ../shell/shell.bin $(BINS) $(OBJ) $(H_FILES)
-	$(CC) -T linker.ld -o echidna.bin -nostdlib $(OBJ) -Xlinker --oformat=binary
+	$(CC) -T linker.ld -o echidna.bin -nostdlib $(OBJ) -static-libgcc -lgcc -Xlinker --oformat=binary
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -38,9 +38,15 @@
 
 void kputs(const char* string);
 void tty_kputs(const char* string, uint8_t which_tty);
-void kuitoa(uint32_t x);
-void kxtoa(uint32_t x);
-void tty_kxtoa(uint32_t x, uint8_t which_tty);
+void kuitoa(uint64_t x);
+void tty_kuitoa(uint64_t x, uint8_t which_tty);
+void kxtoa(uint64_t x);
+void tty_kxtoa(uint64_t x, uint8_t which_tty);
+
+int kstrcmp(char* dest, char* source);
+void kmemcpy(char* dest, char* source, uint32_t count);
+void kstrcpy(char* dest, char* source);
+
 uint64_t power(uint64_t x, uint64_t y);
 void init_disk(uint8_t boot_drive);
 uint8_t disk_read_b(uint8_t drive, uint64_t loc);
@@ -133,9 +139,6 @@ extern task_t* current_task;
 extern uint8_t current_tty;
 
 extern tty_t tty[KRNL_TTY_COUNT];
-
-void kmemcpy(char* dest, char* source, uint32_t count);
-void kstrcpy(char* dest, char* source);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);

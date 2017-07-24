@@ -147,7 +147,7 @@ void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_se
 uint32_t detect_mem(void);
 
 void char_to_stdout(int c);
-int char_from_stdin(void);
+void enter_iowait_status(void);
 
 void* alloc(uint32_t size);
 

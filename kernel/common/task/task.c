@@ -72,6 +72,7 @@ void task_start(task_info_t* task_info) {
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
 
     uint32_t int_ptr;
+    int c;
 
     current_task->eax_p = eax_r;
     current_task->ebx_p = ebx_r;
@@ -103,7 +104,15 @@ check_task:
             break;
         case KRN_STAT_RES_TASK:
         case KRN_STAT_TERM_TASK:
+            goto next_task;
         case KRN_STAT_IOWAIT_TASK:
+            if ((c = (int)keyboard_fetch_char(current_task->tty))) {
+                // embed the result in EAX and resume task
+                current_task->eax_p = (uint32_t)c;
+                current_task->status = KRN_STAT_ACTIVE_TASK;
+                idle_cpu = 0;
+                break;
+            }
             goto next_task;
         default:
             current_task = (task_t*)KRNL_MEMORY_BASE;

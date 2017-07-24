@@ -16,7 +16,7 @@ extern alloc
 extern free
 extern realloc
 extern char_to_stdout
-extern char_from_stdin
+extern enter_iowait_status
 extern pwd
 
 section .data
@@ -55,7 +55,7 @@ routine_list:
         dd      0                       ; 0x1e
         dd      0                       ; 0x1f
         dd      char_to_stdout          ; 0x20
-        dd      char_from_stdin         ; 0x21
+        dd      0 ;char_from_stdin        0x21 - dummy entry
 
 section .text
 
@@ -145,6 +145,10 @@ keyboard_isr:
 syscall:
 ; ARGS in EAX (call code), ECX, EDX, EDI, ESI
 ; return value in EAX/EDX
+        ; special routines check
+        cmp eax, 0x21
+        je char_from_stdin
+        ; end special routines check
         push ebx
         push ecx
         push esi
@@ -171,3 +175,24 @@ syscall:
         pop ecx
         pop ebx
         iretd
+
+char_from_stdin:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        call enter_iowait_status
+        call task_switch

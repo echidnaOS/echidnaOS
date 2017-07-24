@@ -7,17 +7,7 @@ void char_to_stdout(int c) {
     return;
 }
 
-// gets a char from the current standard input
-// for now, it will get the char from the keyboard buffer
-// returns -2 (NO_INPUT) if no input
-// returns char on input
-// returns EOF on EOF (not implemented yet)
-// DOES NOT HALT EXECUTION UNTIL INPUT
-#define NO_INPUT -2
-
-int char_from_stdin(void) {
-    int c;
-    if ((c = (int)keyboard_fetch_char(current_task->tty)) == '\0')
-        c = NO_INPUT;
-    return c;
+void enter_iowait_status(void) {
+    current_task->status = KRN_STAT_IOWAIT_TASK;
+    return;
 }

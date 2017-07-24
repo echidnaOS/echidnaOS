@@ -16,15 +16,8 @@ int putchar(int c) {
     return c;
 }
 
-// implementation of getchar with a loop
-// to be fixed later on
-#define NO_INPUT -2
-
 int getchar(void) {
-    int c=NO_INPUT;
-    while (c==NO_INPUT)
-        c = OS_getc();
-    return c;
+    return OS_getc();
 }
 
 int puts(const char *str) {

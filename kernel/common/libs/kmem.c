@@ -46,6 +46,9 @@ void* kalloc(uint32_t size) {
     heap_chunk_t* heap_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
     heap_chunk_t* new_chunk;
     uint32_t heap_chunk_ptr;
+    
+    // avoid odd memory allocations, align at 4
+    while (size % 4) size++;
 
 again:
     if ((heap_chunk->free) && (heap_chunk->size > (size + sizeof(heap_chunk_t)))) {
@@ -61,7 +64,7 @@ again:
         heap_chunk_ptr = (uint32_t)heap_chunk;
         heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
         if (heap_chunk_ptr >= memory_size)
-            panic("Fatal memory allocation failure, system halted.");
+            return (void*)0;
         heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
         goto again;
     }

@@ -63,3 +63,24 @@ void free(void* addr) {
 void* realloc(void* prev_ptr, uint32_t size) {
     return (void*)0;
 }
+
+// prints a char to the current standard output
+// for now, it will just print raw to the text driver
+void char_to_stdout(int c) {
+    text_putchar((char)c, task_table[current_task]->tty);
+    return;
+}
+
+void enter_iowait_status(void) {
+    task_table[current_task]->status = KRN_STAT_IOWAIT_TASK;
+    return;
+}
+
+void pwd(char* pwd_dump) {
+    uint32_t pwd_dump_ptr = (uint32_t)pwd_dump;
+    pwd_dump_ptr += task_table[current_task]->base;
+    pwd_dump = (char*)pwd_dump_ptr;
+
+    kstrcpy(pwd_dump, task_table[current_task]->pwd);
+    return;
+}

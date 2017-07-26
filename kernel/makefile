@@ -1,6 +1,6 @@
 CC = ../tools/bin/i386-elf-gcc
 
-C_FILES = ./init.c $(shell find ./common/ -type f -name '*.c')
+C_FILES = ./init.c $(shell find ./src/ -type f -name '*.c')
 H_FILES = $(shell find ./ -type f -name '*.h')
 ASM_FILES = $(shell find ./asm/ -type f -name '*.asm')
 REAL_FILES = $(shell find ./blobs/ -type f -name '*.real')

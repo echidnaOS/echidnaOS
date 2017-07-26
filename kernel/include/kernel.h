@@ -141,6 +141,12 @@ extern uint8_t current_tty;
 
 extern tty_t tty[KRNL_TTY_COUNT];
 
+void panic(const char *msg);
+
+void init_kalloc(void);
+void* kalloc(uint32_t size);
+void kfree(void* addr);
+
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
 void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_sector);

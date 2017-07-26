@@ -26,10 +26,11 @@
 #define TTY_DEF_TXT_PAL 0x07
 
 #define KRNL_MEMORY_BASE 0x1000000
+#define KRNL_MAX_TASKS 65536
 
 // memory statuses
 
-#define KRN_STAT_NOT_PRESENT    0
+#define KRN_STAT_ENDTABLE_TASK  0
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
 #define KRN_STAT_TERM_TASK      3
@@ -136,12 +137,15 @@ typedef struct {
 
 extern uint32_t memory_size;
 extern uint32_t memory_bottom;
-extern task_t* current_task;
+extern int current_task;
+extern task_t** task_table;
 extern uint8_t current_tty;
 
 extern tty_t tty[KRNL_TTY_COUNT];
 
 void panic(const char *msg);
+
+void task_init(void);
 
 void init_kalloc(void);
 void* kalloc(uint32_t size);

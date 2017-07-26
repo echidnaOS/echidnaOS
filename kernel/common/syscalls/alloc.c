@@ -3,7 +3,7 @@
 
 void* alloc(uint32_t size) {
     // search of a big enough, free, heap chunk
-    heap_chunk_t* heap_chunk = (heap_chunk_t*)current_task->heap_begin;
+    heap_chunk_t* heap_chunk = (heap_chunk_t*)task_table[current_task]->heap_begin;
     heap_chunk_t* new_chunk;
     uint32_t heap_chunk_ptr;
 
@@ -14,14 +14,14 @@ again:
         new_chunk->free = 1;
         new_chunk->size = heap_chunk->size - (size + sizeof(heap_chunk_t));
         new_chunk->prev_chunk = (uint32_t)heap_chunk;
-        new_chunk->prev_chunk -= current_task->base;
+        new_chunk->prev_chunk -= task_table[current_task]->base;
         heap_chunk->free = !heap_chunk->free;
         heap_chunk->size = size;
-        return (void*)(((uint32_t)heap_chunk + sizeof(heap_chunk_t)) - current_task->base);
+        return (void*)(((uint32_t)heap_chunk + sizeof(heap_chunk_t)) - task_table[current_task]->base);
     } else {
         heap_chunk_ptr = (uint32_t)heap_chunk;
         heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
-        if (heap_chunk_ptr >= (current_task->base + (current_task->pages * 4096)))
+        if (heap_chunk_ptr >= (task_table[current_task]->base + (task_table[current_task]->pages * 4096)))
             return (void*)0;        // alloc fail
         heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
         goto again;
@@ -30,7 +30,7 @@ again:
 
 void free(void* addr) {
     uint32_t heap_chunk_ptr = (uint32_t)addr;
-    heap_chunk_ptr += current_task->base;
+    heap_chunk_ptr += task_table[current_task]->base;
     
     heap_chunk_ptr -= sizeof(heap_chunk_t);
     heap_chunk_t* heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
@@ -40,7 +40,7 @@ void free(void* addr) {
     
     heap_chunk_t* prev_chunk;
     if (heap_chunk->prev_chunk)
-        prev_chunk = (heap_chunk_t*)(heap_chunk->prev_chunk + current_task->base);
+        prev_chunk = (heap_chunk_t*)(heap_chunk->prev_chunk + task_table[current_task]->base);
     else
         prev_chunk = (heap_chunk_t*)0;
     

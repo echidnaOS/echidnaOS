@@ -46,6 +46,7 @@ void* kalloc(uint32_t size) {
     heap_chunk_t* heap_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
     heap_chunk_t* new_chunk;
     uint32_t heap_chunk_ptr;
+    char* area;
     
     // avoid odd memory allocations, align at 4
     while (size % 4) size++;
@@ -59,7 +60,7 @@ again:
         new_chunk->prev_chunk = (uint32_t)heap_chunk;
         heap_chunk->free = !heap_chunk->free;
         heap_chunk->size = size;
-        return (void*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
+        area = (char*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
     } else {
         heap_chunk_ptr = (uint32_t)heap_chunk;
         heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
@@ -68,6 +69,11 @@ again:
         heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
         goto again;
     }
+    
+    // zero the memory
+    for (int i = 0; i < size; i++)
+        area[i] = 0;
+    return (void*)area;
 }
 
 void kfree(void* addr) {

@@ -8,7 +8,6 @@ void kernel_shell(void);
 
 void kernel_init(uint8_t boot_drive) {
     task_t empty_task = {0};
-    task_t* krnl_task = (task_t*)KRNL_MEMORY_BASE;
 
     // setup the PIC's mask
     set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
@@ -42,10 +41,7 @@ void kernel_init(uint8_t boot_drive) {
     // increase speed of the PIT
     set_pit_freq(KRNL_PIT_FREQ);
     
-    // create dummy kernel task
-    memory_bottom += sizeof(task_t);
-    *krnl_task = empty_task;
-    krnl_task->status = KRN_STAT_RES_TASK;
+    task_init();
     
     // print intro to tty0
     kputs("Welcome to echidnaOS!\n");

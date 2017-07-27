@@ -19,8 +19,10 @@ task_info:
     .stack      dd  0x10000
     .heap       dd  0x100000
     .pwd        dd  pwd
+    .name       dd  name
 
 pwd db "/", 0
+name db "shell", 0
 
 section .text
 

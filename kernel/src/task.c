@@ -3,6 +3,7 @@
 
 #define TASK_RESERVED_SPACE     0x10000
 #define PAGE_SIZE               4096
+#define EMPTY_PID               (task_t*)0xffffffff
 
 task_t** task_table;
 
@@ -13,6 +14,8 @@ void task_init(void) {
     // create kernel task
     if ((task_table[0] = kalloc(sizeof(task_t))) == 0)
         panic("unable to allocate kernel task");
+    kstrcpy(task_table[0]->pwd, "/");
+    kstrcpy(task_table[0]->name, "kernel");
     task_table[0]->status = KRN_STAT_RES_TASK;    
     return;
 }
@@ -27,7 +30,7 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                0,0,0,
-                               ""};
+                               "",""};
 
 int task_start(task_info_t* task_info) {
     // start new task
@@ -41,6 +44,10 @@ int task_start(task_info_t* task_info) {
     // correct the address for kernel space
     uint32_t task_addr = task_info->addr + task_table[current_task]->base;
     
+    // correct pointers for kernel space
+    char* pwd = task_info->pwd + task_table[current_task]->base;
+    char* name = task_info->name + task_table[current_task]->base;
+    
     // find an empty entry in the task table
     int new_task;
     for (new_task = 0; new_task < KRNL_MAX_TASKS; new_task++)
@@ -53,6 +60,8 @@ int task_start(task_info_t* task_info) {
         return 0;
 
     *task_table[new_task] = prototype_task;  // initialise struct
+    
+    task_table[new_task]->parent = current_task;    // set parent
 
     // get task size in pages
     task_table[new_task]->pages = (TASK_RESERVED_SPACE + task_info->size + task_info->stack + task_info->heap) / PAGE_SIZE;
@@ -82,7 +91,8 @@ int task_start(task_info_t* task_info) {
     
     task_table[new_task]->tty = task_info->tty;
     
-    kstrcpy(task_table[new_task]->pwd, task_info->pwd);
+    kstrcpy(task_table[new_task]->pwd, pwd);
+    kstrcpy(task_table[new_task]->name, name);
     
     // debug logging
     kputs("\n\nNew task startup request completed with:\n");
@@ -91,6 +101,7 @@ int task_start(task_info_t* task_info) {
     kputs("\npages:  "); kxtoa(task_table[new_task]->pages);
     kputs("\ntty:    "); kuitoa((uint32_t)task_table[new_task]->tty);
     kputs("\npwd:    "); kputs(task_table[new_task]->pwd);
+    kputs("\nname:   "); kputs(task_table[new_task]->name);
     
     return new_task;
 }
@@ -139,6 +150,11 @@ void task_scheduler(void) {
             continue;
         }
         
+        if (task_table[current_task] == EMPTY_PID) {
+            current_task++;
+            continue;
+        }
+        
         switch (task_table[current_task]->status) {
             case KRN_STAT_IOWAIT_TASK:
                 if ((c = (int)keyboard_fetch_char(task_table[current_task]->tty))) {
@@ -155,7 +171,6 @@ void task_scheduler(void) {
                 set_segment(0x4, task_table[current_task]->base, task_table[current_task]->pages);
                 task_spinup((void*)task_table[current_task]);
             case KRN_STAT_RES_TASK:
-            case KRN_STAT_TERM_TASK:
             default:
                 current_task++;
                 continue;
@@ -163,4 +178,10 @@ void task_scheduler(void) {
 
     }
 
+}
+
+void task_terminate(int pid) {
+    kfree((void*)task_table[pid]->base);
+    kfree((void*)task_table[pid]);
+    task_table[pid] = EMPTY_PID;
 }

@@ -30,11 +30,9 @@
 
 // memory statuses
 
-#define KRN_STAT_ENDTABLE_TASK  0
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
-#define KRN_STAT_TERM_TASK      3
-#define KRN_STAT_IOWAIT_TASK    4
+#define KRN_STAT_IOWAIT_TASK    3
 
 // prototypes
 
@@ -63,7 +61,7 @@ void init_tty(void);
 typedef struct {
 
     int status;
-    uint16_t pid;
+    int parent;
     
     uint32_t base;
     uint32_t pages;
@@ -90,6 +88,7 @@ typedef struct {
     uint32_t heap_size;
     
     char pwd[2048];
+    char name[128];
 
 } task_t;
 
@@ -103,10 +102,12 @@ typedef struct {
     uint32_t stack;
     uint32_t heap;
     char* pwd;
+    char* name;
 } task_info_t;
 
 int task_start(task_info_t* task_info);
 void task_scheduler(void);
+void task_terminate(int pid);
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r);
 
 typedef struct {

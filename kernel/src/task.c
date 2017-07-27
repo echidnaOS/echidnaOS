@@ -135,6 +135,7 @@ scheduler:
         asm volatile (
                         "sti;"
                         "1:"
+                        "mov esp, 0xefffff;"
                         "hlt;"
                         "jmp 1b;"
                      );

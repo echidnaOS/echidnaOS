@@ -97,9 +97,6 @@ int task_start(task_info_t* task_info) {
 
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
 
-    uint32_t int_ptr;
-    int c;
-
     task_table[current_task]->eax_p = eax_r;
     task_table[current_task]->ebx_p = ebx_r;
     task_table[current_task]->ecx_p = ecx_r;
@@ -117,10 +114,41 @@ void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r,
     task_table[current_task]->ss_p = ss_r;
     task_table[current_task]->eflags_p = eflags_r;
 
-    // find next task
-scheduler:
-    for (current_task++; current_task < KRNL_MAX_TASKS; current_task++) {
+    current_task++;
+    task_scheduler();
+}
+
+void task_scheduler(void) {
+    int c;
+
+    for (;;) {
+        if (!task_table[current_task]) {
+            current_task = 0;
+            if (idle_cpu) {
+            // if no process took CPU time, wait for the next
+            // context switch idling
+                asm volatile (
+                                "sti;"
+                                "1:"
+                                "mov esp, 0xefffff;"
+                                "hlt;"
+                                "jmp 1b;"
+                             );
+            }
+            idle_cpu = 1;
+            continue;
+        }
+        
         switch (task_table[current_task]->status) {
+            case KRN_STAT_IOWAIT_TASK:
+                if ((c = (int)keyboard_fetch_char(task_table[current_task]->tty))) {
+                    // embed the result in EAX and continue
+                    task_table[current_task]->eax_p = (uint32_t)c;
+                    task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                } else {
+                    current_task++;
+                    continue;
+                }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;
                 set_segment(0x3, task_table[current_task]->base, task_table[current_task]->pages);
@@ -128,33 +156,11 @@ scheduler:
                 task_spinup((void*)task_table[current_task]);
             case KRN_STAT_RES_TASK:
             case KRN_STAT_TERM_TASK:
+            default:
+                current_task++;
                 continue;
-            case KRN_STAT_IOWAIT_TASK:
-                if ((c = (int)keyboard_fetch_char(task_table[current_task]->tty))) {
-                    // embed the result in EAX and continue
-                    task_table[current_task]->eax_p = (uint32_t)c;
-                    task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
-                }
-                continue;
-            case KRN_STAT_ENDTABLE_TASK:
-                break;
         }
-        break;
-    }
 
-    current_task = 0;
-    if (idle_cpu) {
-        // if no process took CPU time, wait for the next
-        // context switch idling
-        asm volatile (
-                        "sti;"
-                        "1:"
-                        "mov esp, 0xefffff;"
-                        "hlt;"
-                        "jmp 1b;"
-                     );
     }
-    idle_cpu = 1;
-    goto scheduler;
 
 }

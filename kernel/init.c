@@ -54,5 +54,5 @@ void kernel_init(uint8_t boot_drive) {
     kernel_shell();
 	
     // start scheduler
-    task_switch(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+    task_scheduler();
 }

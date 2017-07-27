@@ -8,9 +8,11 @@ task_t** task_table;
 
 void task_init(void) {
     // allocate the task table
-    task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t*));
+    if ((task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t*))) == 0)
+        panic("unable to allocate task table");
     // create kernel task
-    task_table[0] = kalloc(sizeof(task_t));
+    if ((task_table[0] = kalloc(sizeof(task_t))) == 0)
+        panic("unable to allocate kernel task");
     task_table[0]->status = KRN_STAT_RES_TASK;    
     return;
 }
@@ -27,7 +29,9 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,
                                ""};
 
-void task_start(task_info_t* task_info) {
+int task_start(task_info_t* task_info) {
+    // start new task
+    // returns 0 on failure, PID on success
 
     // correct the struct pointer for kernel space
     uint32_t task_info_ptr = (uint32_t)task_info;
@@ -41,8 +45,12 @@ void task_start(task_info_t* task_info) {
     int new_task;
     for (new_task = 0; new_task < KRNL_MAX_TASKS; new_task++)
         if (!task_table[new_task]) break;
+    if (new_task == KRNL_MAX_TASKS)
+        return 0;
+    
     // allocate a task entry
-    task_table[new_task] = kalloc(sizeof(task_t));
+    if ((task_table[new_task] = kalloc(sizeof(task_t))) == 0)
+        return 0;
 
     *task_table[new_task] = prototype_task;  // initialise struct
 
@@ -50,8 +58,14 @@ void task_start(task_info_t* task_info) {
     task_table[new_task]->pages = (TASK_RESERVED_SPACE + task_info->size + task_info->stack + task_info->heap) / PAGE_SIZE;
     if ((TASK_RESERVED_SPACE + task_info->size + task_info->stack + task_info->heap) % PAGE_SIZE) task_table[new_task]->pages++;
 
+    // allocate task space
+    if ((task_table[new_task]->base = (uint32_t)kalloc(task_table[new_task]->pages * PAGE_SIZE)) == 0) {
+        kfree(task_table[new_task]);
+        task_table[new_task] = 0;
+        return 0;
+    }
+    
     // copy task code into the running location
-    task_table[new_task]->base = (uint32_t)kalloc(task_table[new_task]->pages * PAGE_SIZE);
     kmemcpy((char*)(task_table[new_task]->base + TASK_RESERVED_SPACE), (char*)task_addr, task_info->size);
     
     // build first heap chunk identifier
@@ -78,7 +92,7 @@ void task_start(task_info_t* task_info) {
     kputs("\ntty:    "); kuitoa((uint32_t)task_table[new_task]->tty);
     kputs("\npwd:    "); kputs(task_table[new_task]->pwd);
     
-    return;
+    return new_task;
 }
 
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {

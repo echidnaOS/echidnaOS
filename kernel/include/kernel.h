@@ -151,6 +151,7 @@ void task_init(void);
 
 void init_kalloc(void);
 void* kalloc(uint32_t size);
+void* krealloc(void* addr, uint32_t new_size);
 void kfree(void* addr);
 
 void vga_disable_cursor(void);

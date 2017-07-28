@@ -51,29 +51,51 @@ void* kalloc(uint32_t size) {
     // avoid odd memory allocations, align at 4
     while (size % 4) size++;
 
-again:
-    if ((heap_chunk->free) && (heap_chunk->size > (size + sizeof(heap_chunk_t)))) {
-        // split off a new heap_chunk
-        new_chunk = (heap_chunk_t*)((uint32_t)heap_chunk + size + sizeof(heap_chunk_t));
-        new_chunk->free = 1;
-        new_chunk->size = heap_chunk->size - (size + sizeof(heap_chunk_t));
-        new_chunk->prev_chunk = (uint32_t)heap_chunk;
-        heap_chunk->free = !heap_chunk->free;
-        heap_chunk->size = size;
-        area = (char*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
-    } else {
-        heap_chunk_ptr = (uint32_t)heap_chunk;
-        heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
-        if (heap_chunk_ptr >= memory_size)
-            return (void*)0;
-        heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
-        goto again;
+    for (;;) {
+        if ((heap_chunk->free) && (heap_chunk->size > (size + sizeof(heap_chunk_t)))) {
+            // split off a new heap_chunk
+            new_chunk = (heap_chunk_t*)((uint32_t)heap_chunk + size + sizeof(heap_chunk_t));
+            new_chunk->free = 1;
+            new_chunk->size = heap_chunk->size - (size + sizeof(heap_chunk_t));
+            new_chunk->prev_chunk = (uint32_t)heap_chunk;
+            heap_chunk->free = !heap_chunk->free;
+            heap_chunk->size = size;
+            area = (char*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
+            break;
+        } else {
+            heap_chunk_ptr = (uint32_t)heap_chunk;
+            heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
+            if (heap_chunk_ptr >= memory_size)
+                return (void*)0;
+            heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
+            continue;
+        }
     }
     
     // zero the memory
     for (int i = 0; i < size; i++)
         area[i] = 0;
     return (void*)area;
+}
+
+void* krealloc(void* addr, uint32_t new_size) {
+    uint32_t heap_chunk_ptr = (uint32_t)addr;
+    
+    heap_chunk_ptr -= sizeof(heap_chunk_t);
+    heap_chunk_t* heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
+    
+    char* new_ptr;
+    if ((new_ptr = kalloc(new_size)) == 0)
+        return (void*)0;
+    
+    if (heap_chunk->size > new_size)
+        kmemcpy(new_ptr, (char*)addr, new_size);
+    else
+        kmemcpy(new_ptr, (char*)addr, heap_chunk->size);
+    
+    kfree(addr);
+    
+    return new_ptr;
 }
 
 void kfree(void* addr) {

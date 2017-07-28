@@ -49,4 +49,62 @@
                      : "eax", "edx" );  \
 })
 
+#define OS_ipc_send_packet(pid, payload, len) ({ \
+    asm volatile (  "mov eax, 0x08;"    \
+                    "int 0x80;"         \
+                     :                  \
+                     : "c" (pid),        \
+                       "d" (payload),    \
+                       "D" (len)      \
+                     : "eax" );         \
+})
+
+#define OS_ipc_read_packet(payload) ({  \
+    int pid;                            \
+    asm volatile (  "mov eax, 0x09;"    \
+                    "int 0x80;"         \
+                     : "=a" (pid)         \
+                     : "c" (payload)    \
+                     : "edx" );         \
+    pid;                                \
+})
+
+#define OS_ipc_resolve_name(server_name) ({  \
+    int pid;                            \
+    asm volatile (  "mov eax, 0x0a;"    \
+                    "int 0x80;"         \
+                     : "=a" (pid)         \
+                     : "c" (server_name) \
+                     : "edx" );         \
+    pid;                                \
+})
+
+#define OS_ipc_payload_sender() ({      \
+    int c;                              \
+    asm volatile (  "mov eax, 0x0b;"    \
+                    "int 0x80;"         \
+                     : "=a" (c)         \
+                     :                  \
+                     : "edx" );         \
+    c;                                  \
+})
+
+#define OS_ipc_payload_length() ({      \
+    int c;                              \
+    asm volatile (  "mov eax, 0x0c;"    \
+                    "int 0x80;"         \
+                     : "=a" (c)         \
+                     :                  \
+                     : "edx" );         \
+    c;                                  \
+})
+
+#define OS_ipc_await() ({                \
+    asm volatile (  "mov eax, 0x0d;"    \
+                    "int 0x80;"         \
+                     :                  \
+                     :                    \
+                     :  );  \
+})
+
 #endif

@@ -17,7 +17,13 @@ extern free
 extern realloc
 extern char_to_stdout
 extern enter_iowait_status
+extern enter_ipcwait_status
 extern pwd
+extern ipc_send_packet
+extern ipc_read_packet
+extern ipc_resolve_name
+extern ipc_payload_sender
+extern ipc_payload_length
 
 section .data
 
@@ -30,12 +36,12 @@ routine_list:
         dd      0                       ; 0x05
         dd      0                       ; 0x06
         dd      0                       ; 0x07
-        dd      0                       ; 0x08
-        dd      0                       ; 0x09
-        dd      0                       ; 0x0a
-        dd      0                       ; 0x0b
-        dd      0                       ; 0x0c
-        dd      0                       ; 0x0d
+        dd      ipc_send_packet         ; 0x08
+        dd      ipc_read_packet         ; 0x09
+        dd      ipc_resolve_name        ; 0x0a
+        dd      ipc_payload_sender      ; 0x0b
+        dd      ipc_payload_length      ; 0x0c
+        dd      0 ;ipc_await              0x0d - dummy entry
         dd      0                       ; 0x0e
         dd      0                       ; 0x0f
         dd      alloc                   ; 0x10
@@ -148,6 +154,8 @@ syscall:
         ; special routines check
         cmp eax, 0x21
         je char_from_stdin
+        cmp eax, 0x0d
+        je ipc_await
         ; end special routines check
         push ebx
         push ecx
@@ -160,7 +168,9 @@ syscall:
         mov ds, bx
         mov es, bx
         mov ebx, 4
+        push edx
         mul ebx
+        pop edx
         push esi
         push edi
         push edx
@@ -195,4 +205,25 @@ char_from_stdin:
         mov fs, ax
         mov gs, ax
         call enter_iowait_status
+        call task_switch
+
+ipc_await:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        call enter_ipcwait_status
         call task_switch

@@ -48,6 +48,19 @@ int main(int argc, char** argv) {
 
         else if ((!strcmp("pcowsay",s_argv[0])) || (!strcmp("scowsay", s_argv[0])) || (!strcmp("tcowsay", s_argv[0])))
             cowsay_cmd(s_argv, s_argc);
+        
+        else if (!strcmp("div0", s_argv[0])) {
+            int a = 0;
+            a = a / 0;
+        }
+        
+        else if (!strcmp("send", s_argv[0])) {
+            char server[] = "server";
+            int pid = OS_ipc_resolve_name(server);
+            printf("%s's PID is: %d\n", server, pid);
+            printf("payload is: %s\n", s_argv[1]);
+            OS_ipc_send_packet(pid, s_argv[1], strlen(s_argv[1]) + 1);
+        }
 
         // return to prompt if no input
         else if (!input[0]) continue;

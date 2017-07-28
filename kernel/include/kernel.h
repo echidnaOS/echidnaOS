@@ -33,6 +33,7 @@
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
 #define KRN_STAT_IOWAIT_TASK    3
+#define KRN_STAT_IPCWAIT_TASK   4
 
 // prototypes
 
@@ -46,6 +47,7 @@ void tty_kxtoa(uint64_t x, uint8_t which_tty);
 int kstrcmp(char* dest, char* source);
 void kmemcpy(char* dest, char* source, uint32_t count);
 void kstrcpy(char* dest, char* source);
+uint32_t kstrlen(char* str);
 
 uint64_t power(uint64_t x, uint64_t y);
 void init_disk(uint8_t boot_drive);
@@ -57,6 +59,12 @@ void disk_read_seq(uint8_t* buffer, uint8_t drive, uint32_t loc, uint32_t count)
 
 void switch_tty(uint8_t which_tty);
 void init_tty(void);
+
+typedef struct {
+    int sender;
+    int length;
+    char* payload;
+} ipc_packet_t;
 
 typedef struct {
 
@@ -90,6 +98,9 @@ typedef struct {
     char pwd[2048];
     char name[128];
     char server_name[128];
+    
+    ipc_packet_t* ipc_queue;
+    int ipc_queue_ptr;
 
 } task_t;
 
@@ -156,6 +167,12 @@ void* kalloc(uint32_t size);
 void* krealloc(void* addr, uint32_t new_size);
 void kfree(void* addr);
 
+void ipc_send_packet(int pid, char* payload, int len);
+int ipc_read_packet(char* payload);
+int ipc_resolve_name(char* server_name);
+int ipc_payload_length(void);
+int ipc_payload_sender(void);
+
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
 void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_sector);
@@ -163,6 +180,7 @@ uint32_t detect_mem(void);
 
 void char_to_stdout(int c);
 void enter_iowait_status(void);
+void enter_ipcwait_status(void);
 
 void* alloc(uint32_t size);
 

@@ -1,6 +1,64 @@
 #include <stdint.h>
 #include <kernel.h>
 
+void ipc_send_packet(int pid, char* payload, int len) {
+    payload += task_table[current_task]->base;
+    task_table[pid]->ipc_queue = krealloc(task_table[pid]->ipc_queue, (task_table[pid]->ipc_queue_ptr + 1) * sizeof(ipc_packet_t));
+    
+    task_table[pid]->ipc_queue[task_table[pid]->ipc_queue_ptr].payload = kalloc(len);
+    kmemcpy(task_table[pid]->ipc_queue[task_table[pid]->ipc_queue_ptr].payload, payload, len);
+
+    task_table[pid]->ipc_queue[task_table[pid]->ipc_queue_ptr].length = len;
+    task_table[pid]->ipc_queue[task_table[pid]->ipc_queue_ptr++].sender = current_task;
+
+    if (task_table[pid]->status == KRN_STAT_IPCWAIT_TASK)
+        task_table[pid]->status = KRN_STAT_ACTIVE_TASK;
+
+    return;
+}
+
+int ipc_payload_length(void) {
+    if (task_table[current_task]->ipc_queue_ptr)
+        return task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].length;
+    else
+        return 0;
+}
+
+int ipc_payload_sender(void) {
+    if (task_table[current_task]->ipc_queue_ptr)
+        return task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].sender;
+    else
+        return 0;
+}
+
+int ipc_resolve_name(char* server_name) {
+    server_name += task_table[current_task]->base;
+    // find the server name's PID
+    int pid;
+    for (pid = 0; task_table[pid]; pid++)
+        if (!kstrcmp(server_name, task_table[pid]->server_name)) return pid;
+    return 0;
+}
+
+int ipc_read_packet(char* payload) {
+    if (!task_table[current_task]->ipc_queue_ptr) return 0;
+
+    payload += task_table[current_task]->base;
+
+    kmemcpy(payload,
+            task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].payload,
+            task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].length);
+            
+    kfree(task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].payload);
+
+    int pid = task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].sender;
+    
+    task_table[current_task]->ipc_queue = krealloc(task_table[current_task]->ipc_queue,
+                                          --task_table[current_task]->ipc_queue_ptr * sizeof(ipc_packet_t));
+    
+    return pid;
+}
+
 void* alloc(uint32_t size) {
     // search of a big enough, free, heap chunk
     heap_chunk_t* heap_chunk = (heap_chunk_t*)task_table[current_task]->heap_begin;
@@ -73,6 +131,11 @@ void char_to_stdout(int c) {
 
 void enter_iowait_status(void) {
     task_table[current_task]->status = KRN_STAT_IOWAIT_TASK;
+    return;
+}
+
+void enter_ipcwait_status(void) {
+    task_table[current_task]->status = KRN_STAT_IPCWAIT_TASK;
     return;
 }
 

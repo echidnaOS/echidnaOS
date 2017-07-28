@@ -30,6 +30,14 @@ int kstrcmp(char* dest, char* source) {
     return 1;
 }
 
+uint32_t kstrlen(char* str) {
+    uint32_t len;
+
+    for (len = 0; str[len]; len++);
+
+    return len;
+}
+
 void init_kalloc(void) {
     // creates the first memory chunk
     heap_chunk_t* root_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
@@ -79,6 +87,12 @@ void* kalloc(uint32_t size) {
 }
 
 void* krealloc(void* addr, uint32_t new_size) {
+    if (!addr) return kalloc(new_size);
+    if (!new_size) {
+        kfree(addr);
+        return (void*)0;
+    }
+
     uint32_t heap_chunk_ptr = (uint32_t)addr;
     
     heap_chunk_ptr -= sizeof(heap_chunk_t);

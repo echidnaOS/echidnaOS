@@ -1,3 +1,7 @@
+cpu: reset_on_triple_fault=0
+
+display_library: x, options="gui_debug"
+
 megs: 256
 
 clock: sync=realtime, time0=local

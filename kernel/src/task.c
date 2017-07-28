@@ -30,7 +30,8 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                0,0,0,
-                               "","",""};
+                               "","","",
+                               0,0};
 
 int task_start(task_info_t* task_info) {
     // start new task
@@ -173,6 +174,7 @@ void task_scheduler(void) {
                 set_segment(0x3, task_table[current_task]->base, task_table[current_task]->pages);
                 set_segment(0x4, task_table[current_task]->base, task_table[current_task]->pages);
                 task_spinup((void*)task_table[current_task]);
+            case KRN_STAT_IPCWAIT_TASK:
             case KRN_STAT_RES_TASK:
             default:
                 current_task++;

@@ -2,9 +2,8 @@
 #include <kernel.h>
 
 uint32_t memory_size;
-uint32_t memory_bottom = KRNL_MEMORY_BASE;
 
-void kernel_shell(void);
+void init_tasks(void);
 
 void kernel_init(uint8_t boot_drive) {
     task_t empty_task = {0};
@@ -50,8 +49,8 @@ void kernel_init(uint8_t boot_drive) {
     
     init_disk(boot_drive);
 
-    // launch the shells
-    kernel_shell();
+    // launch the tasks
+    init_tasks();
 	
     // start scheduler
     task_scheduler();

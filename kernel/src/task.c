@@ -30,7 +30,7 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,0,0,0,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                0,0,0,
-                               "",""};
+                               "","",""};
 
 int task_start(task_info_t* task_info) {
     // start new task
@@ -47,6 +47,7 @@ int task_start(task_info_t* task_info) {
     // correct pointers for kernel space
     char* pwd = task_info->pwd + task_table[current_task]->base;
     char* name = task_info->name + task_table[current_task]->base;
+    char* server_name = task_info->server_name + task_table[current_task]->base;
     
     // find an empty entry in the task table
     int new_task;
@@ -93,15 +94,17 @@ int task_start(task_info_t* task_info) {
     
     kstrcpy(task_table[new_task]->pwd, pwd);
     kstrcpy(task_table[new_task]->name, name);
+    kstrcpy(task_table[new_task]->server_name, server_name);
     
     // debug logging
     kputs("\n\nNew task startup request completed with:\n");
-    kputs("\npid:    "); kuitoa((uint32_t)new_task);
-    kputs("\nbase:   "); kxtoa(task_table[new_task]->base);
-    kputs("\npages:  "); kxtoa(task_table[new_task]->pages);
-    kputs("\ntty:    "); kuitoa((uint32_t)task_table[new_task]->tty);
-    kputs("\npwd:    "); kputs(task_table[new_task]->pwd);
-    kputs("\nname:   "); kputs(task_table[new_task]->name);
+    kputs("\npid:         "); kuitoa((uint32_t)new_task);
+    kputs("\nbase:        "); kxtoa(task_table[new_task]->base);
+    kputs("\npages:       "); kxtoa(task_table[new_task]->pages);
+    kputs("\ntty:         "); kuitoa((uint32_t)task_table[new_task]->tty);
+    kputs("\npwd:         "); kputs(task_table[new_task]->pwd);
+    kputs("\nname:        "); kputs(task_table[new_task]->name);
+    kputs("\nserver name: "); kputs(task_table[new_task]->server_name);
     
     return new_task;
 }

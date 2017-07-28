@@ -89,6 +89,7 @@ typedef struct {
     
     char pwd[2048];
     char name[128];
+    char server_name[128];
 
 } task_t;
 
@@ -103,6 +104,7 @@ typedef struct {
     uint32_t heap;
     char* pwd;
     char* name;
+    char* server_name;
 } task_info_t;
 
 int task_start(task_info_t* task_info);

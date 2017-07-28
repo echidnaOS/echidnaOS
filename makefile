@@ -1,4 +1,4 @@
-kernel/echidna.bin: target_libc ./shell/shell.bin
+kernel/echidna.bin: target_libc ./shell/shell.bin ./server/server.bin
 	cd kernel && make
 
 target_libc:
@@ -7,17 +7,22 @@ target_libc:
 ./shell/shell.bin:
 	cd shell && make
 
+./server/server.bin:
+	cd server && make
+
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils
 
 .PHONY: clean clean-all img all tools32 tools64 clean-tools packages
 
 clean:
+	cd server && make clean
 	cd shell && make clean
 	cd libc && make clean
 	cd kernel && make clean
 
 clean-all:
+	rm ./server/server.bin
 	rm ./shell/shell.bin
 	rm ./kernel/echidna.bin
 

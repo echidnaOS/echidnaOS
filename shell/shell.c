@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
         
         else if (!strcmp("send", s_argv[0])) {
             char server[] = "server";
-            int pid = OS_ipc_resolve_name(server);
+            uint32_t pid = OS_ipc_resolve_name(server);
             printf("%s's PID is: %d\n", server, pid);
             printf("payload is: %s\n", s_argv[1]);
             OS_ipc_send_packet(pid, s_argv[1], strlen(s_argv[1]) + 1);

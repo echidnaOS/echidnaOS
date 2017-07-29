@@ -1,10 +1,6 @@
 #include <kernel.h>
 #include <stdint.h>
 
-#define TASK_RESERVED_SPACE     0x10000
-#define PAGE_SIZE               4096
-#define EMPTY_PID               (task_t*)0xffffffff
-
 task_t** task_table;
 
 void task_init(void) {
@@ -20,7 +16,7 @@ void task_init(void) {
     return;
 }
 
-int current_task = 0;
+uint32_t current_task = 0;
 
 int idle_cpu = 1;
 
@@ -33,7 +29,7 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                "","","",
                                0,0};
 
-int task_start(task_info_t* task_info) {
+uint32_t task_start(task_info_t* task_info) {
     // start new task
     // returns 0 on failure, PID on success
 
@@ -51,7 +47,7 @@ int task_start(task_info_t* task_info) {
     char* server_name = task_info->server_name + task_table[current_task]->base;
     
     // find an empty entry in the task table
-    int new_task;
+    uint32_t new_task;
     for (new_task = 0; new_task < KRNL_MAX_TASKS; new_task++)
         if (!task_table[new_task]) break;
     if (new_task == KRNL_MAX_TASKS)

@@ -1,7 +1,22 @@
 #include <stdint.h>
 #include <kernel.h>
 
-void ipc_send_packet(int pid, char* payload, int len) {
+void ipc_send_packet(uint32_t pid, char* payload, uint32_t len) {
+    // check for a limit overflow
+    if (((uint32_t)payload + len) >= (task_table[current_task]->pages * PAGE_SIZE)) {
+        tty_kputs("\nIPC packet had a bogus length.", task_table[current_task]->tty);
+        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        task_terminate(current_task);
+        task_scheduler();
+    }
+    // check if the pid exists
+    if ((!task_table[pid]) || (task_table[pid] == EMPTY_PID)) {
+        tty_kputs("\nIPC packet targeted a non-existent PID.", task_table[current_task]->tty);
+        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        task_terminate(current_task);
+        task_scheduler();
+    }
+    
     payload += task_table[current_task]->base;
     task_table[pid]->ipc_queue = krealloc(task_table[pid]->ipc_queue, (task_table[pid]->ipc_queue_ptr + 1) * sizeof(ipc_packet_t));
     
@@ -17,42 +32,61 @@ void ipc_send_packet(int pid, char* payload, int len) {
     return;
 }
 
-int ipc_payload_length(void) {
+uint32_t ipc_payload_length(void) {
     if (task_table[current_task]->ipc_queue_ptr)
-        return task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].length;
+        return task_table[current_task]->ipc_queue[0].length;
     else
         return 0;
 }
 
-int ipc_payload_sender(void) {
+uint32_t ipc_payload_sender(void) {
     if (task_table[current_task]->ipc_queue_ptr)
-        return task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].sender;
+        return task_table[current_task]->ipc_queue[0].sender;
     else
         return 0;
 }
 
-int ipc_resolve_name(char* server_name) {
+uint32_t ipc_resolve_name(char* server_name) {
+    // check for a limit overflow
+    if (((uint32_t)server_name + kstrlen(server_name + task_table[current_task]->base)) >= (task_table[current_task]->pages * PAGE_SIZE)) {
+        tty_kputs("\nIPC server name resolve request had a bogus length.", task_table[current_task]->tty);
+        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        task_terminate(current_task);
+        task_scheduler();
+    }
     server_name += task_table[current_task]->base;
     // find the server name's PID
-    int pid;
-    for (pid = 0; task_table[pid]; pid++)
+    uint32_t pid;
+    for (pid = 0; task_table[pid]; pid++) {
+        if (task_table[pid] == EMPTY_PID) continue;
         if (!kstrcmp(server_name, task_table[pid]->server_name)) return pid;
+    }
     return 0;
 }
 
-int ipc_read_packet(char* payload) {
+uint32_t ipc_read_packet(char* payload) {
     if (!task_table[current_task]->ipc_queue_ptr) return 0;
+    // check for a limit overflow
+    if (((uint32_t)payload + task_table[current_task]->ipc_queue[0].length) >= (task_table[current_task]->pages * PAGE_SIZE)) {
+        tty_kputs("\nIPC payload length exceeds task limit.", task_table[current_task]->tty);
+        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        task_terminate(current_task);
+        task_scheduler();
+    }
 
     payload += task_table[current_task]->base;
 
-    kmemcpy(payload,
-            task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].payload,
-            task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].length);
+    kmemcpy(payload, task_table[current_task]->ipc_queue[0].payload, task_table[current_task]->ipc_queue[0].length);
             
-    kfree(task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].payload);
+    kfree(task_table[current_task]->ipc_queue[0].payload);
 
-    int pid = task_table[current_task]->ipc_queue[task_table[current_task]->ipc_queue_ptr-1].sender;
+    uint32_t pid = task_table[current_task]->ipc_queue[0].sender;
     
+    // push the queue back
+    for (uint32_t i = (task_table[current_task]->ipc_queue_ptr - 1); i; i--)
+        task_table[pid]->ipc_queue[i-1] = task_table[pid]->ipc_queue[i];
+    
+    // free queue entry
     task_table[current_task]->ipc_queue = krealloc(task_table[current_task]->ipc_queue,
                                           --task_table[current_task]->ipc_queue_ptr * sizeof(ipc_packet_t));
     
@@ -135,7 +169,8 @@ void enter_iowait_status(void) {
 }
 
 void enter_ipcwait_status(void) {
-    task_table[current_task]->status = KRN_STAT_IPCWAIT_TASK;
+    if (!task_table[current_task]->ipc_queue_ptr)
+        task_table[current_task]->status = KRN_STAT_IPCWAIT_TASK;
     return;
 }
 

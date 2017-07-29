@@ -5,6 +5,8 @@
 #ifndef __SYS_API_H__
 #define __SYS_API_H__
 
+#include <stdint.h>
+
 #define OS_alloc(value) ({              \
     void* addr;                         \
     asm volatile (  "mov eax, 0x10;"    \
@@ -60,7 +62,7 @@
 })
 
 #define OS_ipc_read_packet(payload) ({  \
-    int pid;                            \
+    uint32_t pid;                            \
     asm volatile (  "mov eax, 0x09;"    \
                     "int 0x80;"         \
                      : "=a" (pid)         \
@@ -70,33 +72,33 @@
 })
 
 #define OS_ipc_resolve_name(server_name) ({  \
-    int pid;                            \
+    uint32_t pid;                            \
     asm volatile (  "mov eax, 0x0a;"    \
                     "int 0x80;"         \
                      : "=a" (pid)         \
-                     : "c" (server_name) \
+                     : "c" (server_name)  \
                      : "edx" );         \
     pid;                                \
 })
 
 #define OS_ipc_payload_sender() ({      \
-    int c;                              \
+    uint32_t pid;                              \
     asm volatile (  "mov eax, 0x0b;"    \
                     "int 0x80;"         \
-                     : "=a" (c)         \
+                     : "=a" (pid)         \
                      :                  \
                      : "edx" );         \
-    c;                                  \
+    pid;                                  \
 })
 
 #define OS_ipc_payload_length() ({      \
-    int c;                              \
+    uint32_t pid;                              \
     asm volatile (  "mov eax, 0x0c;"    \
                     "int 0x80;"         \
-                     : "=a" (c)         \
+                     : "=a" (pid)         \
                      :                  \
                      : "edx" );         \
-    c;                                  \
+    pid;                                  \
 })
 
 #define OS_ipc_await() ({                \

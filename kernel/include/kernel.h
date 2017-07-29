@@ -35,6 +35,10 @@
 #define KRN_STAT_IOWAIT_TASK    3
 #define KRN_STAT_IPCWAIT_TASK   4
 
+#define EMPTY_PID               (task_t*)0xffffffff
+#define TASK_RESERVED_SPACE     0x10000
+#define PAGE_SIZE               4096
+
 // prototypes
 
 void kputs(const char* string);
@@ -61,15 +65,15 @@ void switch_tty(uint8_t which_tty);
 void init_tty(void);
 
 typedef struct {
-    int sender;
-    int length;
+    uint32_t sender;
+    uint32_t length;
     char* payload;
 } ipc_packet_t;
 
 typedef struct {
 
     int status;
-    int parent;
+    uint32_t parent;
     
     uint32_t base;
     uint32_t pages;
@@ -100,7 +104,7 @@ typedef struct {
     char server_name[128];
     
     ipc_packet_t* ipc_queue;
-    int ipc_queue_ptr;
+    uint32_t ipc_queue_ptr;
 
 } task_t;
 
@@ -118,7 +122,7 @@ typedef struct {
     char* server_name;
 } task_info_t;
 
-int task_start(task_info_t* task_info);
+uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);
 void task_terminate(int pid);
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r);
@@ -151,8 +155,7 @@ typedef struct {
 } tty_t;
 
 extern uint32_t memory_size;
-extern uint32_t memory_bottom;
-extern int current_task;
+extern uint32_t current_task;
 extern task_t** task_table;
 extern uint8_t current_tty;
 
@@ -167,11 +170,11 @@ void* kalloc(uint32_t size);
 void* krealloc(void* addr, uint32_t new_size);
 void kfree(void* addr);
 
-void ipc_send_packet(int pid, char* payload, int len);
-int ipc_read_packet(char* payload);
-int ipc_resolve_name(char* server_name);
-int ipc_payload_length(void);
-int ipc_payload_sender(void);
+void ipc_send_packet(uint32_t pid, char* payload, uint32_t len);
+uint32_t ipc_read_packet(char* payload);
+uint32_t ipc_resolve_name(char* server_name);
+uint32_t ipc_payload_length(void);
+uint32_t ipc_payload_sender(void);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);

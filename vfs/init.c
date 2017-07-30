@@ -4,5 +4,6 @@
 
 int main(int argc, char** argv) {
     printf("\nVFS running!\n");
-    for (;;);
+    for (;;)
+        OS_ipc_await();
 }

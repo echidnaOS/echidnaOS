@@ -5,7 +5,7 @@ uint32_t memory_size;
 
 void init_tasks(void);
 
-void kernel_init(uint8_t boot_drive) {
+void kernel_init(void) {
     task_t empty_task = {0};
 
     // setup the PIC's mask
@@ -45,9 +45,14 @@ void kernel_init(uint8_t boot_drive) {
     // print intro to tty0
     kputs("Welcome to echidnaOS!\n");
     
-    kputs("\n"); kuitoa(memory_size); kputs(" bytes ("); kuitoa(memory_size / 0x100000); kputs(" MiB) of memory detected.");
+    kputs("\n"); kuitoa(memory_size); kputs(" bytes ("); kuitoa(memory_size / 0x100000); kputs(" MiB) of memory detected.\n");
     
-    init_disk(boot_drive);
+    kputs("\nInitialising drivers...");
+    // ******* DRIVER INITIALISATION CALLS GO HERE *******
+    init_bios_harddisks();
+
+
+    // ******* END OF DRIVER INITIALISATION CALLS *******
 
     // launch the tasks
     init_tasks();

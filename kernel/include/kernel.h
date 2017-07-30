@@ -39,6 +39,14 @@
 #define TASK_RESERVED_SPACE     0x10000
 #define PAGE_SIZE               4096
 
+// driver inits
+
+void init_bios_harddisks(void);
+
+// end driver inits
+
+void kernel_add_device(char* name, uint32_t gp_value, uint8_t (*io_wrapper)(uint32_t, uint64_t, int, uint8_t));
+
 // prototypes
 
 void kputs(const char* string);
@@ -54,12 +62,6 @@ void kstrcpy(char* dest, char* source);
 uint32_t kstrlen(char* str);
 
 uint64_t power(uint64_t x, uint64_t y);
-void init_disk(uint8_t boot_drive);
-uint8_t disk_read_b(uint8_t drive, uint64_t loc);
-uint16_t disk_read_w(uint8_t drive, uint64_t loc);
-uint32_t disk_read_d(uint8_t drive, uint64_t loc);
-uint64_t disk_read_q(uint8_t drive, uint64_t loc);
-void disk_read_seq(uint8_t* buffer, uint8_t drive, uint32_t loc, uint32_t count);
 
 void switch_tty(uint8_t which_tty);
 void init_tty(void);

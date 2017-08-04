@@ -19,9 +19,9 @@ vfs_end:
 vfs_info:
     .addr       dd  vfs
     .size       dd  vfs_size
-    .stdin      dd  0
-    .stdout     dd  0
-    .stderr     dd  0
+    .stdin      dd  tty0
+    .stdout     dd  tty0
+    .stderr     dd  tty0
     .tty        dd  0
     .stack      dd  0x10000
     .heap       dd  0x100000
@@ -32,9 +32,9 @@ vfs_info:
 shell1_info:
     .addr       dd  shell
     .size       dd  shell_size
-    .stdin      dd  0
-    .stdout     dd  0
-    .stderr     dd  0
+    .stdin      dd  tty1
+    .stdout     dd  tty1
+    .stderr     dd  tty1
     .tty        dd  1
     .stack      dd  0x10000
     .heap       dd  0x100000
@@ -45,9 +45,9 @@ shell1_info:
 shell2_info:
     .addr       dd  shell
     .size       dd  shell_size
-    .stdin      dd  0
-    .stdout     dd  0
-    .stderr     dd  0
+    .stdin      dd  tty2
+    .stdout     dd  tty2
+    .stderr     dd  tty2
     .tty        dd  2
     .stack      dd  0x10000
     .heap       dd  0x100000
@@ -58,9 +58,9 @@ shell2_info:
 server_info:
     .addr       dd  server
     .size       dd  server_size
-    .stdin      dd  0
-    .stdout     dd  0
-    .stderr     dd  0
+    .stdin      dd  tty3
+    .stdout     dd  tty3
+    .stderr     dd  tty3
     .tty        dd  3
     .stack      dd  0x10000
     .heap       dd  0x100000
@@ -74,14 +74,16 @@ server_name db "server", 0
 vfs_name db "vfs", 0
 none db 0
 
+tty0 db '/dev/tty0', 0
+tty1 db '/dev/tty1', 0
+tty2 db '/dev/tty2', 0
+tty3 db '/dev/tty3', 0
+
 section .text
 
 bits 32
 
 init_tasks:
-    push vfs_info
-    call task_start
-    add esp, 4
     push shell1_info
     call task_start
     add esp, 4

@@ -35,6 +35,8 @@ img: echidnafs/echfs-utils
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format
+	echidnafs/echfs-utils echidna.img mkdir dev
+	echidnafs/echfs-utils echidna.img mkdir bin
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
 
 all:

@@ -30,6 +30,15 @@ int kstrcmp(char* dest, char* source) {
     return 1;
 }
 
+int kstrncmp(char* dest, char* source, uint32_t len) {
+    uint32_t i = 0;
+
+    for ( ; i < len; i++)
+        if (dest[i] != source[i]) return 1;
+
+    return 0;
+}
+
 uint32_t kstrlen(char* str) {
     uint32_t len;
 

@@ -1,12 +1,6 @@
 #include <stdint.h>
 #include <kernel.h>
 
-typedef struct {
-    char name[32];
-    uint32_t gp_value;
-    uint8_t (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
-} device_t;
-
 device_t* device_list;
 uint32_t device_ptr = 0;
 

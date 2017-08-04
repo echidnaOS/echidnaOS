@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+typedef struct {
+    char filename[2048];
+} vfs_metadata_t;
+
 #define OS_alloc(value) ({              \
     void* addr;                         \
     asm volatile (  "mov eax, 0x10;"    \
@@ -107,6 +111,18 @@
                      :                  \
                      :                    \
                      :  );  \
+})
+
+#define OS_vfs_list(path, metadata, entry) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x32;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (path),  \
+                       "d" (metadata), \
+                       "D" (entry) \
+                     :  );         \
+    return_val;                                \
 })
 
 #endif

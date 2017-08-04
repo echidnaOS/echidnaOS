@@ -44,6 +44,11 @@
 void init_bios_harddisks(void);
 
 // end driver inits
+// fs inits
+
+void install_devfs(void);
+
+// end fs inits
 
 void kernel_add_device(char* name, uint32_t gp_value, uint8_t (*io_wrapper)(uint32_t, uint64_t, int, uint8_t));
 
@@ -57,6 +62,7 @@ void kxtoa(uint64_t x);
 void tty_kxtoa(uint64_t x, uint8_t which_tty);
 
 int kstrcmp(char* dest, char* source);
+int kstrncmp(char* dest, char* source, uint32_t len);
 void kmemcpy(char* dest, char* source, uint32_t count);
 void kstrcpy(char* dest, char* source);
 uint32_t kstrlen(char* str);
@@ -105,6 +111,10 @@ typedef struct {
     char name[128];
     char server_name[128];
     
+    char stdin[2048];
+    char stdout[2048];
+    char stderr[2048];
+    
     ipc_packet_t* ipc_queue;
     uint32_t ipc_queue_ptr;
 
@@ -113,9 +123,9 @@ typedef struct {
 typedef struct {
     uint32_t addr;
     uint32_t size;
-    uint32_t stdin;
-    uint32_t stdout;
-    uint32_t stderr;
+    char* stdin;
+    char* stdout;
+    char* stderr;
     uint8_t tty;
     uint32_t stack;
     uint32_t heap;
@@ -123,6 +133,39 @@ typedef struct {
     char* name;
     char* server_name;
 } task_info_t;
+
+typedef struct {
+    char filename[2048];
+} vfs_metadata_t;
+
+typedef struct {
+    char name[128];
+    int (*read)(char* path, uint32_t loc);
+    int (*write)(char* path, uint8_t val, uint32_t loc);
+    int (*get_metadata)(char* path, vfs_metadata_t* metadata);
+    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry);
+} filesystem_t;
+
+typedef struct {
+    char mountpoint[2048];
+    char device[2048];
+    char filesystem[128];
+} mountpoint_t;
+
+typedef struct {
+    char name[32];
+    uint32_t gp_value;
+    uint8_t (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
+} device_t;
+
+int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
+
+int vfs_mount(char* mountpoint, char* device, char* filesystem);
+void vfs_install_fs(char* name,
+                    int (*read)(char* path, uint32_t loc),
+                    int (*write)(char* path, uint8_t val, uint32_t loc),
+                    int (*get_metadata)(char* path, vfs_metadata_t* metadata),
+                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry) );
 
 uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);
@@ -162,6 +205,9 @@ extern task_t** task_table;
 extern uint8_t current_tty;
 
 extern tty_t tty[KRNL_TTY_COUNT];
+
+extern device_t* device_list;
+extern uint32_t device_ptr;
 
 void panic(const char *msg);
 

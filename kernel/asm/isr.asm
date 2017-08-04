@@ -24,6 +24,7 @@ extern ipc_read_packet
 extern ipc_resolve_name
 extern ipc_payload_sender
 extern ipc_payload_length
+extern vfs_list
 
 section .data
 
@@ -62,6 +63,23 @@ routine_list:
         dd      0                       ; 0x1f
         dd      char_to_stdout          ; 0x20
         dd      0 ;char_from_stdin        0x21 - dummy entry
+        dd      0                       ; 0x22
+        dd      0                       ; 0x23
+        dd      0                       ; 0x24
+        dd      0                       ; 0x25
+        dd      0                       ; 0x26
+        dd      0                       ; 0x27
+        dd      0                       ; 0x28
+        dd      0                       ; 0x29
+        dd      0                       ; 0x2a
+        dd      0                       ; 0x2b
+        dd      0                       ; 0x2c
+        dd      0                       ; 0x2d
+        dd      0                       ; 0x2e
+        dd      0                       ; 0x2f
+        dd      0                       ; 0x30
+        dd      0                       ; 0x31
+        dd      vfs_list                ; 0x32
 
 section .text
 

@@ -18,6 +18,8 @@ int main(int argc, char** argv) {
     int s_argc;
     char* s_argv[128];
     char pwd[2048];
+    
+    vfs_metadata_t metadata = {0};
 
     puts(
         "\n"
@@ -52,6 +54,13 @@ int main(int argc, char** argv) {
         else if (!strcmp("div0", s_argv[0])) {
             int a = 0;
             a = a / 0;
+        }
+        
+        else if (!strcmp("ls", s_argv[0])) {
+            for (int i = 0; ; i++) {
+                if (OS_vfs_list(pwd, &metadata, i) == -2) break;
+                puts(metadata.filename);
+            }
         }
         
         else if (!strcmp("send", s_argv[0])) {

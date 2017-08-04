@@ -37,8 +37,8 @@ commands:
 
 Proceed by cloning the echidnaOS repo:
 
-    git clone https://github.com/echidnaOS/echidnaOS.git
-    cd echidnaOS
+    git clone https://github.com/echidnaOS/echidnaOS-mirror.git
+    cd echidnaOS-mirror
 
 Now let's build the cross toolchain:
 

@@ -27,6 +27,7 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                0,0,0,
                                "","","",
+                               "","","",
                                0,0};
 
 uint32_t task_start(task_info_t* task_info) {
@@ -45,6 +46,10 @@ uint32_t task_start(task_info_t* task_info) {
     char* pwd = task_info->pwd + task_table[current_task]->base;
     char* name = task_info->name + task_table[current_task]->base;
     char* server_name = task_info->server_name + task_table[current_task]->base;
+    
+    char* ptr_stdin = task_info->stdin + task_table[current_task]->base;
+    char* ptr_stdout = task_info->stdout + task_table[current_task]->base;
+    char* ptr_stderr = task_info->stderr + task_table[current_task]->base;
     
     // find an empty entry in the task table
     uint32_t new_task;
@@ -93,8 +98,12 @@ uint32_t task_start(task_info_t* task_info) {
     kstrcpy(task_table[new_task]->name, name);
     kstrcpy(task_table[new_task]->server_name, server_name);
     
+    kstrcpy(task_table[new_task]->stdin, ptr_stdin);
+    kstrcpy(task_table[new_task]->stdout, ptr_stdout);
+    kstrcpy(task_table[new_task]->stderr, ptr_stderr);
+    
     // debug logging
-    kputs("\n\nNew task startup request completed with:\n");
+    kputs("\nNew task startup request completed with:");
     kputs("\npid:         "); kuitoa((uint32_t)new_task);
     kputs("\nbase:        "); kxtoa(task_table[new_task]->base);
     kputs("\npages:       "); kxtoa(task_table[new_task]->pages);
@@ -102,6 +111,9 @@ uint32_t task_start(task_info_t* task_info) {
     kputs("\npwd:         "); kputs(task_table[new_task]->pwd);
     kputs("\nname:        "); kputs(task_table[new_task]->name);
     kputs("\nserver name: "); kputs(task_table[new_task]->server_name);
+    kputs("\nstdin:       "); kputs(task_table[new_task]->stdin);
+    kputs("\nstdout:      "); kputs(task_table[new_task]->stdout);
+    kputs("\nstderr:      "); kputs(task_table[new_task]->stderr);
     
     return new_task;
 }

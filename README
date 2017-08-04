@@ -15,14 +15,13 @@ even an SSD!
 
 - Requirements:
 
-git
 nasm
 gnu make
 qemu (for testing the image, non essential)
 
 !!!
 Building the cross compiler requires an environment capable of building
-GCC and Binutils.
+GCC and Binutils. (usually the packages gcc, g++, make, and bison)
 The "build-essential" package on Debian-like systems contains all
 necessary dependencies.
 !!!
@@ -33,12 +32,9 @@ You can install all the above packages on Ubuntu/Debian with the following
 commands:
 
     sudo apt-get update
-    sudo apt-get install git nasm build-essential qemu-system-x86
+    sudo apt-get install nasm build-essential qemu-system-x86
 
-Proceed by cloning the echidnaOS repo:
-
-    git clone https://github.com/echidnaOS/echidnaOS-mirror.git
-    cd echidnaOS-mirror
+Make sure you are in the root of the source tree.
 
 Now let's build the cross toolchain:
 

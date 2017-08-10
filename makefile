@@ -1,4 +1,4 @@
-kernel/echidna.bin: target_libc ./shell/shell.bin ./server/server.bin ./vfs/vfs.bin
+kernel/echidna.bin: target_libc ./shell/shell.bin ./server/server.bin
 	cd kernel && make
 
 target_libc:
@@ -10,23 +10,18 @@ target_libc:
 ./server/server.bin:
 	cd server && make
 
-./vfs/vfs.bin:
-	cd vfs && make
-
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils
 
 .PHONY: clean clean-all img all tools32 tools64 clean-tools packages
 
 clean:
-	cd vfs && make clean
 	cd server && make clean
 	cd shell && make clean
 	cd libc && make clean
 	cd kernel && make clean
 
 clean-all:
-	rm ./vfs/vfs.bin
 	rm ./server/server.bin
 	rm ./shell/shell.bin
 	rm ./kernel/echidna.bin

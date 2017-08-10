@@ -12,23 +12,6 @@ shell_end:
 server:                     incbin "../server/server.bin"
 server_end:
 
-%define vfs_size            vfs_end - vfs
-vfs:                        incbin "../vfs/vfs.bin"
-vfs_end:
-
-vfs_info:
-    .addr       dd  vfs
-    .size       dd  vfs_size
-    .stdin      dd  tty0
-    .stdout     dd  tty0
-    .stderr     dd  tty0
-    .tty        dd  0
-    .stack      dd  0x10000
-    .heap       dd  0x100000
-    .pwd        dd  pwd
-    .name       dd  vfs_name
-    .server_name    dd vfs_name
-
 shell1_info:
     .addr       dd  shell
     .size       dd  shell_size
@@ -71,10 +54,8 @@ server_info:
 pwd db "/", 0
 shell_name db "shell", 0
 server_name db "server", 0
-vfs_name db "vfs", 0
 none db 0
 
-tty0 db '/dev/tty0', 0
 tty1 db '/dev/tty1', 0
 tty2 db '/dev/tty2', 0
 tty3 db '/dev/tty3', 0

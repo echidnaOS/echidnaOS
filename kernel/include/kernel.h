@@ -47,6 +47,7 @@ void init_bios_harddisks(void);
 // fs inits
 
 void install_devfs(void);
+void install_echfs(void);
 
 // end fs inits
 
@@ -159,6 +160,8 @@ typedef struct {
 } device_t;
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
+int vfs_read(char* path, uint64_t loc);
+int vfs_kread(char* path, uint64_t loc);
 
 int vfs_mount(char* mountpoint, char* device, char* filesystem);
 void vfs_install_fs(char* name,

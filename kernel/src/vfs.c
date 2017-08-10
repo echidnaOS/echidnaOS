@@ -31,15 +31,19 @@ int vfs_translate_fs(int mountpoint) {
 }
 
 int vfs_read(char* path, uint64_t loc) {
-    char* local_path;
     path += task_table[current_task]->base;
+    return vfs_kread(path, loc);
+}
+
+int vfs_kread(char* path, uint64_t loc) {
+    char* local_path;
     
     if (!kstrncmp(path, ":://", 4)) {
     // read from dev directly
         path += 4;
         for (int i = 0; i < device_ptr; i++) {
-            if (!kstrcmp(path, device_list[device_ptr].name))
-                return (int)(*device_list[device_ptr].io_wrapper)(device_list[device_ptr].gp_value, loc, 0, 0);
+            if (!kstrcmp(path, device_list[i].name))
+                return (int)(*device_list[i].io_wrapper)(device_list[i].gp_value, loc, 0, 0);
         }
         return FAILURE;
     }

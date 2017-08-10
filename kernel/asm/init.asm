@@ -34,7 +34,7 @@ shell2_info:
     .tty        dd  2
     .stack      dd  0x10000
     .heap       dd  0x100000
-    .pwd        dd  pwd
+    .pwd        dd  pwd1
     .name       dd  shell_name
     .server_name    dd none
 
@@ -52,6 +52,7 @@ server_info:
     .server_name    dd server_name
 
 pwd db "/", 0
+pwd1 db "/dev", 0
 shell_name db "shell", 0
 server_name db "server", 0
 none db 0

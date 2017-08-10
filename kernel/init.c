@@ -54,11 +54,13 @@ void kernel_init(void) {
 
     // ******* END OF DRIVER INITIALISATION CALLS *******
     install_devfs();
+    install_echfs();
 
     // launch the tasks
     init_tasks();
     
-    vfs_mount("/", "devfs", "devfs");
+    vfs_mount("/", ":://bhda", "echfs");
+    vfs_mount("/dev", "devfs", "devfs");
 	
     // start scheduler
     task_scheduler();

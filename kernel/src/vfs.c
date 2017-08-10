@@ -30,10 +30,19 @@ int vfs_translate_fs(int mountpoint) {
     return FAILURE;
 }
 
-/*
 int vfs_read(char* path, uint64_t loc) {
     char* local_path;
     path += task_table[current_task]->base;
+    
+    if (!kstrncmp(path, ":://", 4)) {
+    // read from dev directly
+        path += 4;
+        for (int i = 0; i < device_ptr; i++) {
+            if (!kstrcmp(path, device_list[device_ptr].name))
+                return (int)(*device_list[device_ptr].io_wrapper)(device_list[device_ptr].gp_value, loc, 0, 0);
+        }
+        return FAILURE;
+    }
 
     int mountpoint = vfs_translate_mnt(path, &local_path);
     if (mountpoint == FAILURE) return FAILURE;
@@ -41,9 +50,8 @@ int vfs_read(char* path, uint64_t loc) {
     int filesystem = vfs_translate_fs(mountpoint);
     if (filesystem == FAILURE) return FAILURE;
 
-    return (*filesystems[filesystem].read)(local_path, loc, dev);
+    return (*filesystems[filesystem].read)(local_path, loc, mountpoints[mountpoint].device);
 }
-*/
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;

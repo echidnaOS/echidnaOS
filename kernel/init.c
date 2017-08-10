@@ -58,7 +58,6 @@ void kernel_init(void) {
     // launch the tasks
     init_tasks();
     
-    //vfs_mount("/", ":://bhda", "echfs");
     vfs_mount("/", "devfs", "devfs");
 	
     // start scheduler

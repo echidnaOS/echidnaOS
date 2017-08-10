@@ -30,7 +30,8 @@ int vfs_translate_fs(int mountpoint) {
     return FAILURE;
 }
 
-int vfs_read(char* path, uint32_t loc) {
+/*
+int vfs_read(char* path, uint64_t loc) {
     char* local_path;
     path += task_table[current_task]->base;
 
@@ -40,8 +41,9 @@ int vfs_read(char* path, uint32_t loc) {
     int filesystem = vfs_translate_fs(mountpoint);
     if (filesystem == FAILURE) return FAILURE;
 
-    return (*filesystems[filesystem].read)(local_path, loc);
+    return (*filesystems[filesystem].read)(local_path, loc, dev);
 }
+*/
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;
@@ -53,7 +55,7 @@ int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     int filesystem = vfs_translate_fs(mountpoint);
     if (filesystem == FAILURE) return FAILURE;
 
-    return (*filesystems[filesystem].list)(local_path, metadata, entry);
+    return (*filesystems[filesystem].list)(local_path, metadata, entry, mountpoints[mountpoint].device);
 }
 
 int vfs_mount(char* mountpoint, char* device, char* filesystem) {
@@ -71,10 +73,10 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
 }
 
 void vfs_install_fs(char* name,
-                    int (*read)(char* path, uint32_t loc),
-                    int (*write)(char* path, uint8_t val, uint32_t loc),
-                    int (*get_metadata)(char* path, vfs_metadata_t* metadata),
-                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry) ) {
+                    int (*read)(char* path, uint64_t loc, char* dev),
+                    int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
+                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev),
+                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));
     

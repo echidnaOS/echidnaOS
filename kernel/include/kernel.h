@@ -140,10 +140,10 @@ typedef struct {
 
 typedef struct {
     char name[128];
-    int (*read)(char* path, uint32_t loc);
-    int (*write)(char* path, uint8_t val, uint32_t loc);
-    int (*get_metadata)(char* path, vfs_metadata_t* metadata);
-    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry);
+    int (*read)(char* path, uint64_t loc, char* dev);
+    int (*write)(char* path, uint8_t val, uint64_t loc, char* dev);
+    int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev);
+    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev);
 } filesystem_t;
 
 typedef struct {
@@ -162,10 +162,10 @@ int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
 
 int vfs_mount(char* mountpoint, char* device, char* filesystem);
 void vfs_install_fs(char* name,
-                    int (*read)(char* path, uint32_t loc),
-                    int (*write)(char* path, uint8_t val, uint32_t loc),
-                    int (*get_metadata)(char* path, vfs_metadata_t* metadata),
-                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry) );
+                    int (*read)(char* path, uint64_t loc, char* dev),
+                    int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
+                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev),
+                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) );
 
 uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);

@@ -232,7 +232,8 @@ next:
         goto next;
     }
     
-    kstrcpy(metadata->filename + task_table[current_task]->base, rd_entry(ii).name);
+    kstrcpy(metadata->filename, rd_entry(ii).name);
+    metadata->filetype = rd_entry(ii).type;
     return SUCCESS;
             
 }

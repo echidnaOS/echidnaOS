@@ -6,7 +6,8 @@
 
 int devfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) {
     if (entry >= device_ptr) return FAILURE;
-    kstrcpy(metadata->filename + task_table[current_task]->base, device_list[entry].name);
+    kstrcpy(metadata->filename, device_list[entry].name);
+    metadata->filetype = FILE_TYPE;
     return SUCCESS;
 }
 

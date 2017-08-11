@@ -9,6 +9,7 @@
 
 typedef struct {
     char filename[2048];
+    int filetype;
 } vfs_metadata_t;
 
 #define OS_alloc(value) ({              \

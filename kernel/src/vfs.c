@@ -60,6 +60,8 @@ int vfs_kread(char* path, uint64_t loc) {
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;
     path += task_table[current_task]->base;
+    
+    metadata = (vfs_metadata_t*)((uint32_t)metadata + task_table[current_task]->base);
 
     int mountpoint = vfs_translate_mnt(path, &local_path);
     if (mountpoint == FAILURE) return FAILURE;

@@ -39,6 +39,9 @@
 #define TASK_RESERVED_SPACE     0x10000
 #define PAGE_SIZE               4096
 
+#define FILE_TYPE               0
+#define DIRECTORY_TYPE          1
+
 // driver inits
 
 void init_bios_harddisks(void);
@@ -137,6 +140,7 @@ typedef struct {
 
 typedef struct {
     char filename[2048];
+    int filetype;
 } vfs_metadata_t;
 
 typedef struct {

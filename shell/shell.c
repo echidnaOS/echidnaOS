@@ -57,8 +57,11 @@ int main(int argc, char** argv) {
         }
         
         else if (!strcmp("ls", s_argv[0])) {
+            char* ls_path;
+            if (s_argc == 1) ls_path = pwd;
+            else ls_path = s_argv[1];
             for (int i = 0; ; i++) {
-                if (OS_vfs_list(pwd, &metadata, i) == -2) break;
+                if (OS_vfs_list(ls_path, &metadata, i) == -2) break;
                 puts(metadata.filename);
             }
         }

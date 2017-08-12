@@ -30,6 +30,72 @@ int vfs_translate_fs(int mountpoint) {
     return FAILURE;
 }
 
+void vfs_get_absolute_path(char* path_ptr, char* path) {
+    // converts a relative path into an absolute one
+    char* orig_ptr = path_ptr;
+    
+    if (!*path) {
+        kstrcpy(path_ptr, task_table[current_task]->pwd);
+        return;
+    }
+    
+    if (*path != '/') {
+        kstrcpy(path_ptr, task_table[current_task]->pwd);
+        path_ptr += kstrlen(path_ptr);
+    } else {
+        *path_ptr = '/';
+        path_ptr++;
+        path++;
+    }
+    
+    goto first_run;
+    
+    for (;;) {
+        switch (*path) {
+            case '/':
+                path++;
+first_run:
+                if (*path == '/') continue;
+                if ((!kstrncmp(path, ".\0", 2))
+                ||  (!kstrncmp(path, "./\0", 3))) {
+                    goto term;
+                }
+                if ((!kstrncmp(path, "..\0", 3))
+                ||  (!kstrncmp(path, "../\0", 4))) {
+                    while (*path_ptr != '/') path_ptr--;
+                    if (path_ptr == orig_ptr) path_ptr++;
+                    goto term;
+                }
+                if (!kstrncmp(path, "../", 3)) {
+                    while (*path_ptr != '/') path_ptr--;
+                    if (path_ptr == orig_ptr) path_ptr++;
+                    path += 2;
+                    *path_ptr = 0;
+                    continue;
+                }
+                if (!kstrncmp(path, "./", 2)) {
+                    path += 1;
+                    continue;
+                }
+                if (((path_ptr-1) != orig_ptr) && (*(path_ptr-1) != '/')) {
+                    *path_ptr = '/';
+                    path_ptr++;
+                }
+                continue;
+            case '\0':
+term:
+                if ((*(path_ptr-1) == '/') && ((path_ptr-1) != orig_ptr)) path_ptr--;
+                *path_ptr = 0;
+                return;
+            default:
+                *path_ptr = *path;
+                path++;
+                path_ptr++;
+                continue;
+        }
+    }
+}
+
 int vfs_read(char* path, uint64_t loc) {
     path += task_table[current_task]->base;
     return vfs_kread(path, loc);
@@ -37,6 +103,7 @@ int vfs_read(char* path, uint64_t loc) {
 
 int vfs_kread(char* path, uint64_t loc) {
     char* local_path;
+    char absolute_path[2048];
     
     if (!kstrncmp(path, ":://", 4)) {
     // read from dev directly
@@ -47,8 +114,10 @@ int vfs_kread(char* path, uint64_t loc) {
         }
         return FAILURE;
     }
+    
+    vfs_get_absolute_path(absolute_path, path);
 
-    int mountpoint = vfs_translate_mnt(path, &local_path);
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
     if (mountpoint == FAILURE) return FAILURE;
 
     int filesystem = vfs_translate_fs(mountpoint);
@@ -59,11 +128,14 @@ int vfs_kread(char* path, uint64_t loc) {
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;
+    char absolute_path[2048];
     path += task_table[current_task]->base;
     
     metadata = (vfs_metadata_t*)((uint32_t)metadata + task_table[current_task]->base);
+    
+    vfs_get_absolute_path(absolute_path, path);
 
-    int mountpoint = vfs_translate_mnt(path, &local_path);
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
     if (mountpoint == FAILURE) return FAILURE;
 
     int filesystem = vfs_translate_fs(mountpoint);

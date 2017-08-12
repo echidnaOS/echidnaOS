@@ -127,11 +127,13 @@ int fstrncmp(uint64_t loc, const char* str, int len) {
 }
 
 uint64_t search(char* name, uint64_t parent, uint8_t type) {
+    entry_t entry;
     // returns unique entry #, SEARCH_FAILURE upon failure/not found
     for (uint64_t i = 0; ; i++) {
-        if (!rd_entry(i).parent_id) return SEARCH_FAILURE;              // check if past last entry
+        entry = rd_entry(i);
+        if (!entry.parent_id) return SEARCH_FAILURE;              // check if past last entry
         if (i >= (dirsize * ENTRIES_PER_BLOCK)) return SEARCH_FAILURE;  // check if past directory table
-        if ((rd_entry(i).parent_id == parent) && (rd_entry(i).type == type) && (!kstrcmp(rd_entry(i).name, name)))
+        if ((entry.parent_id == parent) && (entry.type == type) && (!kstrcmp(entry.name, name)))
             return i;
     }
 }
@@ -211,29 +213,34 @@ int echfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) 
     dirstart = fatstart + fatsize;
     datastart = RESERVED_BLOCKS + fatsize + dirsize;
     
+    entry_t read_entry;
+    path_result_t path_result;
+    
     uint64_t id;
     uint32_t ii = 0;
     
     if (!*path)
         id = ROOT_ID;
     else {
-        if (path_resolver(path, DIRECTORY_TYPE).not_found)
+        path_result = path_resolver(path, DIRECTORY_TYPE);
+        if (path_result.not_found)
             return FAILURE;
         else
-            id = path_resolver(path, DIRECTORY_TYPE).target.payload;
+            id = path_result.target.payload;
     }
     
     for (uint32_t i = 0; i <= entry; i++) {
 next:
-        if ((rd_entry(ii).parent_id == id) && (i == entry)) break;
-        else if (rd_entry(ii).parent_id == id) { ii++; continue; }
-        else if (!rd_entry(ii).parent_id) return FAILURE;
+        read_entry = rd_entry(ii);
+        if ((read_entry.parent_id == id) && (i == entry)) break;
+        else if (read_entry.parent_id == id) { ii++; continue; }
+        else if (!read_entry.parent_id) return FAILURE;
         ii++;
         goto next;
     }
     
-    kstrcpy(metadata->filename, rd_entry(ii).name);
-    metadata->filetype = rd_entry(ii).type;
+    kstrcpy(metadata->filename, read_entry.name);
+    metadata->filetype = read_entry.type;
     return SUCCESS;
             
 }

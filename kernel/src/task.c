@@ -193,6 +193,11 @@ void task_scheduler(void) {
 
 }
 
+void task_quit(uint64_t return_value) {
+    task_terminate(current_task);
+    task_scheduler();
+}
+
 void task_terminate(int pid) {
     kfree((void*)task_table[pid]->base);
     kfree((void*)task_table[pid]);

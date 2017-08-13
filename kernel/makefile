@@ -7,7 +7,7 @@ REAL_FILES = $(shell find ./blobs/ -type f -name '*.real')
 OBJ = $(C_FILES:.c=.o) $(ASM_FILES:.asm=.o)
 BINS = $(REAL_FILES:.real=.bin)
 
-CFLAGS = -std=gnu99 -ffreestanding -isystem ./include -masm=intel
+CFLAGS = -std=gnu99 -ffreestanding -isystem ./include -masm=intel -mpreferred-stack-boundary=2
 
 echidna.bin: ../shell/shell.bin $(BINS) $(OBJ) $(H_FILES)
 	$(CC) -T linker.ld -o echidna.bin -nostdlib $(OBJ) -static-libgcc -lgcc -Xlinker --oformat=binary

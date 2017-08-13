@@ -76,6 +76,8 @@ int main(int argc, char** argv) {
             printf("payload is: %s\n", s_argv[1]);
             OS_ipc_send_packet(pid, s_argv[1], strlen(s_argv[1]) + 1);
         }
+        
+        else if (!strcmp("exit", s_argv[0])) return 0;
 
         // return to prompt if no input
         else if (!input[0]) continue;

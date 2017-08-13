@@ -12,6 +12,7 @@ extern task_switch
 extern except_div0
 
 ; API calls
+extern task_quit
 extern alloc
 extern free
 extern realloc
@@ -29,7 +30,7 @@ extern vfs_list
 section .data
 
 routine_list:
-        dd      0                       ; 0x00
+        dd      task_quit               ; 0x00
         dd      0                       ; 0x01
         dd      0                       ; 0x02
         dd      0                       ; 0x03

@@ -65,6 +65,17 @@ typedef struct {
     int not_found;
 } path_result_t;
 
+typedef struct {
+    char path[2048];
+    path_result_t path_result;
+    uint64_t cached_block;
+    uint8_t cache[BYTES_PER_BLOCK];
+    int cache_status;
+} cached_file_t;
+
+cached_file_t* cached_files;
+int cached_files_ptr = 0;
+
 int find_device(char* dev) {
     int i;
 
@@ -306,8 +317,30 @@ int echfs_read(char* path, uint64_t loc, char* dev) {
     dirstart = mounts[dev_n].dirstart;
     datastart = mounts[dev_n].datastart;
     
-    path_result_t path_result = path_resolver(path, FILE_TYPE);
+    int cached_file;
     
+    path_result_t path_result;
+
+    if (!cached_files_ptr) goto skip_search;
+
+    for (cached_file = 0; kstrcmp(cached_files[cached_file].path, path); cached_file++)
+        if (cached_file == (cached_files_ptr - 1)) goto skip_search;
+        
+    path_result = cached_files[cached_file].path_result;
+    goto search_out;
+
+skip_search:
+
+    cached_files = krealloc(cached_files, sizeof(cached_file_t) * (cached_files_ptr+1));
+
+    kstrcpy(cached_files[cached_files_ptr].path, path);
+    cached_files[cached_files_ptr].path_result = path_resolver(path, FILE_TYPE);
+
+    path_result = cached_files[cached_file].path_result;
+    
+    cached_files_ptr++;
+
+search_out:
     if (path_result.not_found) return FAILURE;
     
     uint64_t cur_block;
@@ -315,13 +348,23 @@ int echfs_read(char* path, uint64_t loc, char* dev) {
     uint64_t offset = loc % BYTES_PER_BLOCK;
     uint64_t i;
     
+    if (cached_files[cached_file].cache_status &&
+       (cached_files[cached_file].cached_block == block))
+        return cached_files[cached_file].cache[offset];
+    
     cur_block = path_result.target.payload;
     for (i = 0; i < block; i++) {
         cur_block = rd_qword((fatstart * BYTES_PER_BLOCK) + (cur_block * sizeof(uint64_t)));
         if (cur_block == END_OF_CHAIN) return EOF;
     }
     
-    return rd_byte((cur_block * BYTES_PER_BLOCK) + offset);
+    // copy block in cache
+    cached_files[cached_file].cache_status = 1;
+    cached_files[cached_file].cached_block = block;
+    for (i = 0; i < BYTES_PER_BLOCK; i++)
+        cached_files[cached_file].cache[i] = rd_byte((cur_block * BYTES_PER_BLOCK) + i);
+    
+    return cached_files[cached_file].cache[offset];
 }
 
 int echfs_get_metadata(char* path, vfs_metadata_t* metadata, char* dev) { return 0; }

@@ -151,6 +151,9 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
     kstrcpy(mountpoints[mountpoints_ptr].device, device + task_table[current_task]->base);
     kstrcpy(mountpoints[mountpoints_ptr].filesystem, filesystem + task_table[current_task]->base);
     
+    int filesystem_n = vfs_translate_fs(mountpoints_ptr);
+    (*filesystems[filesystem_n].mount)(device);
+    
     kputs("\nMounted `"); kputs(mountpoints[mountpoints_ptr].device);
     kputs("' on `"); kputs(mountpoints[mountpoints_ptr].mountpoint);
     kputs("' using filesystem: "); kputs(mountpoints[mountpoints_ptr].filesystem);
@@ -162,7 +165,8 @@ void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev),
-                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) ) {
+                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
+                    int (*mount)(char* device) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));
     
@@ -171,6 +175,7 @@ void vfs_install_fs(char* name,
     filesystems[filesystems_ptr].write = write;
     filesystems[filesystems_ptr].get_metadata = get_metadata;
     filesystems[filesystems_ptr].list = list;
+    filesystems[filesystems_ptr].mount = mount;
     
     filesystems_ptr++;
     return;

@@ -152,6 +152,7 @@ typedef struct {
     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev);
     int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev);
     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev);
+    int (*mount)(char* device);
 } filesystem_t;
 
 typedef struct {
@@ -175,7 +176,8 @@ void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev),
-                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) );
+                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
+                    int (*mount)(char* device) );
 
 uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);

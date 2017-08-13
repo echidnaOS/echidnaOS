@@ -248,6 +248,8 @@ next:
 
 int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return 0; }
 
+int echfs_mount(char* device) { return 0; }
+
 int echfs_read(char* path, uint64_t loc, char* dev) {
     device = dev;
     blocks = rd_qword(12);
@@ -279,5 +281,5 @@ int echfs_read(char* path, uint64_t loc, char* dev) {
 int echfs_get_metadata(char* path, vfs_metadata_t* metadata, char* dev) { return 0; }
 
 void install_echfs(void) {
-    vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_get_metadata, &echfs_list);
+    vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_get_metadata, &echfs_list, &echfs_mount);
 }

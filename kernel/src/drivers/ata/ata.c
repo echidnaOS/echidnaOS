@@ -5,11 +5,6 @@
 #define DEVICE_COUNT 4
 #define BYTES_PER_SECT 512
 
-static int cache_status = 0;
-static char cached_drive;
-static uint32_t cached_sector;
-static uint8_t disk_cache[BYTES_PER_SECT];
-
 typedef struct {
     uint8_t master; // this is a boolean
     
@@ -26,6 +21,10 @@ typedef struct {
     uint8_t exists;
     
     uint16_t bytes_per_sector;
+    
+    uint8_t cache[BYTES_PER_SECT];
+    uint32_t cached_sector;
+    int cache_status;
 } ata_device;
 
 char* ata_names[] = {
@@ -46,7 +45,7 @@ ata_device ata_identify(ata_device dev);
 void ata_read(uint32_t disk, uint32_t sector, uint8_t* buffer);
 void ata_write(uint32_t disk, uint32_t sector, uint8_t* data);
 
-ata_device devices[4];
+ata_device devices[DEVICE_COUNT];
 
 uint8_t ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload) {
     if (type == 0)
@@ -60,15 +59,14 @@ uint8_t ata_read_byte(uint32_t drive, uint64_t loc) {
     uint64_t sect = loc / BYTES_PER_SECT;
     uint16_t offset = loc % BYTES_PER_SECT;
 
-    if ((sect == cached_sector) && (drive == cached_drive) && (cache_status))
-        return disk_cache[offset];
+    if (((uint32_t)sect == devices[drive].cached_sector) && (devices[drive].cache_status))
+        return devices[drive].cache[offset];
 
-    ata_read(drive, sect, disk_cache);
-    cached_drive = drive;
-    cached_sector = sect;
-    cache_status = 1;
+    ata_read(drive, (uint32_t)sect, devices[drive].cache);
+    devices[drive].cached_sector = (uint32_t)sect;
+    devices[drive].cache_status = 1;
     
-    return disk_cache[offset];
+    return devices[drive].cache[offset];
 }
 
 void init_ata(void) {
@@ -88,12 +86,16 @@ void get_ata_devices(void) {
     
     devices[0] = init_ata_device(0x1F0, 1);
     devices[0] = ata_identify(devices[0]);
+    devices[0].cache_status = 0;
     devices[1] = init_ata_device(0x1F0, 0);
     devices[1] = ata_identify(devices[1]);
+    devices[1].cache_status = 0;
     devices[2] = init_ata_device(0x170, 1);
     devices[2] = ata_identify(devices[2]);
+    devices[2].cache_status = 0;
     devices[3] = init_ata_device(0x170, 0);
     devices[3] = ata_identify(devices[3]);
+    devices[3].cache_status = 0;
     
     return;
 }

@@ -18,13 +18,25 @@
 #define SUCCESS 0
 
 char* device;
-uint64_t imgsize;
 uint64_t blocks;
 uint64_t fatsize;
 uint64_t fatstart;
 uint64_t dirsize;
 uint64_t dirstart;
 uint64_t datastart;
+
+typedef struct {
+    char name[128];
+    uint64_t blocks;
+    uint64_t fatsize;
+    uint64_t fatstart;
+    uint64_t dirsize;
+    uint64_t dirstart;
+    uint64_t datastart;
+} mount_t;
+
+mount_t* mounts;
+int mounts_ptr = 0;
 
 typedef struct {
     uint64_t parent_id;
@@ -248,17 +260,50 @@ next:
 
 int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return 0; }
 
-int echfs_mount(char* device) { return 0; }
+int echfs_mount(char* dev) {
+    mounts = krealloc(mounts, sizeof(mount_t) * (mounts_ptr+1));
+
+    kstrcpy(mounts[mounts_ptr].name, dev);
+    device = dev;
+    mounts[mounts_ptr].blocks = rd_qword(12);
+    mounts[mounts_ptr].fatsize = (mounts[mounts_ptr].blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
+    if ((mounts[mounts_ptr].blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) mounts[mounts_ptr].fatsize++;
+    mounts[mounts_ptr].fatstart = RESERVED_BLOCKS;
+    mounts[mounts_ptr].dirsize = rd_qword(20);
+    mounts[mounts_ptr].dirstart = mounts[mounts_ptr].fatstart + mounts[mounts_ptr].fatsize;
+    mounts[mounts_ptr].datastart = RESERVED_BLOCKS + mounts[mounts_ptr].fatsize + mounts[mounts_ptr].dirsize;
+    
+    kputs("\nmounted with:");
+    kputs("\nblocks:        "); kxtoa(mounts[mounts_ptr].blocks);
+    kputs("\nfatsize:       "); kxtoa(mounts[mounts_ptr].fatsize);
+    kputs("\nfatstart:      "); kxtoa(mounts[mounts_ptr].fatstart);
+    kputs("\ndirsize:       "); kxtoa(mounts[mounts_ptr].dirsize);
+    kputs("\ndirstart:      "); kxtoa(mounts[mounts_ptr].dirstart);
+    kputs("\ndatastart:     "); kxtoa(mounts[mounts_ptr].datastart);
+    
+    mounts_ptr++;
+
+    return SUCCESS;
+}
+
+int find_device(char* dev) {
+    int i;
+
+    for (i = 0; kstrcmp(mounts[i].name, dev); i++);
+    
+    return i;
+}
 
 int echfs_read(char* path, uint64_t loc, char* dev) {
+    int dev_n = find_device(dev);
+
     device = dev;
-    blocks = rd_qword(12);
-    fatsize = (blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
-    if ((blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) fatsize++;
-    fatstart = RESERVED_BLOCKS;
-    dirsize = rd_qword(20);
-    dirstart = fatstart + fatsize;
-    datastart = RESERVED_BLOCKS + fatsize + dirsize;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
     
     path_result_t path_result = path_resolver(path, FILE_TYPE);
     

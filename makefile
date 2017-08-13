@@ -32,7 +32,9 @@ img: echidnafs/echfs-utils
 	echidnafs/echfs-utils echidna.img format
 	echidnafs/echfs-utils echidna.img mkdir dev
 	echidnafs/echfs-utils echidna.img mkdir bin
+	echidnafs/echfs-utils echidna.img mkdir docs
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
+	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
 
 all:
 	make

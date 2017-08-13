@@ -14,6 +14,7 @@
 #define END_OF_CHAIN            0xffffffffffffffff
 
 #define FAILURE -2
+#define EOF -1
 #define SUCCESS 0
 
 char* device;
@@ -246,7 +247,35 @@ next:
 }
 
 int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return 0; }
-int echfs_read(char* path, uint64_t loc, char* dev) { return 0; }
+
+int echfs_read(char* path, uint64_t loc, char* dev) {
+    device = dev;
+    blocks = rd_qword(12);
+    fatsize = (blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
+    if ((blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) fatsize++;
+    fatstart = RESERVED_BLOCKS;
+    dirsize = rd_qword(20);
+    dirstart = fatstart + fatsize;
+    datastart = RESERVED_BLOCKS + fatsize + dirsize;
+    
+    path_result_t path_result = path_resolver(path, FILE_TYPE);
+    
+    if (path_result.not_found) return FAILURE;
+    
+    uint64_t cur_block;
+    uint64_t block = loc / BYTES_PER_BLOCK;
+    uint64_t offset = loc % BYTES_PER_BLOCK;
+    uint64_t i;
+    
+    cur_block = path_result.target.payload;
+    for (i = 0; i < block; i++) {
+        cur_block = rd_qword((fatstart * BYTES_PER_BLOCK) + (cur_block * sizeof(uint64_t)));
+        if (cur_block == END_OF_CHAIN) return EOF;
+    }
+    
+    return rd_byte((cur_block * BYTES_PER_BLOCK) + offset);
+}
+
 int echfs_get_metadata(char* path, vfs_metadata_t* metadata, char* dev) { return 0; }
 
 void install_echfs(void) {

@@ -19,6 +19,9 @@ int main(int argc, char** argv) {
     char* s_argv[128];
     char pwd[2048];
     
+    int c;
+    uint64_t i;
+    
     vfs_metadata_t metadata = {0};
 
     puts(
@@ -78,6 +81,14 @@ int main(int argc, char** argv) {
         }
         
         else if (!strcmp("exit", s_argv[0])) return 0;
+        
+        else if (!strcmp("dump", s_argv[0])) {
+            if (s_argc == 1) continue;
+            for (i = 0; ((c = OS_vfs_read(s_argv[1], i)) != -1); i++) {
+                if (c == -2) break;
+                putchar(c);
+            }
+        }
 
         // return to prompt if no input
         else if (!input[0]) continue;

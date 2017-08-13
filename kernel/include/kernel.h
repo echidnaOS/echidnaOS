@@ -45,6 +45,7 @@
 // driver inits
 
 void init_bios_harddisks(void);
+void init_ata(void);
 
 // end driver inits
 // fs inits
@@ -60,6 +61,8 @@ void kernel_add_device(char* name, uint32_t gp_value, uint8_t (*io_wrapper)(uint
 
 void kputs(const char* string);
 void tty_kputs(const char* string, uint8_t which_tty);
+void knputs(const char* string, uint32_t count);
+void tty_knputs(const char* string, uint32_t count, uint8_t which_tty);
 void kuitoa(uint64_t x);
 void tty_kuitoa(uint64_t x, uint8_t which_tty);
 void kxtoa(uint64_t x);

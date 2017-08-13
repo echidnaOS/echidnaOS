@@ -168,6 +168,19 @@ void tty_kputs(const char* string, uint8_t which_tty) {
     return;
 }
 
+void knputs(const char* string, uint32_t count) {
+    tty_knputs(string, count, 0);
+    
+    return;
+}
+
+void tty_knputs(const char* string, uint32_t count, uint8_t which_tty) {
+    uint32_t i;
+    for (i = 0; i < count; i++)
+        text_putchar(string[i], which_tty);
+    return;
+}
+
 void kuitoa(uint64_t x) {
     tty_kuitoa(x, 0);
 

@@ -49,7 +49,8 @@ void kernel_init(void) {
     
     kputs("\nInitialising drivers...");
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
-    init_bios_harddisks();
+    //init_bios_harddisks();
+    init_ata();
 
 
     // ******* END OF DRIVER INITIALISATION CALLS *******
@@ -59,7 +60,7 @@ void kernel_init(void) {
     // launch the tasks
     init_tasks();
     
-    vfs_mount("/", ":://bhda", "echfs");
+    vfs_mount("/", ":://hda", "echfs");
     vfs_mount("/dev", "devfs", "devfs");
 	
     // start scheduler

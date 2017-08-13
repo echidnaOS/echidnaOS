@@ -336,8 +336,9 @@ skip_search:
     kstrcpy(cached_files[cached_files_ptr].path, path);
     cached_files[cached_files_ptr].path_result = path_resolver(path, FILE_TYPE);
 
-    path_result = cached_files[cached_file].path_result;
+    path_result = cached_files[cached_files_ptr].path_result;
     
+    cached_file = cached_files_ptr;
     cached_files_ptr++;
 
 search_out:

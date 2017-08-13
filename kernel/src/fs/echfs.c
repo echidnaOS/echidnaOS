@@ -65,6 +65,14 @@ typedef struct {
     int not_found;
 } path_result_t;
 
+int find_device(char* dev) {
+    int i;
+
+    for (i = 0; kstrcmp(mounts[i].name, dev); i++);
+    
+    return i;
+}
+
 uint8_t rd_byte(uint64_t loc) {
     return (uint8_t)vfs_kread(device, loc);
 }
@@ -217,14 +225,15 @@ next:
 }
 
 int echfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) {
+    int dev_n = find_device(dev);
+
     device = dev;
-    blocks = rd_qword(12);
-    fatsize = (blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
-    if ((blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) fatsize++;
-    fatstart = RESERVED_BLOCKS;
-    dirsize = rd_qword(20);
-    dirstart = fatstart + fatsize;
-    datastart = RESERVED_BLOCKS + fatsize + dirsize;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
     
     entry_t read_entry;
     path_result_t path_result;
@@ -284,14 +293,6 @@ int echfs_mount(char* dev) {
     mounts_ptr++;
 
     return SUCCESS;
-}
-
-int find_device(char* dev) {
-    int i;
-
-    for (i = 0; kstrcmp(mounts[i].name, dev); i++);
-    
-    return i;
 }
 
 int echfs_read(char* path, uint64_t loc, char* dev) {

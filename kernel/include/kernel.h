@@ -170,6 +170,7 @@ typedef struct {
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
 int vfs_read(char* path, uint64_t loc);
 int vfs_kread(char* path, uint64_t loc);
+int vfs_cd(char* path);
 
 int vfs_mount(char* mountpoint, char* device, char* filesystem);
 void vfs_install_fs(char* name,

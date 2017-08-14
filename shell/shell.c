@@ -89,6 +89,11 @@ int main(int argc, char** argv) {
                 putchar(c);
             }
         }
+        
+        else if (!strcmp("cd", s_argv[0])) {
+            if (s_argc == 1) continue;
+            OS_vfs_cd(s_argv[1]);
+        }
 
         // return to prompt if no input
         else if (!input[0]) continue;

@@ -140,4 +140,14 @@ typedef struct {
     return_val;                                \
 })
 
+#define OS_vfs_cd(path) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x2f;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)      \
+                     : "c" (path)  \
+                     : "edx" );         \
+    return_val;                                \
+})
+
 #endif

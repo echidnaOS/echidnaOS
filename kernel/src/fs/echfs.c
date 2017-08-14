@@ -71,6 +71,7 @@ typedef struct {
     uint64_t cached_block;
     uint8_t cache[BYTES_PER_BLOCK];
     int cache_status;
+    uint64_t* alloc_map;
 } cached_file_t;
 
 cached_file_t* cached_files;
@@ -307,6 +308,8 @@ int echfs_mount(char* dev) {
 }
 
 int echfs_read(char* path, uint64_t loc, char* dev) {
+    uint64_t i;
+    
     int dev_n = find_device(dev);
 
     device = dev;
@@ -339,31 +342,34 @@ skip_search:
     path_result = cached_files[cached_files_ptr].path_result;
     
     cached_file = cached_files_ptr;
+    
+    // cache the allocation map
+    cached_files[cached_file].alloc_map = kalloc(sizeof(uint64_t));
+    cached_files[cached_file].alloc_map[0] = path_result.target.payload;
+    for (i = 1; cached_files[cached_file].alloc_map[i-1] != END_OF_CHAIN; i++) {
+        cached_files[cached_file].alloc_map = krealloc(cached_files[cached_file].alloc_map, sizeof(uint64_t) * (i+1));
+        cached_files[cached_file].alloc_map[i] = rd_qword((fatstart * BYTES_PER_BLOCK) + (cached_files[cached_file].alloc_map[i-1] * sizeof(uint64_t)));
+    }
+    
     cached_files_ptr++;
 
 search_out:
     if (path_result.not_found) return FAILURE;
     
-    uint64_t cur_block;
+    if (loc >= path_result.target.size) return EOF;
+    
     uint64_t block = loc / BYTES_PER_BLOCK;
     uint64_t offset = loc % BYTES_PER_BLOCK;
-    uint64_t i;
     
     if (cached_files[cached_file].cache_status &&
        (cached_files[cached_file].cached_block == block))
         return cached_files[cached_file].cache[offset];
     
-    cur_block = path_result.target.payload;
-    for (i = 0; i < block; i++) {
-        cur_block = rd_qword((fatstart * BYTES_PER_BLOCK) + (cur_block * sizeof(uint64_t)));
-        if (cur_block == END_OF_CHAIN) return EOF;
-    }
-    
     // copy block in cache
     cached_files[cached_file].cache_status = 1;
     cached_files[cached_file].cached_block = block;
     for (i = 0; i < BYTES_PER_BLOCK; i++)
-        cached_files[cached_file].cache[i] = rd_byte((cur_block * BYTES_PER_BLOCK) + i);
+        cached_files[cached_file].cache[i] = rd_byte((cached_files[cached_file].alloc_map[block] * BYTES_PER_BLOCK) + i);
     
     return cached_files[cached_file].cache[offset];
 }

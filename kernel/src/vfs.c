@@ -96,6 +96,17 @@ term:
     }
 }
 
+int vfs_cd(char* path) {
+    path += task_table[current_task]->base;
+    char absolute_path[2048];
+    
+    vfs_get_absolute_path(absolute_path, path);
+
+    kstrcpy(task_table[current_task]->pwd, absolute_path);
+
+    return SUCCESS;
+}
+
 int vfs_read(char* path, uint64_t loc) {
     path += task_table[current_task]->base;
     return vfs_kread(path, loc);

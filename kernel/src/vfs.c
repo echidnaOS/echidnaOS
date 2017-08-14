@@ -13,13 +13,18 @@ int filesystems_ptr = 0;
 int vfs_translate_mnt(char* path, char** local_path) {
     int guess = FAILURE;
     int guess_size = 0;
-    for (int i = 0; i < mountpoints_ptr; i++)
-        if (!kstrncmp(path, mountpoints[i].mountpoint, kstrlen(mountpoints[i].mountpoint)))
-            if (kstrlen(mountpoints[i].mountpoint) > guess_size) {
+    for (int i = 0; i < mountpoints_ptr; i++) {
+        uint32_t mountpoint_len = kstrlen(mountpoints[i].mountpoint);
+        if (!kstrncmp(path, mountpoints[i].mountpoint, mountpoint_len))
+            if ( (((path[mountpoint_len] == '/') || (path[mountpoint_len] == '\0'))
+                 || (!kstrcmp(mountpoints[i].mountpoint, "/")))
+               && (mountpoint_len > guess_size)) {
                 guess = i;
-                guess_size = kstrlen(mountpoints[i].mountpoint);
+                guess_size = mountpoint_len;
             }
+    }
     *local_path = path + guess_size;
+    if (**local_path == '/') *local_path++;
     return guess;
 }
 

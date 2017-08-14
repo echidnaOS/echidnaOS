@@ -266,6 +266,7 @@ int echfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) 
     for (uint32_t i = 0; i <= entry; i++) {
 next:
         read_entry = rd_entry(ii);
+        if ((!kstrcmp(read_entry.name, ".")) || (!kstrcmp(read_entry.name, ".."))) { ii++; goto next; }
         if ((read_entry.parent_id == id) && (i == entry)) break;
         else if (read_entry.parent_id == id) { ii++; continue; }
         else if (!read_entry.parent_id) return FAILURE;

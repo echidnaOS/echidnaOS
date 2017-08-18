@@ -44,7 +44,6 @@
 
 // driver inits
 
-void init_bios_harddisks(void);
 void init_ata(void);
 
 // end driver inits
@@ -55,7 +54,7 @@ void install_echfs(void);
 
 // end fs inits
 
-void kernel_add_device(char* name, uint32_t gp_value, uint8_t (*io_wrapper)(uint32_t, uint64_t, int, uint8_t));
+void kernel_add_device(char* name, uint32_t gp_value, int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t));
 
 // prototypes
 
@@ -164,7 +163,7 @@ typedef struct {
 typedef struct {
     char name[32];
     uint32_t gp_value;
-    uint8_t (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
+    int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
 } device_t;
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
@@ -239,7 +238,6 @@ uint32_t ipc_payload_sender(void);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
-void disk_load_sector(uint8_t drive, uint8_t* target_address, uint64_t source_sector);
 uint32_t detect_mem(void);
 
 void char_to_stdout(int c);

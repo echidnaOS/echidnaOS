@@ -49,13 +49,18 @@ void kernel_init(void) {
     
     kputs("\nInitialising drivers...");
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
-    //init_bios_harddisks();
     init_ata();
 
 
     // ******* END OF DRIVER INITIALISATION CALLS *******
+    
+    kputs("\nInitialising file systems...");
+    // ******* FILE SYSTEM INSTALLATION CALLS *******
     install_devfs();
     install_echfs();
+    
+    
+    // ******* END OF FILE SYSTEM INSTALLATION CALLS *******
 
     // launch the tasks
     init_tasks();

@@ -47,8 +47,8 @@ char* ata_names[] = {
 uint16_t ata_ports[] = { 0x1f0, 0x1f0, 0x170, 0x170 };
 int max_ports = 4;
 
-uint8_t ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload);
-uint8_t ata_read_byte(uint32_t drive, uint64_t loc);
+int ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload);
+int ata_read_byte(uint32_t drive, uint64_t loc);
 ata_device init_ata_device(uint16_t port_base, uint8_t master);
 void ata_identify(ata_device* dev);
 int ata_read28(uint32_t disk, uint32_t sector, uint8_t* buffer);
@@ -57,7 +57,7 @@ void ata_write(uint32_t disk, uint32_t sector, uint8_t* data);
 
 ata_device devices[DEVICE_COUNT];
 
-uint8_t ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload) {
+int ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload) {
     if (type == 0)
         return ata_read_byte(disk, loc);
     else if (type == 1) {
@@ -65,19 +65,22 @@ uint8_t ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload) {
     }
 }
 
-uint8_t ata_read_byte(uint32_t drive, uint64_t loc) {
+int ata_read_byte(uint32_t drive, uint64_t loc) {
     uint64_t sect = loc / BYTES_PER_SECT;
     uint16_t offset = loc % BYTES_PER_SECT;
 
     if ((sect == devices[drive].cached_sector) && (devices[drive].cache_status))
         return devices[drive].cache[offset];
 
-    if (sect >= devices[drive].sector_count) return 0; // should be EOF (oopsie, return type should've been int)
+    if (sect >= devices[drive].sector_count) return EOF;
     
+    int ret;
     if (sect <= 0x0fffffff)
-        ata_read28(drive, (uint32_t)sect, devices[drive].cache);
+        ret = ata_read28(drive, (uint32_t)sect, devices[drive].cache);
     else
-        ata_read48(drive, sect, devices[drive].cache);
+        ret = ata_read48(drive, sect, devices[drive].cache);
+    
+    if (ret == FAILURE) return FAILURE;
     
     devices[drive].cached_sector = sect;
     devices[drive].cache_status = 1;

@@ -27,6 +27,7 @@ extern ipc_payload_sender
 extern ipc_payload_length
 extern vfs_cd
 extern vfs_read
+extern vfs_write
 extern vfs_list
 
 section .data
@@ -81,7 +82,7 @@ routine_list:
         dd      0                       ; 0x2e
         dd      vfs_cd                  ; 0x2f
         dd      vfs_read                ; 0x30
-        dd      0                       ; 0x31
+        dd      vfs_write               ; 0x31
         dd      vfs_list                ; 0x32
 
 section .text

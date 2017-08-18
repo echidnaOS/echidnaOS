@@ -140,6 +140,21 @@ typedef struct {
     return_val;                                \
 })
 
+#define OS_vfs_write(path, loc, val) ({  \
+    int return_val;                            \
+    uint32_t loc_low = loc & 0x00000000ffffffff; \
+    uint32_t loc_high = loc / 0x100000000; \
+    asm volatile (  "mov eax, 0x31;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (path),  \
+                       "d" (loc_low), \
+                       "D" (loc_high), \
+                       "S" (val) \
+                     :  );         \
+    return_val;                                \
+})
+
 #define OS_vfs_cd(path) ({  \
     int return_val;                            \
     asm volatile (  "mov eax, 0x2f;"    \

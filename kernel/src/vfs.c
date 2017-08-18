@@ -142,6 +142,36 @@ int vfs_kread(char* path, uint64_t loc) {
     return (*filesystems[filesystem].read)(local_path, loc, mountpoints[mountpoint].device);
 }
 
+int vfs_write(char* path, uint64_t loc, uint8_t val) {
+    path += task_table[current_task]->base;
+    return vfs_kwrite(path, loc, val);
+}
+
+int vfs_kwrite(char* path, uint64_t loc, uint8_t val) {
+    char* local_path;
+    char absolute_path[2048];
+    
+    if (!kstrncmp(path, ":://", 4)) {
+    // write to dev directly
+        path += 4;
+        for (int i = 0; i < device_ptr; i++) {
+            if (!kstrcmp(path, device_list[i].name))
+                return (int)(*device_list[i].io_wrapper)(device_list[i].gp_value, loc, 1, val);
+        }
+        return FAILURE;
+    }
+    
+    vfs_get_absolute_path(absolute_path, path);
+
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
+    if (mountpoint == FAILURE) return FAILURE;
+
+    int filesystem = vfs_translate_fs(mountpoint);
+    if (filesystem == FAILURE) return FAILURE;
+
+    return (*filesystems[filesystem].write)(local_path, val, loc, mountpoints[mountpoint].device);
+}
+
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;
     char absolute_path[2048];

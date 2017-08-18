@@ -50,6 +50,7 @@ void kernel_init(void) {
     kputs("\nInitialising drivers...");
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
     init_ata();
+    init_pcspk();
 
 
     // ******* END OF DRIVER INITIALISATION CALLS *******

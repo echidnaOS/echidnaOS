@@ -46,6 +46,7 @@
 
 void init_ata(void);
 void init_pcspk(void);
+void init_tty_drv(void);
 
 // end driver inits
 // fs inits

@@ -80,6 +80,7 @@ void init_ata(void) {
     int ii = 0;
     int master = 1;
     for (int i = 0; i < DEVICE_COUNT; i++) {
+        if (ii >= max_ports) return;
         while (!(devices[i] = init_ata_device(ata_ports[ii], master)).exists) {
             ii++;
             if (ii >= max_ports) return;
@@ -87,7 +88,6 @@ void init_ata(void) {
             else master = 1;
         }
         ii++;
-        if (ii >= max_ports) return;
         if (ii % 2) master = 0;
         else master = 1;
         kernel_add_device(ata_names[i], i, &ata_io_wrapper);

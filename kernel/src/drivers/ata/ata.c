@@ -8,6 +8,8 @@
 typedef struct {
     uint8_t master; // this is a boolean
     
+    uint16_t identify[256];
+    
     uint16_t data_port;
     uint16_t error_port;
     uint16_t sector_count_port;
@@ -20,6 +22,7 @@ typedef struct {
     
     uint8_t exists;
     
+    uint64_t sector_count;
     uint16_t bytes_per_sector;
     
     uint8_t cache[BYTES_PER_SECT];
@@ -120,15 +123,10 @@ ata_device init_ata_device(uint16_t port_base, uint8_t master) {
 
 void ata_identify(ata_device* dev) {
 
-    port_out_b(dev->device_port, dev->master ? 0xA0 : 0xB0);
-    //port_out_b(dev.control_port, 0);
-    
-    uint8_t status = port_in_b(dev->command_port);
-    if (status == 0xFF) {
-        dev->exists = 0;
-        kputs("\nNo device found!");
-        return;
-    }
+    if (dev->master)
+        port_out_b(dev->device_port, 0xa0);
+    else
+        port_out_b(dev->device_port, 0xb0);
         
     port_out_b(dev->sector_count_port, 0);
     port_out_b(dev->lba_low_port, 0);
@@ -136,24 +134,37 @@ void ata_identify(ata_device* dev) {
     port_out_b(dev->lba_hi_port, 0);
     
     port_out_b(dev->command_port, 0xEC); // identify command
-
-    status = port_in_b(dev->command_port);
     
-    if (status == 0x00) {
+    if (!port_in_b(dev->command_port)) {
         dev->exists = 0;
         kputs("\nNo device found!");
         return;
-    }
+    } else
+        while (port_in_b(dev->command_port) & 0b10000000);
     
-    while (((status & 0x80) == 0x80)
-        && ((status & 0x01) != 0x01)) 
-        status = port_in_b(dev->command_port);
-    
-    if (status & 0x01) {
+    // check for non-standard ATAPI
+    if (port_in_b(dev->lba_mid_port) || port_in_b(dev->lba_hi_port)) {
         dev->exists = 0;
-        kputs("\nError occured!");
+        kputs("\nNon-standard ATAPI, ignoring.");
         return;
     }
+    
+    for (;;) {
+        uint8_t status = port_in_b(dev->command_port);
+        if (status & 0b00000001) {
+            dev->exists = 0;
+            kputs("\nError occured!");
+            return;
+        }
+        if (status & 0b00001000) break;
+    }
+    
+    kputs("\nStoring IDENTIFY info...");
+    for (int i = 0; i < 256; i++)
+        dev->identify[i] = port_in_w(dev->data_port);
+    
+    dev->sector_count = *((uint64_t*)&dev->identify[100]);
+    kputs("\nSector count: "); kuitoa(dev->sector_count);
     
     kputs("\nDevice successfully identified!");
     

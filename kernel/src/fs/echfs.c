@@ -283,10 +283,17 @@ next:
 int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return 0; }
 
 int echfs_mount(char* dev) {
+    device = dev;
+    
+    // verify signature
+    if (!fstrncmp(4, "_ECH_FS_", 8)) {
+        kputs("\nechidnaFS signature invalid, mount failed!");
+        return FAILURE;
+    }
+    
     mounts = krealloc(mounts, sizeof(mount_t) * (mounts_ptr+1));
 
     kstrcpy(mounts[mounts_ptr].name, dev);
-    device = dev;
     mounts[mounts_ptr].blocks = rd_qword(12);
     mounts[mounts_ptr].fatsize = (mounts[mounts_ptr].blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;
     if ((mounts[mounts_ptr].blocks * sizeof(uint64_t)) % BYTES_PER_BLOCK) mounts[mounts_ptr].fatsize++;

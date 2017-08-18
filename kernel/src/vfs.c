@@ -161,14 +161,17 @@ int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
 }
 
 int vfs_mount(char* mountpoint, char* device, char* filesystem) {
+    int i;
+    for (i = 0; i < filesystems_ptr; i++)
+        if (!kstrcmp(filesystems[i].name, filesystem)) break;
+    
+    if (((*filesystems[i].mount)(device)) == FAILURE) return FAILURE;
+    
     mountpoints = krealloc(mountpoints, sizeof(mountpoint_t) * (mountpoints_ptr+1));
     
     kstrcpy(mountpoints[mountpoints_ptr].mountpoint, mountpoint + task_table[current_task]->base);
     kstrcpy(mountpoints[mountpoints_ptr].device, device + task_table[current_task]->base);
     kstrcpy(mountpoints[mountpoints_ptr].filesystem, filesystem + task_table[current_task]->base);
-    
-    int filesystem_n = vfs_translate_fs(mountpoints_ptr);
-    (*filesystems[filesystem_n].mount)(device);
     
     kputs("\nMounted `"); kputs(mountpoints[mountpoints_ptr].device);
     kputs("' on `"); kputs(mountpoints[mountpoints_ptr].mountpoint);

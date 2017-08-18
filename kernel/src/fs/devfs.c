@@ -12,7 +12,16 @@ int devfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) 
 }
 
 int devfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return 0; }
-int devfs_read(char* path, uint64_t loc, char* dev) { return 0; }
+
+int devfs_read(char* path, uint64_t loc, char* dev) {
+    if (*path == '/') path++;
+    for (int i = 0; i < device_ptr; i++) {
+        if (!kstrcmp(path, device_list[i].name))
+            return (int)(*device_list[i].io_wrapper)(device_list[i].gp_value, loc, 0, 0);
+    }
+    return FAILURE;
+}
+
 int devfs_get_metadata(char* path, vfs_metadata_t* metadata, char* dev) { return 0; }
 int devfs_mount(char* device) { return 0; }
 

@@ -37,11 +37,13 @@ char* ata_names[] = {
     "hdy", "hdz"
 };
 
+uint16_t ata_ports[] = { 0x1f0, 0x1f0, 0x170, 0x170 };
+int max_ports = 4;
+
 uint8_t ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload);
 uint8_t ata_read_byte(uint32_t drive, uint64_t loc);
-void get_ata_devices(void);
 ata_device init_ata_device(uint16_t port_base, uint8_t master);
-ata_device ata_identify(ata_device dev);
+void ata_identify(ata_device* dev);
 void ata_read(uint32_t disk, uint32_t sector, uint8_t* buffer);
 void ata_write(uint32_t disk, uint32_t sector, uint8_t* data);
 
@@ -72,31 +74,23 @@ uint8_t ata_read_byte(uint32_t drive, uint64_t loc) {
 void init_ata(void) {
     kputs("\nInitialising ATA device driver...");
     
-    get_ata_devices();
-    
+    int ii = 0;
+    int master = 1;
     for (int i = 0; i < DEVICE_COUNT; i++) {
+        while (!(devices[i] = init_ata_device(ata_ports[ii], master)).exists) {
+            ii++;
+            if (ii >= max_ports) return;
+            if (ii % 2) master = 0;
+            else master = 1;
+        }
+        ii++;
+        if (ii >= max_ports) return;
+        if (ii % 2) master = 0;
+        else master = 1;
         kernel_add_device(ata_names[i], i, &ata_io_wrapper);
         kputs("\nInitialised "); kputs(ata_names[i]);
     }
 
-    return;
-}
-
-void get_ata_devices(void) {
-    
-    devices[0] = init_ata_device(0x1F0, 1);
-    devices[0] = ata_identify(devices[0]);
-    devices[0].cache_status = 0;
-    devices[1] = init_ata_device(0x1F0, 0);
-    devices[1] = ata_identify(devices[1]);
-    devices[1].cache_status = 0;
-    devices[2] = init_ata_device(0x170, 1);
-    devices[2] = ata_identify(devices[2]);
-    devices[2].cache_status = 0;
-    devices[3] = init_ata_device(0x170, 0);
-    devices[3] = ata_identify(devices[3]);
-    devices[3].cache_status = 0;
-    
     return;
 }
 
@@ -117,60 +111,61 @@ ata_device init_ata_device(uint16_t port_base, uint8_t master) {
     
     dev.bytes_per_sector = 512;
     
+    dev.cache_status = 0;
+    
+    ata_identify(&dev);
+    
     return dev;
 }
 
-ata_device ata_identify(ata_device dev) {
+void ata_identify(ata_device* dev) {
 
-    port_out_b(dev.device_port, dev.master ? 0xA0 : 0xB0);
+    port_out_b(dev->device_port, dev->master ? 0xA0 : 0xB0);
     //port_out_b(dev.control_port, 0);
     
-    uint8_t status = port_in_b(dev.command_port);
+    uint8_t status = port_in_b(dev->command_port);
     if (status == 0xFF) {
-        dev.exists = 0;
+        dev->exists = 0;
         kputs("\nNo device found!");
-        return dev;
+        return;
     }
         
-    port_out_b(dev.sector_count_port, 0);
-    port_out_b(dev.lba_low_port, 0);
-    port_out_b(dev.lba_mid_port, 0);
-    port_out_b(dev.lba_hi_port, 0);
+    port_out_b(dev->sector_count_port, 0);
+    port_out_b(dev->lba_low_port, 0);
+    port_out_b(dev->lba_mid_port, 0);
+    port_out_b(dev->lba_hi_port, 0);
     
-    port_out_b(dev.command_port, 0xEC); // identify command
+    port_out_b(dev->command_port, 0xEC); // identify command
 
-    status = port_in_b(dev.command_port);
+    status = port_in_b(dev->command_port);
     
     if (status == 0x00) {
-        dev.exists = 0;
+        dev->exists = 0;
         kputs("\nNo device found!");
-        return dev;
+        return;
     }
     
     while (((status & 0x80) == 0x80)
         && ((status & 0x01) != 0x01)) 
-        status = port_in_b(dev.command_port);
+        status = port_in_b(dev->command_port);
     
     if (status & 0x01) {
-        dev.exists = 0;
+        dev->exists = 0;
         kputs("\nError occured!");
-        return dev;
+        return;
     }
     
     kputs("\nDevice successfully identified!");
     
-    dev.exists = 1;
+    dev->exists = 1;
     
-    return dev;
+    return;
 }
 
 void ata_read(uint32_t disk, uint32_t sector, uint8_t* buffer) {
     ata_device dev = devices[disk];
 
     if (sector > 0x0FFFFFFF)
-        return;
-    
-    if (dev.exists == 0) 
         return;
 
     port_out_b(dev.device_port, (dev.master ? 0xE0 : 0xF0) | ((sector & 0x0F000000) >> 24));
@@ -208,9 +203,6 @@ void ata_write(uint32_t disk, uint32_t sector, uint8_t* data) {
     ata_device dev = devices[disk];
     
     if (sector > 0x0FFFFFFF)
-        return;
-    
-    if (dev.exists == 0) 
         return;
 
     port_out_b(dev.device_port, (dev.master ? 0xE0 : 0xF0) | ((sector & 0x0F000000) >> 24));

@@ -28,6 +28,7 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0,0,0,
                                "","","",
                                "","","",
+                               "",0,
                                0,0};
 
 uint32_t task_start(task_info_t* task_info) {
@@ -169,7 +170,7 @@ void task_scheduler(void) {
         
         switch (task_table[current_task]->status) {
             case KRN_STAT_IOWAIT_TASK:
-                if ((c = (int)keyboard_fetch_char(task_table[current_task]->tty))) {
+                if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
                     // embed the result in EAX and continue
                     task_table[current_task]->eax_p = (uint32_t)c;
                     task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;

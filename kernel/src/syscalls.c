@@ -163,7 +163,10 @@ void char_to_stdout(int c) {
     return;
 }
 
-void enter_iowait_status(void) {
+void enter_iowait_status(char* dev, uint64_t loc) {
+    dev += task_table[current_task]->base;
+    kstrcpy(task_table[current_task]->iowait_dev, dev);
+    task_table[current_task]->iowait_loc = loc;
     task_table[current_task]->status = KRN_STAT_IOWAIT_TASK;
     return;
 }

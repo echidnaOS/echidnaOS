@@ -81,7 +81,7 @@ routine_list:
         dd      0                       ; 0x2d
         dd      0                       ; 0x2e
         dd      vfs_cd                  ; 0x2f
-        dd      vfs_read                ; 0x30
+        dd      0 ;vfs_read             ; 0x30 - dummy entry
         dd      vfs_write               ; 0x31
         dd      vfs_list                ; 0x32
 
@@ -178,6 +178,8 @@ syscall:
         je char_from_stdin
         cmp eax, 0x0d
         je ipc_await
+        cmp eax, 0x30
+        je vfs_read_isr
         ; end special routines check
         push ebx
         push ecx
@@ -207,6 +209,59 @@ syscall:
         pop ecx
         pop ebx
         iretd
+
+vfs_read_isr:
+        ; check if I/O is ready
+        push ebx
+        push ecx
+        push esi
+        push edi
+        push ebp
+        push ds
+        push es
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
+        push esi
+        push edi
+        push edx
+        push ecx
+        call vfs_read
+        add esp, 16
+        pop es
+        pop ds
+        pop ebp
+        pop edi
+        pop esi
+        pop ecx
+        pop ebx
+        cmp eax, -5     ; if I/O is not ready
+        je .enter_iowait
+        iretd           ; else, just return
+    .enter_iowait:
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        push esi
+        push edi
+        push edx
+        push ecx
+        call enter_iowait_status
+        add esp, 16
+        call task_switch
 
 char_from_stdin:
         ; save task status

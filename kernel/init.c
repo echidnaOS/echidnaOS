@@ -49,6 +49,7 @@ void kernel_init(void) {
     
     kputs("\nInitialising drivers...");
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
+    init_streams();
     init_tty_drv();
     init_ata();
     init_pcspk();

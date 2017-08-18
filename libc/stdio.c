@@ -12,12 +12,12 @@ char *_ltoa(long, char *, int, int);
 //char *_lltoa(long long, char *, int, int);
 
 int putchar(int c) {
-    OS_putc(c);
+    OS_vfs_write("/dev/stdout", 0, c);
     return c;
 }
 
 int getchar(void) {
-    return OS_getc();
+    return OS_vfs_read("/dev/stdin", 0);
 }
 
 int puts(const char *str) {

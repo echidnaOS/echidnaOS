@@ -144,7 +144,7 @@ void keyboard_handler(uint8_t input_byte) {
     return;
 }
 
-char keyboard_fetch_char(uint8_t which_tty) {
+int keyboard_fetch_char(uint8_t which_tty) {
     uint16_t i;
     char c;
 
@@ -153,7 +153,7 @@ char keyboard_fetch_char(uint8_t which_tty) {
         c = tty[which_tty].kb_l2_buffer[0];
         for (i = 0; i < (KB_L2_SIZE - 1); i++)
             tty[which_tty].kb_l2_buffer[i] = tty[which_tty].kb_l2_buffer[i + 1];
-        return c;
+        return (int)c;
     } else
-        return '\0';
+        return IO_NOT_READY;
 }

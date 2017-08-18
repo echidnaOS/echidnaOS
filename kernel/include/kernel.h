@@ -42,11 +42,14 @@
 #define FILE_TYPE               0
 #define DIRECTORY_TYPE          1
 
+#define IO_NOT_READY -5
+
 // driver inits
 
 void init_ata(void);
 void init_pcspk(void);
 void init_tty_drv(void);
+void init_streams(void);
 
 // end driver inits
 // fs inits
@@ -122,6 +125,9 @@ typedef struct {
     char stdin[2048];
     char stdout[2048];
     char stderr[2048];
+    
+    char iowait_dev[2048];
+    uint64_t iowait_loc;
     
     ipc_packet_t* ipc_queue;
     uint32_t ipc_queue_ptr;
@@ -245,7 +251,7 @@ void vga_80_x_50(void);
 uint32_t detect_mem(void);
 
 void char_to_stdout(int c);
-void enter_iowait_status(void);
+void enter_iowait_status(char* dev, uint64_t loc);
 void enter_ipcwait_status(void);
 
 void* alloc(uint32_t size);
@@ -280,6 +286,6 @@ void load_IDT(void);
 
 void keyboard_init(void);
 void keyboard_handler(uint8_t input_byte);
-char keyboard_fetch_char(uint8_t which_tty);
+int keyboard_fetch_char(uint8_t which_tty);
 
 #endif

@@ -51,6 +51,7 @@ void init_pcspk(void);
 void init_tty_drv(void);
 void init_streams(void);
 void init_com(void);
+void init_stty(void);
 
 // end driver inits
 // fs inits

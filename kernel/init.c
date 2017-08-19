@@ -53,6 +53,7 @@ void kernel_init(void) {
     init_tty_drv();
     init_ata();
     init_com();
+    init_stty();
     init_pcspk();
 
 

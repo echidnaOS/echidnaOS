@@ -41,9 +41,9 @@ shell2_info:
 shell3_info:
     .addr       dd  shell
     .size       dd  shell_size
-    .stdin      dd  com1
-    .stdout     dd  com1
-    .stderr     dd  com1
+    .stdin      dd  stty0
+    .stdout     dd  stty0
+    .stderr     dd  stty0
     .tty        dd  2
     .stack      dd  0x10000
     .heap       dd  0x100000
@@ -73,7 +73,7 @@ none db 0
 tty1 db '/dev/tty1', 0
 tty2 db '/dev/tty2', 0
 tty3 db '/dev/tty3', 0
-com1 db '/dev/com1', 0
+stty0 db '/dev/stty0', 0
 
 section .text
 

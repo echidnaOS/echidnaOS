@@ -153,8 +153,17 @@ void ata_identify(ata_device* dev) {
         dev->exists = 0;
         kputs("\nNo device found!");
         return;
-    } else
-        while (port_in_b(dev->command_port) & 0b10000000);
+    } else {
+        int timeout = 0;
+        while (port_in_b(dev->command_port) & 0b10000000) {
+            if (++timeout == 100000) {
+                dev->exists = 0;
+                kputs("\nATA error: drive detection timed out.");
+                kputs("\nSkipping drive!");
+                return;
+            }
+        }
+    }
     
     // check for non-standard ATAPI
     if (port_in_b(dev->lba_mid_port) || port_in_b(dev->lba_hi_port)) {
@@ -163,16 +172,21 @@ void ata_identify(ata_device* dev) {
         return;
     }
     
-    for (;;) {
+    for (int timeout = 0; timeout < 100000; timeout++) {
         uint8_t status = port_in_b(dev->command_port);
         if (status & 0b00000001) {
             dev->exists = 0;
             kputs("\nError occured!");
             return;
         }
-        if (status & 0b00001000) break;
+        if (status & 0b00001000) goto success;
     }
-    
+    dev->exists = 0;
+    kputs("\nATA error: drive detection timed out.");
+    kputs("\nSkipping drive!");
+    return;
+
+success:
     kputs("\nStoring IDENTIFY info...");
     for (int i = 0; i < 256; i++)
         dev->identify[i] = port_in_w(dev->data_port);

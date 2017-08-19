@@ -90,7 +90,7 @@ void* kalloc(uint32_t size) {
     }
     
     // zero the memory
-    for (int i = 0; i < size; i++)
+    for (uint32_t i = 0; i < size; i++)
         area[i] = 0;
     return (void*)area;
 }
@@ -110,6 +110,8 @@ void* krealloc(void* addr, uint32_t new_size) {
     char* new_ptr;
     if ((new_ptr = kalloc(new_size)) == 0)
         return (void*)0;
+        
+    while (new_size % 4) new_size++;
     
     if (heap_chunk->size > new_size)
         kmemcpy(new_ptr, (char*)addr, new_size);
@@ -135,14 +137,21 @@ void kfree(void* addr) {
     // flag chunk as free
     heap_chunk->free = 1;
     
+    if ((uint32_t)next_chunk >= memory_size) goto skip_next_chunk;
+    
     // if the next chunk is free as well, fuse the chunks into a single one
     if (next_chunk->free)
         heap_chunk->size += next_chunk->size + sizeof(heap_chunk_t);
-    
+
+skip_next_chunk:
     // if the previous chunk is free as well, fuse the chunks into a single one
     if (prev_chunk) {       // if its not the first chunk
-        if (prev_chunk->free)
+        if (prev_chunk->free) {
             prev_chunk->size += heap_chunk->size + sizeof(heap_chunk_t);
+            // notify the next chunk of the change
+            if ((uint32_t)next_chunk < memory_size)
+                next_chunk->prev_chunk = (uint32_t)prev_chunk;
+        }
     }
     
     return;

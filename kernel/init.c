@@ -31,7 +31,7 @@ void kernel_init(void) {
     vga_disable_cursor();
     
     init_tty();
-    switch_tty(0);
+    switch_tty(1);
 
     // detect memory
     memory_size = detect_mem();

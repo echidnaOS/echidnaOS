@@ -140,8 +140,11 @@ void kfree(void* addr) {
     if ((uint32_t)next_chunk >= memory_size) goto skip_next_chunk;
     
     // if the next chunk is free as well, fuse the chunks into a single one
-    if (next_chunk->free)
+    if (next_chunk->free) {
         heap_chunk->size += next_chunk->size + sizeof(heap_chunk_t);
+        // update next chunk ptr
+        next_chunk = (heap_chunk_t*)((uint32_t)next_chunk + next_chunk->size + sizeof(heap_chunk_t));
+    }
 
 skip_next_chunk:
     // if the previous chunk is free as well, fuse the chunks into a single one

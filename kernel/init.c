@@ -9,7 +9,7 @@ void kernel_init(void) {
     task_t empty_task = {0};
 
     // setup the PIC's mask
-    set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
+    set_PIC0_mask(0b11111111); // disable all IRQs
     set_PIC1_mask(0b11111111);
 
     // setup PIC
@@ -72,7 +72,18 @@ void kernel_init(void) {
     
     vfs_mount("/", ":://hda", "echfs");
     vfs_mount("/dev", "devfs", "devfs");
-	
-    // start scheduler
-    task_scheduler();
+    
+    // setup the PIC's mask
+    set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
+    set_PIC1_mask(0b11111111);
+    
+    // wait for task scheduler
+    asm volatile (
+                    "sti;"
+                    "1:"
+                    "mov esp, 0xefffff;"
+                    "hlt;"
+                    "jmp 1b;"
+                 );
+
 }

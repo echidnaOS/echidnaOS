@@ -3,5 +3,5 @@ ENTRY(main)
 SECTIONS
 {
   .text 0x10000 : { *(.text) }
-  .data : { *(.data) }
+  .data : { *(.data) *(.bss) *(COMMON) }
 }

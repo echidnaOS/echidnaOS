@@ -1,0 +1,11 @@
+#!/bin/bash
+
+BINDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 -nostdlib "$@" \
+    -static-libgcc -lgcc \
+    -isystem $BINDIR/../../libc \
+    -Xlinker $BINDIR/../../libc/stdio.o \
+    -Xlinker $BINDIR/../../libc/stdlib.o \
+    -Xlinker $BINDIR/../../libc/ctype.o \
+    -Xlinker $BINDIR/../../libc/string.o

@@ -1,10 +1,18 @@
+global _entry
+
 extern main
 
 section .text
 
 bits 32
 
-__task_header__:
+_entry:
+    jmp short .entry_point
+    ; executable file header (not specified yet)
+    db "ECH_EXEC", 0
+    
+    align 16
+  .entry_point:
     push 0          ; argc and argv placeholder
     push 0
     call main       ; call the main function

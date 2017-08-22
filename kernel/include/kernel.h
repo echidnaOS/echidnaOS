@@ -28,6 +28,8 @@
 #define KRNL_MEMORY_BASE 0x1000000
 #define KRNL_MAX_TASKS 65536
 
+#define DEFAULT_STACK 0x10000
+
 // memory statuses
 
 #define KRN_STAT_ACTIVE_TASK    1
@@ -94,7 +96,7 @@ typedef struct {
 typedef struct {
 
     int status;
-    uint32_t parent;
+    int parent;
     
     uint32_t base;
     uint32_t pages;
@@ -116,10 +118,6 @@ typedef struct {
     uint32_t ss_p;
     uint32_t eflags_p;
     
-    uint8_t tty;
-    void* heap_begin;
-    uint32_t heap_size;
-    
     char pwd[2048];
     char name[128];
     char server_name[128];
@@ -137,14 +135,10 @@ typedef struct {
 } task_t;
 
 typedef struct {
-    uint32_t addr;
-    uint32_t size;
+    char* path;
     char* stdin;
     char* stdout;
     char* stderr;
-    uint8_t tty;
-    uint32_t stack;
-    uint32_t heap;
     char* pwd;
     char* name;
     char* server_name;
@@ -153,13 +147,14 @@ typedef struct {
 typedef struct {
     char filename[2048];
     int filetype;
+    uint64_t size;
 } vfs_metadata_t;
 
 typedef struct {
     char name[128];
     int (*read)(char* path, uint64_t loc, char* dev);
     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev);
-    int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev);
+    int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev);
     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev);
     int (*mount)(char* device);
 } filesystem_t;
@@ -177,6 +172,8 @@ typedef struct {
 } device_t;
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
+int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type);
+int vfs_kget_metadata(char* path, vfs_metadata_t* metadata, int type);
 int vfs_read(char* path, uint64_t loc);
 int vfs_kread(char* path, uint64_t loc);
 int vfs_write(char* path, uint64_t loc, uint8_t val);
@@ -187,14 +184,17 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem);
 void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
-                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev),
+                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device) );
 
-uint32_t task_start(task_info_t* task_info);
+int task_create(task_t new_task);
+void task_fork(void);
+//uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);
 void task_terminate(int pid);
 void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r);
+int general_execute(task_info_t* task_info);
 
 typedef struct {
     int free;
@@ -224,7 +224,7 @@ typedef struct {
 } tty_t;
 
 extern uint32_t memory_size;
-extern uint32_t current_task;
+extern int current_task;
 extern task_t** task_table;
 extern uint8_t current_tty;
 

@@ -190,6 +190,27 @@ int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     return (*filesystems[filesystem].list)(local_path, metadata, entry, mountpoints[mountpoint].device);
 }
 
+int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type) {
+    path += task_table[current_task]->base;
+    metadata = (vfs_metadata_t*)((uint32_t)metadata + task_table[current_task]->base);
+    return vfs_kget_metadata(path, metadata, type);
+}
+
+int vfs_kget_metadata(char* path, vfs_metadata_t* metadata, int type) {
+    char* local_path;
+    char absolute_path[2048];
+    
+    vfs_get_absolute_path(absolute_path, path);
+
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
+    if (mountpoint == FAILURE) return FAILURE;
+
+    int filesystem = vfs_translate_fs(mountpoint);
+    if (filesystem == FAILURE) return FAILURE;
+
+    return (*filesystems[filesystem].get_metadata)(local_path, metadata, type, mountpoints[mountpoint].device);
+}
+
 int vfs_mount(char* mountpoint, char* device, char* filesystem) {
     int i;
     for (i = 0; i < filesystems_ptr; i++)
@@ -213,7 +234,7 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
 void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
-                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, char* dev),
+                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device) ) {
     

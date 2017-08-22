@@ -14,7 +14,7 @@ void get_argv(char** argv, char* string);
 // built in shell
 
 int main(int argc, char** argv) {
-    char* input = malloc(256);
+    char input[256];
     int s_argc;
     char* s_argv[128];
     char pwd[2048];

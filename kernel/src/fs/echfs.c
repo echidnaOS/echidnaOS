@@ -301,7 +301,7 @@ int echfs_mount(char* dev) {
     mounts[mounts_ptr].dirsize = rd_qword(20);
     mounts[mounts_ptr].dirstart = mounts[mounts_ptr].fatstart + mounts[mounts_ptr].fatsize;
     mounts[mounts_ptr].datastart = RESERVED_BLOCKS + mounts[mounts_ptr].fatsize + mounts[mounts_ptr].dirsize;
-    
+    /*
     kputs("\nmounted with:");
     kputs("\nblocks:        "); kxtoa(mounts[mounts_ptr].blocks);
     kputs("\nfatsize:       "); kxtoa(mounts[mounts_ptr].fatsize);
@@ -309,7 +309,7 @@ int echfs_mount(char* dev) {
     kputs("\ndirsize:       "); kxtoa(mounts[mounts_ptr].dirsize);
     kputs("\ndirstart:      "); kxtoa(mounts[mounts_ptr].dirstart);
     kputs("\ndatastart:     "); kxtoa(mounts[mounts_ptr].datastart);
-    
+    */
     mounts_ptr++;
 
     return SUCCESS;
@@ -382,7 +382,27 @@ search_out:
     return cached_files[cached_file].cache[offset];
 }
 
-int echfs_get_metadata(char* path, vfs_metadata_t* metadata, char* dev) { return 0; }
+int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) {
+    int dev_n = find_device(dev);
+
+    device = dev;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    
+    path_result_t path_result = path_resolver(path, type);
+
+    if (path_result.not_found) return FAILURE;
+    
+    metadata->filetype = type;
+    metadata->size = path_result.target.size;
+    kstrcpy(metadata->filename, path_result.target.name);
+    
+    return SUCCESS;
+}
 
 void install_echfs(void) {
     vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_get_metadata, &echfs_list, &echfs_mount);

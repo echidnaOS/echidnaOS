@@ -4,15 +4,15 @@
 void ipc_send_packet(uint32_t pid, char* payload, uint32_t len) {
     // check for a limit overflow
     if (((uint32_t)payload + len) >= (task_table[current_task]->pages * PAGE_SIZE)) {
-        tty_kputs("\nIPC packet had a bogus length.", task_table[current_task]->tty);
-        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        tty_kputs("\nIPC packet had a bogus length.", 0);
+        tty_kputs("\nTask terminated.\n", 0);
         task_terminate(current_task);
         task_scheduler();
     }
     // check if the pid exists
     if ((!task_table[pid]) || (task_table[pid] == EMPTY_PID)) {
-        tty_kputs("\nIPC packet targeted a non-existent PID.", task_table[current_task]->tty);
-        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        tty_kputs("\nIPC packet targeted a non-existent PID.", 0);
+        tty_kputs("\nTask terminated.\n", 0);
         task_terminate(current_task);
         task_scheduler();
     }
@@ -49,8 +49,8 @@ uint32_t ipc_payload_sender(void) {
 uint32_t ipc_resolve_name(char* server_name) {
     // check for a limit overflow
     if (((uint32_t)server_name + kstrlen(server_name + task_table[current_task]->base)) >= (task_table[current_task]->pages * PAGE_SIZE)) {
-        tty_kputs("\nIPC server name resolve request had a bogus length.", task_table[current_task]->tty);
-        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        tty_kputs("\nIPC server name resolve request had a bogus length.", 0);
+        tty_kputs("\nTask terminated.\n", 0);
         task_terminate(current_task);
         task_scheduler();
     }
@@ -68,8 +68,8 @@ uint32_t ipc_read_packet(char* payload) {
     if (!task_table[current_task]->ipc_queue_ptr) return 0;
     // check for a limit overflow
     if (((uint32_t)payload + task_table[current_task]->ipc_queue[0].length) >= (task_table[current_task]->pages * PAGE_SIZE)) {
-        tty_kputs("\nIPC payload length exceeds task limit.", task_table[current_task]->tty);
-        tty_kputs("\nTask terminated.\n", task_table[current_task]->tty);
+        tty_kputs("\nIPC payload length exceeds task limit.", 0);
+        tty_kputs("\nTask terminated.\n", 0);
         task_terminate(current_task);
         task_scheduler();
     }
@@ -93,7 +93,7 @@ uint32_t ipc_read_packet(char* payload) {
     return pid;
 }
 
-void* alloc(uint32_t size) {
+void* alloc(uint32_t size) { /*
     // search of a big enough, free, heap chunk
     heap_chunk_t* heap_chunk = (heap_chunk_t*)task_table[current_task]->heap_begin;
     heap_chunk_t* new_chunk;
@@ -117,10 +117,12 @@ again:
             return (void*)0;        // alloc fail
         heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
         goto again;
-    }
+    } */
+    
+    return (void*)0;
 }
 
-void free(void* addr) {
+void free(void* addr) { /*
     uint32_t heap_chunk_ptr = (uint32_t)addr;
     heap_chunk_ptr += task_table[current_task]->base;
     
@@ -147,7 +149,7 @@ void free(void* addr) {
     if (prev_chunk) {       // if its not the first chunk
         if (prev_chunk->free)
             prev_chunk->size += heap_chunk->size + sizeof(heap_chunk_t);
-    }
+    } */
     
     return;
 }
@@ -158,8 +160,8 @@ void* realloc(void* prev_ptr, uint32_t size) {
 
 // prints a char to the current standard output
 // for now, it will just print raw to the text driver
-void char_to_stdout(int c) {
-    text_putchar((char)c, task_table[current_task]->tty);
+void char_to_stdout(int c) { /*
+    text_putchar((char)c, task_table[current_task]->tty); */
     return;
 }
 

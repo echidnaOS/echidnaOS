@@ -3,11 +3,7 @@
 
 uint32_t memory_size;
 
-void init_tasks(void);
-
 void kernel_init(void) {
-    task_t empty_task = {0};
-
     // setup the PIC's mask
     set_PIC0_mask(0b11111111); // disable all IRQs
     set_PIC1_mask(0b11111111);
@@ -66,12 +62,29 @@ void kernel_init(void) {
     
     
     // ******* END OF FILE SYSTEM INSTALLATION CALLS *******
+    
+    char shell_path[] = "/bin/shell";
+    char tty1_path[] = "/dev/tty1";
+    char root_path[] = "/";
+    char shell_name[] = "shell";
+    char shell_ser_name[] = "";
 
-    // launch the tasks
-    init_tasks();
+    task_info_t shell_exec = {
+        shell_path,
+        tty1_path,
+        tty1_path,
+        tty1_path,
+        root_path,
+        shell_name,
+        shell_ser_name
+    };
     
     vfs_mount("/", ":://hda", "echfs");
     vfs_mount("/dev", "devfs", "devfs");
+
+    // launch the shell
+    kputs("\nKERNEL INIT DONE! LAUNCHING: "); kputs(shell_exec.path);
+    general_execute(&shell_exec);
     
     // setup the PIC's mask
     set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard

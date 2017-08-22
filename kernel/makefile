@@ -11,7 +11,7 @@ BINS = $(REAL_FILES:.real=.bin)
 CHARDFLAGS = -std=gnu99 -masm=intel
 CFLAGS = 
 
-echidna.bin: ../shell/shell.bin $(BINS) $(OBJ) $(H_FILES)
+echidna.bin: $(BINS) $(OBJ) $(H_FILES)
 	$(CC) -o echidna.bin $(OBJ)
 
 %.o: %.c
@@ -22,9 +22,6 @@ echidna.bin: ../shell/shell.bin $(BINS) $(OBJ) $(H_FILES)
 
 %.o: %.asm
 	nasm $< -f elf32 -o $@
-
-../shell/shell.bin:
-	$(error Unable to find shell.bin)
 
 clean:
 	rm $(OBJ) $(BINS) echidna.bin

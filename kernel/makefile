@@ -12,7 +12,7 @@ CHARDFLAGS = -std=gnu99 -masm=intel
 CFLAGS = 
 
 echidna.bin: ../shell/shell.bin $(BINS) $(OBJ) $(H_FILES)
-	$(CC) -T linker.ld -o echidna.bin $(OBJ) -Xlinker --oformat=binary
+	$(CC) -o echidna.bin $(OBJ)
 
 %.o: %.c
 	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@

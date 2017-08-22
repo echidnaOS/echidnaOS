@@ -2,6 +2,17 @@
 
 BINDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 -nostdlib "$@" \
+for i in "$@" ; do
+    if [[ $i == "-c" ]] ; then
+        i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 "$@" \
+            -isystem $BINDIR/../../kernel/include/
+        exit
+    fi
+done
+
+i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 "$@" \
+    -nostdlib \
     -static-libgcc -lgcc \
-    -isystem $BINDIR/../../kernel/include/
+    -isystem $BINDIR/../../kernel/include/ \
+    -Xlinker --oformat=binary \
+    -T $BINDIR/../../kernel/linker.ld

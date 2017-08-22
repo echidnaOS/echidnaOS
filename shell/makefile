@@ -9,7 +9,7 @@ CHARDFLAGS = -std=gnu99 -masm=intel
 CFLAGS = 
 
 shell.bin: $(OBJ_FILES)
-	$(CC) -T linker.ld -o shell.bin $(OBJ_FILES) -Xlinker --oformat=binary
+	$(CC) -o shell.bin $(OBJ_FILES)
 
 %.o: %.c
 	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@

@@ -66,8 +66,9 @@ int main(int argc, char** argv) {
             for (int i = 0; ; i++) {
                 if (OS_vfs_list(ls_path, &metadata, i) == -2) break;
                 if (metadata.filetype == 1) putchar('[');
-                fputs(metadata.filename, stdout);
-                if (metadata.filetype == 1) puts("]");
+                printf("%s", metadata.filename);
+                if (metadata.filetype == 1) putchar(']');
+                putchar('\n');
             }
         }
         

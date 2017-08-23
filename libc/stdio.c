@@ -11,13 +11,103 @@ char *_itoa(int, char *, int, int);
 char *_ltoa(long, char *, int, int);
 //char *_lltoa(long long, char *, int, int);
 
+FILE* fopen(const char* path, const char* mode) {
+    // fetch metadata (TODO)
+
+    FILE* file_ptr = malloc(sizeof(FILE));
+    
+    file_ptr->stream_ptr = 0;
+    file_ptr->path = malloc(strlen(path) + 1);
+    strcpy(file_ptr->path, path);
+    file_ptr->stream_end = 0x1000000; // dummy file size
+    file_ptr->stream_begin = 0;
+    
+    return file_ptr;
+}
+
+int fclose(FILE* stream) {
+    free(stream);
+    return 0;
+}
+
+int fseek(FILE* stream, long int offset, int type) {
+    switch (type) {
+        case SEEK_SET:
+            stream->stream_ptr = (uint64_t)offset;
+            return 0;
+        case SEEK_END:
+            stream->stream_ptr = (uint64_t)(stream->stream_end + offset);
+            return 0;
+        case SEEK_CUR:
+            stream->stream_ptr += (uint64_t)offset;
+            return 0;
+    }
+}
+
+int fgetc(FILE* stream) {
+    int c = OS_vfs_read(stream->path, stream->stream_ptr);
+    stream->stream_ptr++;
+    return c;
+}
+
+int fputc(int c, FILE* stream) {
+    int ret = OS_vfs_write(stream->path, stream->stream_ptr, c);
+    stream->stream_ptr++;
+    return c;
+}
+
+long int ftell(FILE* stream) {
+    return (long int)stream->stream_ptr;
+}
+
+void rewind(FILE* stream) {
+    stream->stream_ptr = 0;
+    return;
+}
+
+int fputs(const char* str, FILE* stream) {
+    for (int i = 0; str[i]; i++) {
+        fputc(str[i], stream);
+    }
+    return 0;
+}
+
+char stdin_path[] = "/dev/stdin";
+char stdout_path[] = "/dev/stdout";
+char stderr_path[] = "/dev/stderr";
+
+FILE stdin_struct = {
+    stdin_path,
+    0,
+    0,
+    -1
+};
+
+FILE stdout_struct = {
+    stdout_path,
+    0,
+    0,
+    -1
+};
+
+FILE stderr_struct = {
+    stderr_path,
+    0,
+    0,
+    -1
+};
+
+FILE* stdin = &stdin_struct;
+FILE* stdout = &stdout_struct;
+FILE* stderr = &stderr_struct;
+
 int putchar(int c) {
-    OS_vfs_write("/dev/stdout", 0, c);
+    fputc(c, stdout);
     return c;
 }
 
 int getchar(void) {
-    return OS_vfs_read("/dev/stdin", 0);
+    return fgetc(stdin);
 }
 
 int puts(const char *str) {
@@ -48,12 +138,62 @@ void iputs(const char *str) {
 #define PAD_RIGHT 1
 #define PAD_ZERO 2
 
-int printf(const char *format, ...)
+#define PRINTF_BUF_MAX 4096
+
+static char printf_buf[PRINTF_BUF_MAX];
+
+int printf(const char* format, ...) {
+    va_list args;
+    int ret;
+    
+    va_start(args, format);
+    ret = vsnprintf(printf_buf, PRINTF_BUF_MAX, format, args);
+    va_end(args);
+    
+    if (ret == -1) return -1;
+    fputs(printf_buf, stdout);
+    return ret;
+}
+
+int fprintf(FILE* stream, const char* format, ...) {
+    va_list args;
+    int ret;
+    
+    va_start(args, format);
+    ret = vsnprintf(printf_buf, PRINTF_BUF_MAX, format, args);
+    va_end(args);
+    
+    if (ret == -1) return -1;
+    fputs(printf_buf, stream);
+    return ret;
+}
+
+static size_t __PRI_max;
+static char* __PRI_buf;
+static int __PRI_ptr;
+
+static int __PRI_putc(int c) {
+    __PRI_buf[__PRI_ptr++] = c;
+    if (__PRI_ptr == __PRI_max) return -1;
+    return c;
+}
+
+static int __PRI_puts(const char* str) {
+    int len = strlen(str);
+    if ((__PRI_ptr + len) >= __PRI_max) return -1;
+    strcpy(&__PRI_buf[__PRI_ptr], str);
+    __PRI_ptr += len;
+    return len;
+}
+
+int vsnprintf(char* t_buf, size_t t_max, const char* format, va_list args)
 {
     int width, pad, fp_width, mod, sign, count = 0;
-
-    va_list args;
-    va_start(args, format);
+    __PRI_ptr = 0;
+    __PRI_buf = t_buf;
+    __PRI_max = t_max;
+    
+    memset(t_buf, 0, t_max);
 
     for ( ; *format; format++ )
     {
@@ -156,7 +296,8 @@ int printf(const char *format, ...)
                         while ( format[--i] != '%' );
 
                         for( ; i < 3 ; i++ )
-                            putchar(format[i]);
+                            if (__PRI_putc(format[i]) == -1) return -1;
+                            //putchar(format[i]);
 //                        text_putstring(format[i], (format + 3) - &format[i]);
 
                         format += 3;
@@ -182,7 +323,8 @@ int printf(const char *format, ...)
                         while ( format[--i] != '%' );
 
                         for( ; i < 2 ; i++ )
-                            putchar(format[i]);
+                            if (__PRI_putc(format[i]) == -1) return -1;
+                            //putchar(format[i]);
 //                        text_putstring(format[i], (format + 2) - &format[i]);
 
                         format += 2;
@@ -232,7 +374,8 @@ int printf(const char *format, ...)
                         while ( format[--i] != '%' );
 
                         for( ; i < 3 ; i++ )
-                            putchar(format[i]);
+                            if (__PRI_putc(format[i]) == -1) return -1;
+                            //putchar(format[i]);
 //                        text_putstring(format[i], (format + 2) - &format[i]);
 
                         format += 2;
@@ -254,27 +397,36 @@ int printf(const char *format, ...)
                         if ( length > width )
                         {
                             for ( int i = 0; i < width; i++ )
-                                putchar(s[i]);
+                                if (__PRI_putc(s[i]) == -1) return -1;
+                                //putchar(s[i]);
                         }
                         else
                         {
                             for ( int i = width - length; i; i-- )
-                                putchar(' ');
+                                if (__PRI_putc(' ') == -1) return -1;
+                                //putchar(' ');
 
-                            iputs(s);
+                            if (__PRI_puts(s) == -1) return -1;
+                            //iputs(s);
                         }
                     }
                     else
                     {
                         for ( ; width--;  )
                         {
-                            *s ? putchar(*s++) : putchar(' ');
+                            if (*s)
+                                if (__PRI_putc(*s++) == -1) return -1;
+                                //putchar(*s++)
+                            else
+                                if (__PRI_putc(' ') == -1) return -1;
+                                //putchar(' ');
                         }
                     }
                 }
                 else
                 {
-                    iputs(s);
+                    if (__PRI_puts(s) == -1) return -1;
+                    //iputs(s);
                     count += length;
                 }
 
@@ -318,14 +470,19 @@ int printf(const char *format, ...)
                 count += _len + (width > 0 ? width : 0);
 
                 if ( (width > 0) && !(pad & PAD_RIGHT) )
-                    for ( ; width > 0; width-- ) 
-                        putchar(padchar), count++;
+                    for ( ; width > 0; width-- ) {
+                        if (__PRI_putc(padchar) == -1) return -1;
+                        count++;
+                        //putchar(padchar), count++;
+                    }
 
-                iputs(buf);
+                if (__PRI_puts(buf) == -1) return -1;
+                //iputs(buf);
 
                 if ( pad & PAD_RIGHT )
                     for ( ; width > 0; width-- )
-                        putchar(' ');
+                        if (__PRI_putc(' ') == -1) return -1;
+                        //putchar(' ');
 
                 continue;
             }
@@ -366,29 +523,39 @@ int printf(const char *format, ...)
                 width -= _len;
                 int i = 0;
 
-                if ( sign && buf[0] != '-' ) 
-                    putchar('+'), width--, count++;
+                if ( sign && buf[0] != '-' ) {
+                    if (__PRI_putc('+') == -1) return -1;
+                    //putchar('+');
+                    width--;
+                    count++;
+                }
 
                 else if ( buf[0] == '-' )
-                    putchar(buf[i++]);
+                    if (__PRI_putc(i++) == -1) return -1;
+                    //putchar(buf[i++]);
 
 
                 count += _len + (width > 0 ? width : 0);
 
                 if ( (width > 0) && !(pad & PAD_RIGHT) )
                 {
-                    for ( ; width > 0; width-- ) 
-                        putchar(padchar), count++;
+                    for ( ; width > 0; width-- ) {
+                        if (__PRI_putc(padchar) == -1) return -1;
+                        //putchar(padchar);
+                        count++;
+                    }
 
 //                    if ( sign && buf[0] != '-' && padchar == ' ')
 //                        putchar('+');
                 }
 
-                iputs(&buf[i]);
+                if (__PRI_puts(&buf[i]) == -1) return -1;
+                //iputs(&buf[i]);
 
                 if ( pad & PAD_RIGHT )
                     for ( ; width > 0; width-- )
-                        putchar(' ');
+                        if (__PRI_putc(' ') == -1) return -1;
+                        //putchar(' ');
 
                 continue;
             }
@@ -431,14 +598,19 @@ int printf(const char *format, ...)
                 count += _len + (width > 0 ? width : 0);
 
                 if ( (width > 0) && !(pad & PAD_RIGHT) )
-                    for ( ; width > 0; width-- ) 
-                        putchar(padchar), count++;
+                    for ( ; width > 0; width-- ) {
+                        if (__PRI_putc(padchar) == -1) return -1;
+                        //putchar(padchar);
+                        count++;
+                    }
 
-                iputs(buf);
+                if (__PRI_puts(buf) == -1) return -1;
+                //iputs(buf);
 
                 if ( pad & PAD_RIGHT )
                     for ( ; width > 0; width-- )
-                        putchar(' ');
+                        if (__PRI_putc(' ') == -1) return -1;
+                        //putchar(' ');
 
                 continue;
             }
@@ -482,15 +654,18 @@ int printf(const char *format, ...)
 
                 if ( (width > 0) && !(pad & PAD_RIGHT) )
                     for ( ; width > 0; width-- ) 
-                        putchar(padchar);
+                        if (__PRI_putc(padchar) == -1) return -1;
+                        //putchar(padchar);
 
                 for ( int i = 0; buf[i] = toupper(buf[i]); i++ );
 
-                iputs(buf);
+                if (__PRI_puts(buf) == -1) return -1;
+                //iputs(buf);
 
                 if ( pad & PAD_RIGHT )
                     for ( ; width > 0; width-- )
-                        putchar(' ');
+                        if (__PRI_putc(' ') == -1) return -1;
+                        //putchar(' ');
                 continue;
             }
 
@@ -536,15 +711,18 @@ int printf(const char *format, ...)
                     if ( !(pad & PAD_RIGHT) )
                     {
                         for ( ; width > 0; width-- )
-                            putchar(padchar);
+                            if (__PRI_putc(padchar) == -1) return -1;
+                            //putchar(padchar);
                     }
                 }
 
-                iputs(buf);
+                if (__PRI_puts(buf) == -1) return -1;
+                //iputs(buf);
 
                 if ( pad & PAD_RIGHT )
                     for ( ; width > 0; width-- )
-                        putchar(' ');
+                        if (__PRI_putc(' ') == -1) return -1;
+                        //putchar(' ');
 
                 continue;
             }
@@ -553,7 +731,8 @@ int printf(const char *format, ...)
             if ( *format == 'c' )
             {
                 /* char are converted to int when pushed on the stack */
-                putchar((char)va_arg(args, int));
+                if (__PRI_putc((char)va_arg(args, int)) == -1) return -1;
+                //putchar((char)va_arg(args, int));
                 count++;
                 continue;
             }
@@ -596,8 +775,12 @@ int printf(const char *format, ...)
                 width -= _len;
                 count += _len;
 
-                if ( sign && buf[0] != '-' )
-                    putchar('+'), width--, count++;
+                if ( sign && buf[0] != '-' ) {
+                    if (__PRI_putc('+') == -1) return -1;
+                    //putchar('+');
+                    width--;
+                    count++;
+                }
 
                 count += width;
 
@@ -609,24 +792,29 @@ int printf(const char *format, ...)
 
                     // put sign if negative
                     if ( buf[0] == '-' )
-                        putchar(buf[i++]);
+                        if (__PRI_putc(buf[i++]) == -1) return -1;
+                        //putchar(buf[i++]);
 
                     // pad left
                     if ( !(pad & PAD_RIGHT) )
                         while ( width-- )
-                            putchar(padchar);
+                            if (__PRI_putc(padchar) == -1) return -1;
+                            //putchar(padchar);
 
                     // print float
-                    iputs(&buf[i]);
+                    if (__PRI_puts(&buf[i]) == -1) return -1;
+                    //iputs(&buf[i]);
 
                     // pad right
                     if ( pad & PAD_RIGHT )
                         while ( width-- )
-                            putchar(' ');
+                            if (__PRI_putc(' ') == -1) return -1;
+                            //putchar(' ');
 
                 }
                 else
-                    iputs(buf);
+                    if (__PRI_puts(buf) == -1) return -1;
+                    //iputs(buf);
             }
 
 /*            if ( tolower(*format) == 'g' )
@@ -644,11 +832,12 @@ int printf(const char *format, ...)
         else
         {
         out:
-            putchar(*format);
+            if (__PRI_putc(*format) == -1) return -1;
+            //putchar(*format);
             count++;
         }
     }
 
-    va_end(args);
+    //va_end(args);
     return count;
 }

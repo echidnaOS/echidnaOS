@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE -1
+
 char *itoa(int, char *, int);
 char *ltoa(long, char *, int);
 char *lltoa(long long, char *, int);

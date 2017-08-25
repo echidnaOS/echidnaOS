@@ -63,7 +63,7 @@ void kernel_init(void) {
     
     // ******* END OF FILE SYSTEM INSTALLATION CALLS *******
     
-    char shell_path[] = "/bin/shell";
+    char shell_path[] = "/bin/sh";
     char tty1_path[] = "/dev/tty1";
     char root_path[] = "/";
     char shell_name[] = "shell";

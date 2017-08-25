@@ -24,13 +24,6 @@ int main(int argc, char** argv) {
     
     vfs_metadata_t metadata = {0};
 
-    puts(
-        "\n"
-        "Kernel built-in shell.\n"
-        "\n"
-        "Type `help` to get started.\n"
-    );
-
     while (1) {
         OS_pwd(pwd);
         printf("%s# ", pwd);

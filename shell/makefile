@@ -7,15 +7,15 @@ OBJ_FILES = $(C_FILES:.c=.o)
 CHARDFLAGS = -std=gnu99 -masm=intel
 CFLAGS = 
 
-shell.bin: $(OBJ_FILES)
-	$(CC) -o shell.bin $(OBJ_FILES)
+sh: $(OBJ_FILES)
+	$(CC) -o sh $(OBJ_FILES)
 
 %.o: %.c
 	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm $(OBJ_FILES) shell.bin
+	rm $(OBJ_FILES) sh
 
 install:
 	mkdir -p $(PREFIX)/bin
-	cp shell.bin $(PREFIX)/bin/
+	cp sh $(PREFIX)/bin/

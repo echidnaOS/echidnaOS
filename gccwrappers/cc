@@ -5,20 +5,41 @@ BINDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 for i in "$@" ; do
     if [[ $i == "-c" ]] ; then
         i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 "$@" \
+            -fdata-sections -ffunction-sections \
             -isystem $BINDIR/../../libc
         exit
     fi
 done
 
+OUTPUT_NAME="a.out"
+ARGS_STR=""
+
+for ((i=1; i<=$#; i++)); do
+    if [[ ${!i} == "-o" ]] ; then
+        i=$((i+1))
+        OUTPUT_NAME=${!i}
+        continue
+    fi
+    ARGS_STR="$ARGS_STR ${!i}"
+done
+
 i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 \
-    -Xlinker $BINDIR/../../libc/entry.o \
-    "$@" \
+    -isystem $BINDIR/../../libc \
+    $BINDIR/../../libc/entry.o \
+    $BINDIR/../../libc/stdio.o \
+    $BINDIR/../../libc/stdlib.o \
+    $BINDIR/../../libc/ctype.o \
+    $BINDIR/../../libc/string.o \
+    $ARGS_STR \
     -nostdlib \
     -static-libgcc -lgcc \
-    -isystem $BINDIR/../../libc \
-    -Xlinker $BINDIR/../../libc/stdio.o \
-    -Xlinker $BINDIR/../../libc/stdlib.o \
-    -Xlinker $BINDIR/../../libc/ctype.o \
-    -Xlinker $BINDIR/../../libc/string.o \
-    -Xlinker --oformat=binary \
-    -T $BINDIR/../../libc/default_linker.ld
+    -fdata-sections -ffunction-sections -Wl,--gc-sections \
+    -Wl,--entry,_entry \
+    -Wl,-r \
+    -o .cc-tmp.elf
+
+i386-elf-ld .cc-tmp.elf -o $OUTPUT_NAME --gc-sections \
+    -T $BINDIR/../../libc/default_linker.ld \
+    --oformat=binary
+
+rm .cc-tmp.elf

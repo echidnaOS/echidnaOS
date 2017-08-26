@@ -11,13 +11,22 @@ char *_itoa(int, char *, int, int);
 char *_ltoa(long, char *, int, int);
 //char *_lltoa(long long, char *, int, int);
 
+FILE file_list[128];
+int files_ptr = 0;
+char pool[4096];
+int pool_ptr = 0;
+
 FILE* fopen(const char* path, const char* mode) {
     // fetch metadata (TODO)
 
-    FILE* file_ptr = malloc(sizeof(FILE));
+    // use malloc (TODO)
+    //FILE* file_ptr = malloc(sizeof(FILE));
+    FILE* file_ptr = &file_list[files_ptr++];
     
     file_ptr->stream_ptr = 0;
-    file_ptr->path = malloc(strlen(path) + 1);
+    //file_ptr->path = malloc(strlen(path) + 1);
+    file_ptr->path = &pool[pool_ptr];
+    pool_ptr += strlen(path) + 1;
     strcpy(file_ptr->path, path);
     file_ptr->stream_end = 0x1000000; // dummy file size
     file_ptr->stream_begin = 0;
@@ -26,7 +35,7 @@ FILE* fopen(const char* path, const char* mode) {
 }
 
 int fclose(FILE* stream) {
-    free(stream);
+    //free(stream);
     return 0;
 }
 

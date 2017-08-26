@@ -26,7 +26,9 @@ task_info_t prog_info = {
     prog_stderr,
     prog_pwd,
     prog_name,
-    prog_ser_name
+    prog_ser_name,
+    0,
+    0
 };
 
 // built in shell
@@ -125,6 +127,8 @@ int main(int argc, char** argv) {
             OS_what_stdout(prog_stdout);
             OS_what_stderr(prog_stderr);
             OS_pwd(prog_pwd);
+            prog_info.argc = s_argc;
+            prog_info.argv = s_argv;
             *prog_ser_name = 0;
             if (OS_general_execute_block(&prog_info) == -1)
                 printf("shell: invalid command: `%s`.\n", input);

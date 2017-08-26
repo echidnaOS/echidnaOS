@@ -13,9 +13,10 @@ _entry:
     
     align 16
   .entry_point:
-    push 0          ; argc and argv placeholder
-    push 0
+    push 0x1010     ; argc and argv
+    push dword [0x1000]
     call main       ; call the main function
+    add esp, 8
     
     mov ecx, eax    ; put the return value from EAX:EDX to ECX:EDX
     mov eax, 0x00   ; syscall 0, terminate

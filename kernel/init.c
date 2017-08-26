@@ -76,7 +76,9 @@ void kernel_init(void) {
         tty1_path,
         root_path,
         shell_name,
-        shell_ser_name
+        shell_ser_name,
+        0,
+        0
     };
     
     vfs_mount("/", ":://hda", "echfs");

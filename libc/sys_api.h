@@ -20,6 +20,8 @@ typedef struct {
     char* pwd;
     char* name;
     char* server_name;
+    int argc;
+    char** argv;
 } task_info_t;
 
 #define OS_alloc(value) ({              \

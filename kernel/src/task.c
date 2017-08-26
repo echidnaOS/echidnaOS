@@ -155,6 +155,18 @@ int general_execute(task_info_t* task_info) {
     kstrcpy(task_table[new_pid]->stdout, ptr_stdout);
     kstrcpy(task_table[new_pid]->stderr, ptr_stderr);
     
+    *((int*)(task_table[new_pid]->base + 0x1000)) = task_info->argc;
+    int argv_limit = 0x4000;
+    char** argv = (char**)(task_table[new_pid]->base + 0x1010);
+    char** src_argv = (char**)((uint32_t)task_info->argv + task_table[current_task]->base);
+    // copy the argv's
+    for (int i = 0; i < task_info->argc; i++) {
+        kstrcpy( (char*)(task_table[new_pid]->base + argv_limit),
+                 (char*)(src_argv[i] + task_table[current_task]->base) );
+        argv[i] = (char*)argv_limit;
+        argv_limit += kstrlen((char*)(src_argv[i] + task_table[current_task]->base)) + 1;
+    }
+    
     // debug logging
     /*
     kputs("\nNew task startup request completed with:");

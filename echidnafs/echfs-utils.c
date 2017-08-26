@@ -606,9 +606,9 @@ int main(int argc, char** argv) {
     
     if (verbose) fprintf(stdout, "declared block count: %" PRIu64 "\n", rd_qword(12));
     if (rd_qword(12) != blocks) {
-        fprintf(stderr, "%s: error: declared block count mismatch.\n", argv[0]);
-        fclose(image);
-        return EXIT_FAILURE;
+        fprintf(stderr, "%s: warning: declared block count mismatch.\n", argv[0]);
+        //fclose(image);
+        //return EXIT_FAILURE;
     }
     
     fatsize = (blocks * sizeof(uint64_t)) / BYTES_PER_BLOCK;

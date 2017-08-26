@@ -20,6 +20,9 @@ extern char_to_stdout
 extern enter_iowait_status
 extern enter_ipcwait_status
 extern pwd
+extern what_stdin
+extern what_stdout
+extern what_stderr
 extern ipc_send_packet
 extern ipc_read_packet
 extern ipc_resolve_name
@@ -29,13 +32,15 @@ extern vfs_cd
 extern vfs_read
 extern vfs_write
 extern vfs_list
+extern general_execute
+extern general_execute_block
 
 section .data
 
 routine_list:
         dd      task_quit               ; 0x00
-        dd      0                       ; 0x01
-        dd      0                       ; 0x02
+        dd      general_execute         ; 0x01
+        dd      0 ;general_execute_block; 0x02 - dummy entry
         dd      0                       ; 0x03
         dd      0                       ; 0x04
         dd      0                       ; 0x05
@@ -60,9 +65,9 @@ routine_list:
         dd      0                       ; 0x18
         dd      0                       ; 0x19
         dd      pwd                     ; 0x1a
-        dd      0                       ; 0x1b
-        dd      0                       ; 0x1c
-        dd      0                       ; 0x1d
+        dd      what_stdin              ; 0x1b
+        dd      what_stdout             ; 0x1c
+        dd      what_stderr             ; 0x1d
         dd      0                       ; 0x1e
         dd      0                       ; 0x1f
         dd      char_to_stdout          ; 0x20
@@ -180,6 +185,8 @@ syscall:
         je ipc_await
         cmp eax, 0x30
         je vfs_read_isr
+        cmp eax, 0x02
+        je gen_exec_block_isr
         ; end special routines check
         push ebx
         push ecx
@@ -283,6 +290,49 @@ char_from_stdin:
         mov gs, ax
         call enter_iowait_status
         call task_switch
+
+gen_exec_block_isr:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        push esi
+        push edi
+        push edx
+        push ecx
+        call general_execute_block
+        add esp, 16
+        cmp eax, -1
+        je .abort
+        call task_switch
+    .abort:
+        pop eax
+        pop ebx
+        pop ecx
+        pop edx
+        pop esi
+        pop edi
+        pop ebp
+        pop ds
+        pop es
+        pop fs
+        pop gs
+        mov eax, -1
+        mov edx, -1
+        iretd
 
 ipc_await:
         ; save task status

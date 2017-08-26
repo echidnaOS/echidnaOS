@@ -12,6 +12,16 @@ typedef struct {
     int filetype;
 } vfs_metadata_t;
 
+typedef struct {
+    char* path;
+    char* stdin;
+    char* stdout;
+    char* stderr;
+    char* pwd;
+    char* name;
+    char* server_name;
+} task_info_t;
+
 #define OS_alloc(value) ({              \
     void* addr;                         \
     asm volatile (  "mov eax, 0x10;"    \
@@ -50,6 +60,30 @@ typedef struct {
 
 #define OS_pwd(value) ({                \
     asm volatile (  "mov eax, 0x1a;"    \
+                    "int 0x80;"         \
+                     :                  \
+                     : "c" (value)      \
+                     : "eax", "edx" );  \
+})
+
+#define OS_what_stdin(value) ({                \
+    asm volatile (  "mov eax, 0x1b;"    \
+                    "int 0x80;"         \
+                     :                  \
+                     : "c" (value)      \
+                     : "eax", "edx" );  \
+})
+
+#define OS_what_stdout(value) ({                \
+    asm volatile (  "mov eax, 0x1c;"    \
+                    "int 0x80;"         \
+                     :                  \
+                     : "c" (value)      \
+                     : "eax", "edx" );  \
+})
+
+#define OS_what_stderr(value) ({                \
+    asm volatile (  "mov eax, 0x1d;"    \
                     "int 0x80;"         \
                      :                  \
                      : "c" (value)      \
@@ -163,6 +197,30 @@ typedef struct {
                      : "c" (path)  \
                      : "edx" );         \
     return_val;                                \
+})
+
+#define OS_general_execute(value) ({               \
+    int ret; \
+    asm volatile (  "mov eax, 0x01;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret) \
+                     : "c" (value)      \
+                     : "edx" );  \
+    ret; \
+})
+
+#define OS_general_execute_block(value) ({               \
+    uint32_t ret_low; \
+    uint32_t ret_hi; \
+    uint64_t ret; \
+    asm volatile (  "mov eax, 0x02;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret_low),                 \
+                       "=d" (ret_hi) \
+                     : "c" (value)      \
+                     :  );  \
+    ret = ((uint64_t)(ret_hi) << 32) + (uint64_t)ret_low; \
+    ret; \
 })
 
 #endif

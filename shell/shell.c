@@ -11,6 +11,24 @@ void getstring(char* string, uint32_t limit);
 int get_argc(const char* string);
 void get_argv(char** argv, char* string);
 
+char prog_path[128];
+char prog_stdin[128];
+char prog_stdout[128];
+char prog_stderr[128];
+char prog_pwd[128];
+char prog_name[128];
+char prog_ser_name[128];
+
+task_info_t prog_info = {
+    prog_path,
+    prog_stdin,
+    prog_stdout,
+    prog_stderr,
+    prog_pwd,
+    prog_name,
+    prog_ser_name
+};
+
 // built in shell
 
 int main(int argc, char** argv) {
@@ -100,7 +118,17 @@ int main(int argc, char** argv) {
         else if (!input[0]) continue;
 
         // if the input did not match any command
-        else printf("shell: invalid command: `%s`.\n", input);
+        else {
+            strcpy(prog_path, s_argv[0]);
+            strcpy(prog_name, s_argv[0]);
+            OS_what_stdin(prog_stdin);
+            OS_what_stdout(prog_stdout);
+            OS_what_stderr(prog_stderr);
+            OS_pwd(prog_pwd);
+            *prog_ser_name = 0;
+            if (OS_general_execute_block(&prog_info) == -1)
+                printf("shell: invalid command: `%s`.\n", input);
+        }
     }
     
     return 0;

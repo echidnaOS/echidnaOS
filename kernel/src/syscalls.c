@@ -187,3 +187,24 @@ void pwd(char* pwd_dump) {
     kstrcpy(pwd_dump, task_table[current_task]->pwd);
     return;
 }
+
+void what_stdin(char* dump) {
+    dump += task_table[current_task]->base;
+
+    kstrcpy(dump, task_table[current_task]->stdin);
+    return;
+}
+
+void what_stdout(char* dump) {
+    dump += task_table[current_task]->base;
+
+    kstrcpy(dump, task_table[current_task]->stdout);
+    return;
+}
+
+void what_stderr(char* dump) {
+    dump += task_table[current_task]->base;
+
+    kstrcpy(dump, task_table[current_task]->stderr);
+    return;
+}

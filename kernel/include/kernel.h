@@ -36,6 +36,7 @@
 #define KRN_STAT_RES_TASK       2
 #define KRN_STAT_IOWAIT_TASK    3
 #define KRN_STAT_IPCWAIT_TASK   4
+#define KRN_STAT_PROCWAIT_TASK  5
 
 #define EMPTY_PID               (task_t*)0xffffffff
 #define TASK_RESERVED_SPACE     0x10000

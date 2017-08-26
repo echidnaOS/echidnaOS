@@ -94,6 +94,13 @@ void task_fork(void) {
     task_scheduler();
 }
 
+int general_execute_block(task_info_t* task_info) {
+    if (general_execute(task_info) == FAILURE)
+        return -1;
+    task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
+    return 0;
+}
+
 int general_execute(task_info_t* task_info) {
     // correct the struct pointer for kernel space
     uint32_t task_info_ptr = (uint32_t)task_info;
@@ -319,6 +326,7 @@ void task_scheduler(void) {
                 set_segment(0x4, task_table[current_task]->base, task_table[current_task]->pages);
                 task_spinup((void*)task_table[current_task]);
             case KRN_STAT_IPCWAIT_TASK:
+            case KRN_STAT_PROCWAIT_TASK:
             case KRN_STAT_RES_TASK:
             default:
                 current_task++;
@@ -330,6 +338,12 @@ void task_scheduler(void) {
 }
 
 void task_quit(uint64_t return_value) {
+    int parent = task_table[current_task]->parent;
+    if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
+        task_table[parent]->eax_p = (uint32_t)(return_value & 0xffffffff);
+        task_table[parent]->edx_p = (uint32_t)((return_value >> 32) & 0xffffffff);
+        task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
+    }
     task_terminate(current_task);
     task_scheduler();
 }

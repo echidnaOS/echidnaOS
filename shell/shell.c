@@ -67,10 +67,10 @@ int main(int argc, char** argv) {
         else if ((!strcmp("pcowsay",s_argv[0])) || (!strcmp("scowsay", s_argv[0])) || (!strcmp("tcowsay", s_argv[0])))
             cowsay_cmd(s_argv, s_argc);
         
-        else if (!strcmp("div0", s_argv[0])) {
+        else if (!strcmp("div0", s_argv[0])) {/*
             int a = 0;
             a = a / 0;
-        }
+*/        }
         
         else if (!strcmp("ls", s_argv[0])) {
             char* ls_path;

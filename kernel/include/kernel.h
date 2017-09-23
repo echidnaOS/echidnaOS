@@ -19,7 +19,7 @@
 #define KB_L1_SIZE 256
 #define KB_L2_SIZE 2048
 
-#define KRNL_PIT_FREQ 0x8000
+#define KRNL_PIT_FREQ 4000
 #define KRNL_TTY_COUNT 7
 
 #define TTY_DEF_CUR_PAL 0x70
@@ -255,7 +255,6 @@ void vga_disable_cursor(void);
 void vga_80_x_50(void);
 uint32_t detect_mem(void);
 
-void char_to_stdout(int c);
 void enter_iowait_status(char* dev, uint64_t loc);
 void enter_ipcwait_status(void);
 

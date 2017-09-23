@@ -11,12 +11,14 @@ extern keyboard_handler
 extern task_switch
 extern except_div0
 
+extern set_PIC0_mask
+extern get_PIC0_mask
+
 ; API calls
 extern task_quit
 extern alloc
 extern free
 extern realloc
-extern char_to_stdout
 extern enter_iowait_status
 extern enter_ipcwait_status
 extern pwd
@@ -70,8 +72,8 @@ routine_list:
         dd      what_stderr             ; 0x1d
         dd      0                       ; 0x1e
         dd      0                       ; 0x1f
-        dd      char_to_stdout          ; 0x20
-        dd      0 ;char_from_stdin        0x21 - dummy entry
+        dd      0                       ; 0x20
+        dd      0                       ; 0x21
         dd      0                       ; 0x22
         dd      0                       ; 0x23
         dd      0                       ; 0x24
@@ -178,9 +180,20 @@ keyboard_isr:
 syscall:
 ; ARGS in EAX (call code), ECX, EDX, EDI, ESI
 ; return value in EAX/EDX
+        ; disable task switch IRQ, reenable all other interrupts
+        push eax
+        push ecx
+        push edx
+        call get_PIC0_mask
+        or al, 1
+        push eax
+        call set_PIC0_mask
+        add esp, 4
+        pop edx
+        pop ecx
+        pop eax
+        sti
         ; special routines check
-        cmp eax, 0x21
-        je char_from_stdin
         cmp eax, 0x0d
         je ipc_await
         cmp eax, 0x30
@@ -202,12 +215,27 @@ syscall:
         push edx
         mul ebx
         pop edx
+        ; push syscall args, and call
         push esi
         push edi
         push edx
         push ecx
         call [routine_list+eax]
         add esp, 16
+        ; disable all interrupts, reenable task switch IRQ
+        cli
+        push eax
+        push ecx
+        push edx
+        call get_PIC0_mask
+        and al, 0xfe
+        push eax
+        call set_PIC0_mask
+        add esp, 4
+        pop edx
+        pop ecx
+        pop eax
+        ; return
         pop es
         pop ds
         pop ebp
@@ -235,6 +263,20 @@ vfs_read_isr:
         push ecx
         call vfs_read
         add esp, 16
+        ; disable all interrupts, reenable task switch IRQ
+        cli
+        push eax
+        push ecx
+        push edx
+        call get_PIC0_mask
+        and al, 0xfe
+        push eax
+        call set_PIC0_mask
+        add esp, 4
+        pop edx
+        pop ecx
+        pop eax
+        ; done
         pop es
         pop ds
         pop ebp
@@ -270,27 +312,6 @@ vfs_read_isr:
         add esp, 16
         call task_switch
 
-char_from_stdin:
-        ; save task status
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
-        mov ax, 0x10
-        mov ds, ax
-        mov es, ax
-        mov fs, ax
-        mov gs, ax
-        call enter_iowait_status
-        call task_switch
-
 gen_exec_block_isr:
         ; save task status
         push gs
@@ -315,6 +336,20 @@ gen_exec_block_isr:
         push ecx
         call general_execute_block
         add esp, 16
+        ; disable all interrupts, reenable task switch IRQ
+        cli
+        push eax
+        push ecx
+        push edx
+        call get_PIC0_mask
+        and al, 0xfe
+        push eax
+        call set_PIC0_mask
+        add esp, 4
+        pop edx
+        pop ecx
+        pop eax
+        ; done
         cmp eax, -1
         je .abort
         call task_switch
@@ -335,6 +370,19 @@ gen_exec_block_isr:
         iretd
 
 ipc_await:
+        ; disable all interrupts, reenable task switch IRQ
+        cli
+        push eax
+        push ecx
+        push edx
+        call get_PIC0_mask
+        and al, 0xfe
+        push eax
+        call set_PIC0_mask
+        add esp, 4
+        pop edx
+        pop ecx
+        pop eax
         ; save task status
         push gs
         push fs

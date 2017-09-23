@@ -158,13 +158,6 @@ void* realloc(void* prev_ptr, uint32_t size) {
     return (void*)0;
 }
 
-// prints a char to the current standard output
-// for now, it will just print raw to the text driver
-void char_to_stdout(int c) { /*
-    text_putchar((char)c, task_table[current_task]->tty); */
-    return;
-}
-
 void enter_iowait_status(char* dev, uint64_t loc) {
     dev += task_table[current_task]->base;
     kstrcpy(task_table[current_task]->iowait_dev, dev);

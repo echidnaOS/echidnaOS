@@ -129,7 +129,11 @@ handler_div0:
         call except_div0
 
 irq0_handler:
-        cmp dword [cs:ts_enable], 0
+        push ds
+        push 0x10
+        pop ds
+        cmp dword [ts_enable], 0
+        pop ds
         je .ts_abort
         ; save task status
         push gs
@@ -192,12 +196,17 @@ keyboard_isr:
 syscall:
 ; ARGS in EAX (call code), ECX, EDX, EDI, ESI
 ; return value in EAX/EDX
-        ; disable task switch, reenable all interrupts
-        mov dword [cs:ts_enable], 0
-        sti
         ; special routines check
         cmp eax, 0x0d
         je ipc_await
+        ; disable task switch, reenable all interrupts
+        push ds
+        push 0x10
+        pop ds
+        mov dword [ts_enable], 0
+        pop ds
+        sti
+        ; special routines check
         cmp eax, 0x30
         je vfs_read_isr
         cmp eax, 0x02
@@ -226,7 +235,7 @@ syscall:
         add esp, 16
         ; disable all interrupts, reenable task switch
         cli
-        mov dword [cs:ts_enable], 1
+        mov dword [ts_enable], 1
         ; return
         pop es
         pop ds
@@ -257,7 +266,7 @@ vfs_read_isr:
         add esp, 16
         ; disable all interrupts, reenable task switch
         cli
-        mov dword [cs:ts_enable], 1
+        mov dword [ts_enable], 1
         ; done
         pop es
         pop ds
@@ -320,7 +329,7 @@ gen_exec_block_isr:
         add esp, 16
         ; disable all interrupts, reenable task switch
         cli
-        mov dword [cs:ts_enable], 1
+        mov dword [ts_enable], 1
         ; done
         cmp eax, -1
         je .abort
@@ -342,9 +351,6 @@ gen_exec_block_isr:
         iretd
 
 ipc_await:
-        ; disable all interrupts, reenable task switch
-        cli
-        mov dword [cs:ts_enable], 1
         ; save task status
         push gs
         push fs

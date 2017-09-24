@@ -8,9 +8,12 @@
 #define LEFT_SHIFT 0x2A
 #define RIGHT_SHIFT_REL 0xB6
 #define LEFT_SHIFT_REL 0xAA
+#define LEFT_CTRL 0x1D
+#define LEFT_CTRL_REL 0x9D
 
 static int capslock_active = 0;
 static int shift_active = 0;
+static int ctrl_active = 0;
 static uint8_t led_status = 0;
 
 static const char ascii_capslock[] = {
@@ -82,6 +85,16 @@ void keyboard_handler(uint8_t input_byte) {
                 break;
         }
     }
+    
+    // ctrl sequences handling
+    if (ctrl_active) {
+        switch (input_byte) {
+            case 0x2e:      // ctrl+c
+                return;
+            default:
+                break;
+        }
+    }
 
     if (input_byte == CAPSLOCK) {
 
@@ -98,6 +111,9 @@ void keyboard_handler(uint8_t input_byte) {
 
     } else if (input_byte == LEFT_SHIFT || input_byte == RIGHT_SHIFT || input_byte == LEFT_SHIFT_REL || input_byte == RIGHT_SHIFT_REL)
 		shift_active = !shift_active;
+
+    else if (input_byte == LEFT_CTRL || input_byte == LEFT_CTRL_REL)
+        ctrl_active = !ctrl_active;
 
     else if (tty[current_tty].kb_l1_buffer_index < KB_L1_SIZE) {
 

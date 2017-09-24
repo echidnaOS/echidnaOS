@@ -37,6 +37,6 @@ int pcspk_io_wrapper(uint32_t unused, uint64_t freq, int type, uint8_t payload) 
 }
 
 void init_pcspk(void) {
-    kernel_add_device("pcspk", 0, &pcspk_io_wrapper);
+    kernel_add_device("pcspk", 0, 0, &pcspk_io_wrapper);
     return;
 }

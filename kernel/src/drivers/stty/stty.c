@@ -54,7 +54,7 @@ void init_stty(void) {
     
     for (int i = 0; i < MAX_STTY; i++) {
         kstrcpy(devices[i], com_devices[i]);
-        kernel_add_device(stty_names[i], i, &stty_io_wrapper);
+        kernel_add_device(stty_names[i], i, 0, &stty_io_wrapper);
         kputs("\nInitialised "); kputs(stty_names[i]);
     }
 

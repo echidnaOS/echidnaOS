@@ -158,7 +158,8 @@ void init_ata(void) {
         ii++;
         if (ii % 2) master = 0;
         else master = 1;
-        kernel_add_device(ata_names[i], i, &ata_io_wrapper);
+        kernel_add_device(ata_names[i], i, devices[i].sector_count * 512,
+                          &ata_io_wrapper);
         kputs("\nInitialised "); kputs(ata_names[i]);
     }
 

@@ -280,7 +280,7 @@ next:
             
 }
 
-int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return 0; }
+int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return FAILURE; }
 
 int echfs_mount(char* dev) {
     device = dev;

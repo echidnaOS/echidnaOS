@@ -44,6 +44,7 @@
 
 #define FILE_TYPE               0
 #define DIRECTORY_TYPE          1
+#define DEVICE_TYPE             2
 
 #define IO_NOT_READY -5
 
@@ -64,7 +65,8 @@ void install_echfs(void);
 
 // end fs inits
 
-void kernel_add_device(char* name, uint32_t gp_value, int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t));
+void kernel_add_device(char* name, uint32_t gp_value, uint64_t size,
+                       int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t));
 
 // prototypes
 
@@ -171,6 +173,7 @@ typedef struct {
 typedef struct {
     char name[32];
     uint32_t gp_value;
+    uint64_t size;
     int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
 } device_t;
 

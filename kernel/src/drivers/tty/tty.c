@@ -20,7 +20,7 @@ int tty_io_wrapper(uint32_t tty, uint64_t unused, int type, uint8_t payload) {
 void init_tty_drv(void) {
 
     for (int i = 0; i < KRNL_TTY_COUNT; i++)
-        kernel_add_device(tty_names[i], i, &tty_io_wrapper);
+        kernel_add_device(tty_names[i], i, 0, &tty_io_wrapper);
 
     return;
 

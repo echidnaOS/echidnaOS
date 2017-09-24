@@ -7,8 +7,8 @@
 int devfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) {
     if (entry >= device_ptr) return FAILURE;
     kstrcpy(metadata->filename, device_list[entry].name);
-    metadata->filetype = FILE_TYPE;
-    metadata->size = 0xffffffffffffffff;
+    metadata->filetype = DEVICE_TYPE;
+    metadata->size = device_list[entry].size;
     return SUCCESS;
 }
 
@@ -40,8 +40,21 @@ int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
         }
         else return FAILURE;
     }
-
-    return SUCCESS;
+    
+    if (type == DEVICE_TYPE) {
+        for (int i = 0; i < device_ptr; i++) {
+            if (!kstrcmp(path, device_list[i].name)) {
+                kstrcpy(metadata->filename, device_list[i].name);
+                metadata->filetype = DEVICE_TYPE;
+                metadata->size = device_list[i].size;
+            }
+            return SUCCESS;
+        }
+        return FAILURE;
+    }
+    
+    if (type == FILE_TYPE)
+        return FAILURE;
 }
 
 int devfs_mount(char* device) { return 0; }

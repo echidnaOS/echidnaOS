@@ -39,10 +39,10 @@ int zero_io_wrapper(uint32_t unused, uint64_t loc, int type, uint8_t payload) {
 }
 
 void init_streams(void) {
-    kernel_add_device("stdin", 0, &stdin_io_wrapper);
-    kernel_add_device("stdout", 0, &stdout_io_wrapper);
-    kernel_add_device("stderr", 0, &stderr_io_wrapper);
-    kernel_add_device("null", 0, &null_io_wrapper);
-    kernel_add_device("zero", 0, &zero_io_wrapper);
+    kernel_add_device("stdin", 0, 0, &stdin_io_wrapper);
+    kernel_add_device("stdout", 0, 0, &stdout_io_wrapper);
+    kernel_add_device("stderr", 0, 0, &stderr_io_wrapper);
+    kernel_add_device("null", 0, 0, &null_io_wrapper);
+    kernel_add_device("zero", 0, 0, &zero_io_wrapper);
     return;
 }

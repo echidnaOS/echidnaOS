@@ -54,7 +54,7 @@ void init_com(void) {
             if (ii >= MAX_PORTS) return;
         }
         ii++;
-        kernel_add_device(com_names[i], i, &com_io_wrapper);
+        kernel_add_device(com_names[i], i, 0, &com_io_wrapper);
         kputs("\nInitialised "); kputs(com_names[i]);
     }
 

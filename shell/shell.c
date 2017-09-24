@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         
         else if (!strcmp("beep", s_argv[0])) {
             if (s_argc == 1) continue;
-            OS_vfs_write("/dev/pcspk", atoi(s_argv[1]), 0);
+            OS_vfs_write("/dev/pcspk", 0, atoi(s_argv[1]));
         }
         
         else if (!strcmp("rdspk", s_argv[0]))
@@ -108,6 +108,14 @@ int main(int argc, char** argv) {
             for (i = 0; ((c = OS_vfs_read(s_argv[1], i)) != -1); i++) {
                 if (c == -2) break;
                 putchar(c);
+            }
+        }
+        
+        else if (!strcmp("dumpr", s_argv[0])) {
+            if (s_argc < 3) continue;
+            for (i = 0; ((c = OS_vfs_read(s_argv[1], i)) != -1); i++) {
+                if (c == -2) break;
+                OS_vfs_write(s_argv[2], i, c);
             }
         }
         

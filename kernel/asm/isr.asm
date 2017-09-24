@@ -7,6 +7,8 @@ global irq0_handler
 global keyboard_isr
 global syscall
 
+global ts_enable
+
 extern keyboard_handler
 extern task_switch
 extern except_div0
@@ -38,6 +40,8 @@ extern general_execute
 extern general_execute_block
 
 section .data
+
+ts_enable dd 1
 
 routine_list:
         dd      task_quit               ; 0x00
@@ -125,6 +129,8 @@ handler_div0:
         call except_div0
 
 irq0_handler:
+        cmp dword [cs:ts_enable], 0
+        je .ts_abort
         ; save task status
         push gs
         push fs
@@ -145,6 +151,12 @@ irq0_handler:
         mov fs, ax
         mov gs, ax
         call task_switch
+    .ts_abort:
+        push eax
+        mov al, 0x20    ; acknowledge interrupt to PIC0
+        out 0x20, al
+        pop eax
+        iretd
 
 keyboard_isr:
         push eax
@@ -180,18 +192,8 @@ keyboard_isr:
 syscall:
 ; ARGS in EAX (call code), ECX, EDX, EDI, ESI
 ; return value in EAX/EDX
-        ; disable task switch IRQ, reenable all other interrupts
-        push eax
-        push ecx
-        push edx
-        call get_PIC0_mask
-        or al, 1
-        push eax
-        call set_PIC0_mask
-        add esp, 4
-        pop edx
-        pop ecx
-        pop eax
+        ; disable task switch, reenable all interrupts
+        mov dword [cs:ts_enable], 0
         sti
         ; special routines check
         cmp eax, 0x0d
@@ -222,19 +224,9 @@ syscall:
         push ecx
         call [routine_list+eax]
         add esp, 16
-        ; disable all interrupts, reenable task switch IRQ
+        ; disable all interrupts, reenable task switch
         cli
-        push eax
-        push ecx
-        push edx
-        call get_PIC0_mask
-        and al, 0xfe
-        push eax
-        call set_PIC0_mask
-        add esp, 4
-        pop edx
-        pop ecx
-        pop eax
+        mov dword [cs:ts_enable], 1
         ; return
         pop es
         pop ds
@@ -263,19 +255,9 @@ vfs_read_isr:
         push ecx
         call vfs_read
         add esp, 16
-        ; disable all interrupts, reenable task switch IRQ
+        ; disable all interrupts, reenable task switch
         cli
-        push eax
-        push ecx
-        push edx
-        call get_PIC0_mask
-        and al, 0xfe
-        push eax
-        call set_PIC0_mask
-        add esp, 4
-        pop edx
-        pop ecx
-        pop eax
+        mov dword [cs:ts_enable], 1
         ; done
         pop es
         pop ds
@@ -336,19 +318,9 @@ gen_exec_block_isr:
         push ecx
         call general_execute_block
         add esp, 16
-        ; disable all interrupts, reenable task switch IRQ
+        ; disable all interrupts, reenable task switch
         cli
-        push eax
-        push ecx
-        push edx
-        call get_PIC0_mask
-        and al, 0xfe
-        push eax
-        call set_PIC0_mask
-        add esp, 4
-        pop edx
-        pop ecx
-        pop eax
+        mov dword [cs:ts_enable], 1
         ; done
         cmp eax, -1
         je .abort
@@ -370,19 +342,9 @@ gen_exec_block_isr:
         iretd
 
 ipc_await:
-        ; disable all interrupts, reenable task switch IRQ
+        ; disable all interrupts, reenable task switch
         cli
-        push eax
-        push ecx
-        push edx
-        call get_PIC0_mask
-        and al, 0xfe
-        push eax
-        call set_PIC0_mask
-        add esp, 4
-        pop edx
-        pop ecx
-        pop eax
+        mov dword [cs:ts_enable], 1
         ; save task status
         push gs
         push fs

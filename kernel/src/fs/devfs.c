@@ -30,7 +30,20 @@ int devfs_read(char* path, uint64_t loc, char* dev) {
     return FAILURE;
 }
 
-int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) { return 0; }
+int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) {
+    if (type == DIRECTORY_TYPE) {
+        if (!kstrcmp(path, "/") || !*path) {
+            metadata->filetype = type;
+            metadata->size = 0;
+            kstrcpy(metadata->filename, "/");
+            return SUCCESS;
+        }
+        else return FAILURE;
+    }
+
+    return SUCCESS;
+}
+
 int devfs_mount(char* device) { return 0; }
 
 void install_devfs(void) {

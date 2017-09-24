@@ -113,7 +113,8 @@ int main(int argc, char** argv) {
         
         else if (!strcmp("cd", s_argv[0])) {
             if (s_argc == 1) continue;
-            OS_vfs_cd(s_argv[1]);
+            if (OS_vfs_cd(s_argv[1]) == -2)
+                printf("shell: invalid directory: `%s`.\n", s_argv[1]);
         }
 
         // return to prompt if no input

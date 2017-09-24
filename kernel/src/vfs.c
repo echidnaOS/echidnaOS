@@ -105,7 +105,12 @@ int vfs_cd(char* path) {
     path += task_table[current_task]->base;
     char absolute_path[2048];
     
+    vfs_metadata_t metadata;
+    
     vfs_get_absolute_path(absolute_path, path);
+
+    if (vfs_kget_metadata(absolute_path, &metadata, DIRECTORY_TYPE) == FAILURE)
+        return FAILURE;
 
     kstrcpy(task_table[current_task]->pwd, absolute_path);
 

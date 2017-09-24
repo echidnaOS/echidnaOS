@@ -384,6 +384,13 @@ search_out:
 
 int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) {
     int dev_n = find_device(dev);
+    
+    if ((!kstrcmp(path, "/") || !*path) && type == DIRECTORY_TYPE) {
+        metadata->filetype = type;
+        metadata->size = 0;
+        kstrcpy(metadata->filename, "/");
+        return SUCCESS;
+    }
 
     device = dev;
     blocks = mounts[dev_n].blocks;

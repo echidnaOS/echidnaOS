@@ -5,6 +5,10 @@
 #include <sys_api.h>
 #include <stddef.h>
 
+void exit(int status) {
+    OS_exit(status);
+}
+
 void* malloc(size_t size) {
     return OS_alloc(size);
 }

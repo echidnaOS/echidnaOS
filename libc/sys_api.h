@@ -207,4 +207,12 @@ typedef struct {
     ret; \
 })
 
+#define OS_exit(value) ({               \
+    asm volatile (  "mov eax, 0x00;"    \
+                    "int 0x80;"         \
+                     : \
+                     : "c" (value)      \
+                     : "eax", "edx" );  \
+})
+
 #endif

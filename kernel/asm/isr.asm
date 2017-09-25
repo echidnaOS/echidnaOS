@@ -17,6 +17,7 @@ extern set_PIC0_mask
 extern get_PIC0_mask
 
 ; API calls
+extern task_fork
 extern task_quit
 extern alloc
 extern free
@@ -49,7 +50,7 @@ routine_list:
         dd      0 ;general_execute_block; 0x02 - dummy entry
         dd      0                       ; 0x03
         dd      0                       ; 0x04
-        dd      0                       ; 0x05
+        dd      task_fork               ; 0x05
         dd      0                       ; 0x06
         dd      0                       ; 0x07
         dd      ipc_send_packet         ; 0x08

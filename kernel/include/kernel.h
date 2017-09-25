@@ -195,7 +195,7 @@ void vfs_install_fs(char* name,
                     int (*mount)(char* device) );
 
 int task_create(task_t new_task);
-void task_fork(void);
+int task_fork(void);
 //uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);
 void task_terminate(int pid);

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sys_api.h>
 
@@ -71,6 +72,10 @@ int main(int argc, char** argv) {
             int a = 0;
             a = a / 0;
 */        }
+        
+        else if (!strcmp("fork", s_argv[0])) {
+            printf("%d", fork());
+        }
         
         else if (!strcmp("ls", s_argv[0])) {
             char* ls_path;

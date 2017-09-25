@@ -30,6 +30,7 @@ i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 \
     $BINDIR/../../libc/stdlib.o \
     $BINDIR/../../libc/ctype.o \
     $BINDIR/../../libc/string.o \
+    $BINDIR/../../libc/unistd.o \
     $ARGS_STR \
     -nostdlib \
     -static-libgcc -lgcc \

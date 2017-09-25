@@ -6,6 +6,7 @@ distro: libc_target shell/shell.bin kernel/echidna.bin
 	make clean
 
 libc_target:
+	cp gccwrappers/* tools/bin/
 	export PATH=`pwd`/tools/bin:$$PATH && cd libc && make
 
 shell/shell.bin:

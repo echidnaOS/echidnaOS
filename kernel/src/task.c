@@ -51,7 +51,7 @@ int task_create(task_t new_task) {
     return new_pid;
 }
 
-void task_fork(void) {
+int task_fork(void) {
     // forks the current task in a Unix-like way
     
     task_t new_process = *task_table[current_task];
@@ -67,8 +67,7 @@ void task_fork(void) {
     // allocate memory for the forked process
     if ((new_process.base = (uint32_t)kalloc(task_size)) == 0) {
         // fail
-        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
-        task_scheduler();
+        return FAILURE;
     }
     
     // clone the process's memory
@@ -80,18 +79,13 @@ void task_fork(void) {
     if (new_pid == FAILURE) {
         // fail
         kfree((void*)new_process.base);
-        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
-        task_scheduler();
+        return FAILURE;
     }
-    
-    // return the PID to the forking process
-    task_table[current_task]->eax_p = (uint32_t)new_pid;
     
     // return 0 in the child process
     task_table[new_pid]->eax_p = 0;
     
-    // return to scheduler
-    task_scheduler();
+    return new_pid;
 }
 
 int general_execute_block(task_info_t* task_info) {

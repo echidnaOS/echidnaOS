@@ -215,4 +215,14 @@ typedef struct {
                      : "eax", "edx" );  \
 })
 
+#define OS_fork() ({               \
+    int ret; \
+    asm volatile (  "mov eax, 0x05;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret) \
+                     :     \
+                     : "edx" );  \
+    ret; \
+})
+
 #endif

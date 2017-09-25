@@ -51,8 +51,26 @@ int task_create(task_t new_task) {
     return new_pid;
 }
 
-int task_fork(void) {
+void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
+    
     // forks the current task in a Unix-like way
+
+    task_table[current_task]->eax_p = eax_r;
+    task_table[current_task]->ebx_p = ebx_r;
+    task_table[current_task]->ecx_p = ecx_r;
+    task_table[current_task]->edx_p = edx_r;
+    task_table[current_task]->esi_p = esi_r;
+    task_table[current_task]->edi_p = edi_r;
+    task_table[current_task]->ebp_p = ebp_r;
+    task_table[current_task]->esp_p = esp_r;
+    task_table[current_task]->eip_p = eip_r;
+    task_table[current_task]->cs_p = cs_r;
+    task_table[current_task]->ds_p = ds_r;
+    task_table[current_task]->es_p = es_r;
+    task_table[current_task]->fs_p = fs_r;
+    task_table[current_task]->gs_p = gs_r;
+    task_table[current_task]->ss_p = ss_r;
+    task_table[current_task]->eflags_p = eflags_r;
     
     task_t new_process = *task_table[current_task];
 
@@ -67,7 +85,8 @@ int task_fork(void) {
     // allocate memory for the forked process
     if ((new_process.base = (uint32_t)kalloc(task_size)) == 0) {
         // fail
-        return FAILURE;
+        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_scheduler();
     }
     
     // clone the process's memory
@@ -79,13 +98,17 @@ int task_fork(void) {
     if (new_pid == FAILURE) {
         // fail
         kfree((void*)new_process.base);
-        return FAILURE;
+        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_scheduler();
     }
+    
+    // return the PID to the forking process
+    task_table[current_task]->eax_p = (uint32_t)new_pid;
     
     // return 0 in the child process
     task_table[new_pid]->eax_p = 0;
     
-    return new_pid;
+    task_scheduler();
 }
 
 int general_execute_block(task_info_t* task_info) {

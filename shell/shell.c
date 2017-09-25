@@ -74,7 +74,19 @@ int main(int argc, char** argv) {
 */        }
         
         else if (!strcmp("fork", s_argv[0])) {
-            printf("%d", fork());
+            
+            pid_t pid = fork();
+
+            if (pid == -1) {
+                puts("Fork fail.");
+            }
+            else if (pid == 0) {
+                puts("Child process OK.");
+            }
+            else {
+                printf("Child PID: %d\n", pid);
+            }
+
         }
         
         else if (!strcmp("ls", s_argv[0])) {

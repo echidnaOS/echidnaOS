@@ -195,7 +195,7 @@ void vfs_install_fs(char* name,
                     int (*mount)(char* device) );
 
 int task_create(task_t new_task);
-int task_fork(void);
+void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r);
 //uint32_t task_start(task_info_t* task_info);
 void task_scheduler(void);
 void task_terminate(int pid);

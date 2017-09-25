@@ -50,7 +50,7 @@ routine_list:
         dd      0 ;general_execute_block; 0x02 - dummy entry
         dd      0                       ; 0x03
         dd      0                       ; 0x04
-        dd      task_fork               ; 0x05
+        dd      0 ;task_fork            ; 0x05 - dummy entry
         dd      0                       ; 0x06
         dd      0                       ; 0x07
         dd      ipc_send_packet         ; 0x08
@@ -200,6 +200,8 @@ syscall:
         ; special routines check
         cmp eax, 0x0d
         je ipc_await
+        cmp eax, 0x05
+        je fork_isr
         ; disable task switch, reenable all interrupts
         push ds
         push 0x10
@@ -371,3 +373,23 @@ ipc_await:
         mov gs, ax
         call enter_ipcwait_status
         call task_switch
+
+fork_isr:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        call task_fork

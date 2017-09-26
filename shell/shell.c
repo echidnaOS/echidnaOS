@@ -73,6 +73,12 @@ int main(int argc, char** argv) {
             a = a / 0;
 */        }
         
+        else if (!strcmp("esc", s_argv[0])) {
+            if (s_argc == 1) continue;
+            putchar('\e');
+            fputs(s_argv[1], stdout);
+        }
+        
         else if (!strcmp("fork", s_argv[0])) {
             
             pid_t pid = fork();

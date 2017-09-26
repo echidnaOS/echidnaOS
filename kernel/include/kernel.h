@@ -227,6 +227,10 @@ typedef struct {
     char kb_l2_buffer[KB_L2_SIZE];
     uint16_t kb_l1_buffer_index;
     uint16_t kb_l2_buffer_index;
+    int escape;
+    int* esc_value;
+    int esc_value0;
+    int esc_value1;
 } tty_t;
 
 extern uint32_t memory_size;

@@ -3,6 +3,8 @@
 
 #define VIDEO_BOTTOM (VD_ROWS*VD_COLS)-1
 
+void escape_parse(char c, uint8_t which_tty);
+
 static char* video_mem = (char*)0xB8000;
 
 static void clear_cursor(uint8_t which_tty) {
@@ -61,9 +63,16 @@ void text_disable_cursor(uint8_t which_tty) {
 }
 
 void text_putchar(char c, uint8_t which_tty) {
+    if (tty[which_tty].escape) {
+        escape_parse(c, which_tty);
+        return;
+    }
     switch (c) {
         case 0x00:
             break;
+        case 0x1B:
+            tty[which_tty].escape = 1;
+            return;
         case 0x0A:
             if (text_get_cursor_pos_y(which_tty) == (VD_ROWS - 1)) {
                 clear_cursor(which_tty);
@@ -97,6 +106,70 @@ void text_putchar(char c, uint8_t which_tty) {
     return;
 }
 
+void escape_parse(char c, uint8_t which_tty) {
+    
+    if (c >= '0' && c <= '9') {
+        *tty[which_tty].esc_value *= 10;
+        *tty[which_tty].esc_value += c - '0';
+        return;
+    }
+
+    switch (c) {
+        case '[':
+            return;
+        case ';':
+            tty[which_tty].esc_value = &tty[which_tty].esc_value1;
+            return;
+        case 'A':
+            if (tty[which_tty].esc_value0 >
+                text_get_cursor_pos_y(which_tty))
+                tty[which_tty].esc_value0 = text_get_cursor_pos_y(which_tty);
+            text_set_cursor_pos(text_get_cursor_pos_x(which_tty),
+                                text_get_cursor_pos_y(which_tty)
+                                - tty[which_tty].esc_value0,
+                                which_tty);
+            break;
+        case 'B':
+            if ((text_get_cursor_pos_y(which_tty) + tty[which_tty].esc_value0) >
+                (VD_ROWS - 1))
+                tty[which_tty].esc_value0 = (VD_ROWS - 1) - text_get_cursor_pos_y(which_tty);
+            text_set_cursor_pos(text_get_cursor_pos_x(which_tty),
+                                text_get_cursor_pos_y(which_tty)
+                                + tty[which_tty].esc_value0,
+                                which_tty);
+            break;
+        case 'C':
+            if ((text_get_cursor_pos_x(which_tty) + tty[which_tty].esc_value0) >
+                (VD_COLS / 2 - 1))
+                tty[which_tty].esc_value0 = (VD_COLS / 2 - 1) - text_get_cursor_pos_x(which_tty);
+            text_set_cursor_pos(text_get_cursor_pos_x(which_tty)
+                                + tty[which_tty].esc_value0,
+                                text_get_cursor_pos_y(which_tty),
+                                which_tty);
+            break;
+        case 'D':
+            if (tty[which_tty].esc_value0 >
+                text_get_cursor_pos_x(which_tty))
+                tty[which_tty].esc_value0 = text_get_cursor_pos_x(which_tty);
+            text_set_cursor_pos(text_get_cursor_pos_x(which_tty)
+                                - tty[which_tty].esc_value0,
+                                text_get_cursor_pos_y(which_tty),
+                                which_tty);
+            break;
+        default:
+            tty[which_tty].escape = 0;
+            text_putchar('?', which_tty);
+            break;
+    }
+    
+    tty[which_tty].esc_value = &tty[which_tty].esc_value0;
+    tty[which_tty].esc_value0 = 0;
+    tty[which_tty].esc_value1 = 0;
+    tty[which_tty].escape = 0;
+
+    return;
+}
+
 void text_set_cursor_palette(uint8_t c, uint8_t which_tty) {
     tty[which_tty].cursor_palette = c;
     draw_cursor(which_tty);
@@ -117,11 +190,11 @@ uint8_t text_get_text_palette(uint8_t which_tty) {
 }
 
 uint32_t text_get_cursor_pos_x(uint8_t which_tty) {
-    return (tty[which_tty].cursor_offset/2) % VD_ROWS;
+    return (tty[which_tty].cursor_offset % VD_COLS) / 2;
 }
 
 uint32_t text_get_cursor_pos_y(uint8_t which_tty) {
-    return (tty[which_tty].cursor_offset/2) / (VD_COLS/2);
+    return tty[which_tty].cursor_offset / VD_COLS;
 }
 
 void text_set_cursor_pos(uint32_t x, uint32_t y, uint8_t which_tty) {
@@ -145,6 +218,10 @@ void switch_tty(uint8_t which_tty) {
 void init_tty(void) {
     uint32_t i;
     for (i=0; i<KRNL_TTY_COUNT; i++) {
+        tty[i].esc_value = &tty[i].esc_value0;
+        tty[i].esc_value0 = 0;
+        tty[i].esc_value1 = 0;
+        tty[i].escape = 0;
         tty[i].cursor_offset = 0;
         tty[i].cursor_status = 1;
         tty[i].cursor_palette = TTY_DEF_CUR_PAL;

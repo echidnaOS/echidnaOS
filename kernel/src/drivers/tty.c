@@ -111,6 +111,7 @@ void escape_parse(char c, uint8_t which_tty) {
     if (c >= '0' && c <= '9') {
         *tty[which_tty].esc_value *= 10;
         *tty[which_tty].esc_value += c - '0';
+        *tty[which_tty].esc_default = 0;
         return;
     }
 
@@ -119,8 +120,10 @@ void escape_parse(char c, uint8_t which_tty) {
             return;
         case ';':
             tty[which_tty].esc_value = &tty[which_tty].esc_value1;
+            tty[which_tty].esc_default = &tty[which_tty].esc_default1;
             return;
         case 'A':
+            if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 1;
             if (tty[which_tty].esc_value0 >
                 text_get_cursor_pos_y(which_tty))
                 tty[which_tty].esc_value0 = text_get_cursor_pos_y(which_tty);
@@ -130,6 +133,7 @@ void escape_parse(char c, uint8_t which_tty) {
                                 which_tty);
             break;
         case 'B':
+            if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 1;
             if ((text_get_cursor_pos_y(which_tty) + tty[which_tty].esc_value0) >
                 (VD_ROWS - 1))
                 tty[which_tty].esc_value0 = (VD_ROWS - 1) - text_get_cursor_pos_y(which_tty);
@@ -139,6 +143,7 @@ void escape_parse(char c, uint8_t which_tty) {
                                 which_tty);
             break;
         case 'C':
+            if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 1;
             if ((text_get_cursor_pos_x(which_tty) + tty[which_tty].esc_value0) >
                 (VD_COLS / 2 - 1))
                 tty[which_tty].esc_value0 = (VD_COLS / 2 - 1) - text_get_cursor_pos_x(which_tty);
@@ -148,6 +153,7 @@ void escape_parse(char c, uint8_t which_tty) {
                                 which_tty);
             break;
         case 'D':
+            if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 1;
             if (tty[which_tty].esc_value0 >
                 text_get_cursor_pos_x(which_tty))
                 tty[which_tty].esc_value0 = text_get_cursor_pos_x(which_tty);
@@ -165,6 +171,9 @@ void escape_parse(char c, uint8_t which_tty) {
     tty[which_tty].esc_value = &tty[which_tty].esc_value0;
     tty[which_tty].esc_value0 = 0;
     tty[which_tty].esc_value1 = 0;
+    tty[which_tty].esc_default = &tty[which_tty].esc_default0;
+    tty[which_tty].esc_default0 = 1;
+    tty[which_tty].esc_default1 = 1;
     tty[which_tty].escape = 0;
 
     return;
@@ -221,6 +230,9 @@ void init_tty(void) {
         tty[i].esc_value = &tty[i].esc_value0;
         tty[i].esc_value0 = 0;
         tty[i].esc_value1 = 0;
+        tty[i].esc_default = &tty[i].esc_default0;
+        tty[i].esc_default0 = 1;
+        tty[i].esc_default1 = 1;
         tty[i].escape = 0;
         tty[i].cursor_offset = 0;
         tty[i].cursor_status = 1;

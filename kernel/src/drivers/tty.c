@@ -183,6 +183,17 @@ void escape_parse(char c, uint8_t which_tty) {
                                 text_get_cursor_pos_y(which_tty),
                                 which_tty);
             break;
+        case 'H':
+            tty[which_tty].esc_value0 -= 1;
+            tty[which_tty].esc_value1 -= 1;
+            if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 0;
+            if (tty[which_tty].esc_default1) tty[which_tty].esc_value1 = 0;
+            if (tty[which_tty].esc_value1 >= (VD_COLS / 2))
+                tty[which_tty].esc_value1 = (VD_COLS / 2) - 1;
+            if (tty[which_tty].esc_value0 >= VD_ROWS)
+                tty[which_tty].esc_value0 = VD_ROWS - 1;
+            text_set_cursor_pos(tty[which_tty].esc_value1, tty[which_tty].esc_value0, which_tty);
+            break;
         case 'm':
             sgr(which_tty);
             break;

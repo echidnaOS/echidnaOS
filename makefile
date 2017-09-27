@@ -1,7 +1,7 @@
 notarget:
 	$(error No target specified)
 
-distro: libc_target shell/shell.bin misc/check.bin kernel/echidna.bin
+distro: libc_target shell/shell.bin misc/life.bin kernel/echidna.bin
 	make img
 	make clean
 
@@ -9,7 +9,7 @@ libc_target:
 	cp gccwrappers/* tools/bin/
 	export PATH=`pwd`/tools/bin:$$PATH && cd libc && make
 
-misc/check.bin:
+misc/life.bin:
 	export PATH=`pwd`/tools/bin:$$PATH && cd misc && make
 
 shell/shell.bin:
@@ -24,6 +24,7 @@ echidnafs/echfs-utils: echidnafs/echfs-utils.c
 clean:
 	cd shell && make clean
 	cd libc && make clean
+	cd misc && make clean
 	cd kernel && make clean
 
 img: echidnafs/echfs-utils
@@ -35,7 +36,7 @@ img: echidnafs/echfs-utils
 	echidnafs/echfs-utils echidna.img mkdir docs
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
-	echidnafs/echfs-utils echidna.img import ./misc/check /bin/check
+	echidnafs/echfs-utils echidna.img import ./misc/life /bin/life
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
 
 clean-tools:

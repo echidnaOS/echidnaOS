@@ -4,9 +4,9 @@ PREFIX =
 CHARDFLAGS = -std=gnu99 -masm=intel
 CFLAGS = 
 
-check: check.c
-	$(CC) $(CHARDFLAGS) -o check.o -c check.c
-	$(CC) -o check check.o
+life: life.c
+	$(CC) $(CHARDFLAGS) -o life.o -c life.c
+	$(CC) -o life life.o
 
 clean:
-	rm check.o check
+	rm life.o life

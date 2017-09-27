@@ -106,6 +106,27 @@ void text_putchar(char c, uint8_t which_tty) {
     return;
 }
 
+uint8_t ansi_colours[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+
+void sgr(uint8_t which_tty) {
+
+    if (tty[which_tty].esc_value0 >= 30 && tty[which_tty].esc_value0 <= 37) {
+        uint8_t pal = text_get_text_palette(which_tty);
+        pal = (pal & 0xf0) + ansi_colours[tty[which_tty].esc_value0 - 30];
+        text_set_text_palette(pal, which_tty);
+        return;
+    }
+
+    if (tty[which_tty].esc_value0 >= 40 && tty[which_tty].esc_value0 <= 47) {
+        uint8_t pal = text_get_text_palette(which_tty);
+        pal = (pal & 0x0f) + ansi_colours[tty[which_tty].esc_value0 - 40] * 0x10;
+        text_set_text_palette(pal, which_tty);
+        return;
+    }
+
+    return;
+}
+
 void escape_parse(char c, uint8_t which_tty) {
     
     if (c >= '0' && c <= '9') {
@@ -161,6 +182,9 @@ void escape_parse(char c, uint8_t which_tty) {
                                 - tty[which_tty].esc_value0,
                                 text_get_cursor_pos_y(which_tty),
                                 which_tty);
+            break;
+        case 'm':
+            sgr(which_tty);
             break;
         default:
             tty[which_tty].escape = 0;

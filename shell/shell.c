@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 
     while (1) {
         OS_pwd(pwd);
-        printf("%s# ", pwd);
+        printf("\e[32mechidnaOS\e[37m:\e[36m%s\e[37m# ", pwd);
 
         getstring(input, 256);
         s_argc = get_argc(input);
@@ -58,6 +58,9 @@ int main(int argc, char** argv) {
 
         else if (!strcmp("echo", s_argv[0]))
             echo_cmd(s_argv, s_argc);
+
+        else if (!strcmp("col", s_argv[0]))
+            puts("\e[40m \e[41m \e[42m \e[43m \e[44m \e[45m \e[46m \e[47m \e[40m");
 
         else if ((!strcmp("cowsay", s_argv[0])) || (!strcmp("tuxsay", s_argv[0])) || (!strcmp("daemonsay", s_argv[0])))
             cowsay_cmd(s_argv, s_argc);
@@ -101,9 +104,9 @@ int main(int argc, char** argv) {
             else ls_path = s_argv[1];
             for (int i = 0; ; i++) {
                 if (OS_vfs_list(ls_path, &metadata, i) == -2) break;
-                if (metadata.filetype == 1) putchar('[');
+                if (metadata.filetype == 1) fputs("\e[36m", stdout);
                 printf("%s", metadata.filename);
-                if (metadata.filetype == 1) putchar(']');
+                if (metadata.filetype == 1) fputs("\e[37m", stdout);
                 putchar('\n');
             }
         }

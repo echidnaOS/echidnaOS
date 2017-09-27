@@ -72,16 +72,16 @@ void edit_generate(int* grid) {
         switch (c) {
             case '\n':
                 return;
-            case 'h':
+            case 'h': case 'a':
                 x = (--x + COLS) % COLS;
                 break;
-            case 'l':
+            case 'l': case 'd':
                 x = (++x + COLS) % COLS;
                 break;
-            case 'k':
+            case 'k': case 'w':
                 y = (--y + ROWS) % ROWS;
                 break;
-            case 'j':
+            case 'j': case 's':
                 y = (++y + ROWS) % ROWS;
                 break;
             case ' ':

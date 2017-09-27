@@ -238,6 +238,7 @@ typedef struct {
     int* esc_default;
     int esc_default0;
     int esc_default1;
+    int raw;
 } tty_t;
 
 extern uint32_t memory_size;

@@ -131,6 +131,11 @@ void keyboard_handler(uint8_t input_byte) {
             else
                 c = ascii_capslock[input_byte];
             
+            if (tty[current_tty].raw) {
+                tty[current_tty].kb_l2_buffer[tty[current_tty].kb_l2_buffer_index++] = c;
+                return;
+            }
+            
             if (c == '\b') {
                 if (!tty[current_tty].kb_l1_buffer_index) return;
                 text_putchar(c, current_tty);

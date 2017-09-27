@@ -197,6 +197,10 @@ void escape_parse(char c, uint8_t which_tty) {
         case 'm':
             sgr(which_tty);
             break;
+        /* non-standard sequences */
+        case 'r': /* enter raw mode/exit raw mode */
+            tty[which_tty].raw = !tty[which_tty].raw;
+            break;
         default:
             tty[which_tty].escape = 0;
             text_putchar('?', which_tty);
@@ -273,6 +277,7 @@ void init_tty(void) {
         tty[i].cursor_status = 1;
         tty[i].cursor_palette = TTY_DEF_CUR_PAL;
         tty[i].text_palette = TTY_DEF_TXT_PAL;
+        tty[i].raw = 0;
         for (uint32_t ii=0; ii<VIDEO_BOTTOM; ii += 2) {
             tty[i].field[ii] = ' ';
             tty[i].field[ii+1] = TTY_DEF_TXT_PAL;

@@ -67,7 +67,7 @@ void random_generate(char* seed, int* grid) {
 }
 
 void quit() {
-    puts("\e[30m");
+    puts("\e[r\e[b\e[s\e[30m");
     exit(0);
 }
 

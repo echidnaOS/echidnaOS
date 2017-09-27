@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #define ROWS 24
 #define COLS 80
@@ -50,22 +51,62 @@ void tick(int* in, int* out) {
     }
 }
 
-int main(int argc, char** argv) {
-    int g1[ROWS * COLS] = {0}; int* grid1 = g1;
-    int g2[ROWS * COLS] = {0}; int* grid2 = g2;
-
-    /* prng stuff */
+void random_generate(char* seed, int* grid) {
     uint16_t lfsr = 0x4200u;
-    if (argc > 1)
-        for (int i = 0; argv[1][i]; i++)
-            lfsr += argv[1][i];
+    for (int i = 0; seed[i]; i++)
+        lfsr += seed[i];
 
     uint16_t bit;
     for (int i = 0; i < ROWS * COLS; i++) {
         bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
         lfsr =  (lfsr >> 1) | (bit << 15);
-        grid1[i] = bit;
+        grid[i] = bit;
     }
+}
+
+void edit_generate(int* grid) {
+    int x = 0; int y = 0;
+    for (;;) {
+        int c = getchar();
+
+        switch (c) {
+            case '\n':
+                return;
+            case 'h':
+                x = (--x + COLS) % COLS;
+                break;
+            case 'l':
+                x = (++x + COLS) % COLS;
+                break;
+            case 'k':
+                y = (--y + ROWS) % ROWS;
+                break;
+            case 'j':
+                y = (++y + ROWS) % ROWS;
+                break;
+            case ' ':
+                grid[y * COLS + x] ^= 1;
+                break;
+        }
+
+        render_grid(grid);
+    }
+}
+
+int main(int argc, char** argv) {
+    /* raw nonblocking */
+    puts("\e[r\e[b\e[s");
+
+    int g1[ROWS * COLS] = {0}; int* grid1 = g1;
+    int g2[ROWS * COLS] = {0}; int* grid2 = g2;
+
+    if (argc > 1)
+        if (!strcmp(argv[1], "-e"))
+            edit_generate(grid1);
+        else
+            random_generate(argv[1], grid1);
+    else
+        random_generate("", grid1);
 
     for (;;) {
         render_grid(grid1);

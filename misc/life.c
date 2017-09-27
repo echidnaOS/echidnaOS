@@ -56,6 +56,10 @@ int main(int argc, char** argv) {
 
     /* prng stuff */
     uint16_t lfsr = 0x4200u;
+    if (argc > 1)
+        for (int i = 0; argv[1][i]; i++)
+            lfsr += argv[1][i];
+
     uint16_t bit;
     for (int i = 0; i < ROWS * COLS; i++) {
         bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;

@@ -16,6 +16,11 @@ int files_ptr = 0;
 char pool[4096];
 int pool_ptr = 0;
 
+int remove(const char* filename) {
+    if (OS_vfs_remove(filename) == VFS_FAILURE) return -1;
+    else return 0;
+}
+
 FILE* fopen(const char* path, const char* mode) {
     vfs_metadata_t metadata;
 

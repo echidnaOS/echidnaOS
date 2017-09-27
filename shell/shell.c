@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         
         else if (!strcmp("rm", s_argv[0])) {
             if (s_argc == 1) continue;
-            if (OS_vfs_remove(s_argv[1]) == VFS_FAILURE)
+            if (remove(s_argv[1]))
                 fprintf(stderr, "couldn't remove `%s`.\n", s_argv[1]);
         }
         

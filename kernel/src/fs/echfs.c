@@ -89,11 +89,22 @@ uint8_t rd_byte(uint64_t loc) {
     return (uint8_t)vfs_kread(device, loc);
 }
 
+void wr_byte(uint64_t loc, uint8_t x) {
+    vfs_kwrite(device, loc, x);
+    return;
+}
+
 uint16_t rd_word(uint64_t loc) {
     uint16_t x = 0;
     for (uint64_t i = 0; i < 2; i++)
         x += (uint16_t)vfs_kread(device, loc++) * (uint16_t)(power(0x100, i));
     return x;
+}
+
+void wr_word(uint64_t loc, uint16_t x) {
+    for (uint64_t i = 0; i < 2; i++)
+       vfs_kwrite(device, loc++, (int)(x / (power(0x100, i)) & 0xff));
+    return;
 }
 
 uint32_t rd_dword(uint64_t loc) {
@@ -103,6 +114,12 @@ uint32_t rd_dword(uint64_t loc) {
     return x;
 }
 
+void wr_dword(uint64_t loc, uint32_t x) {
+    for (uint64_t i = 0; i < 4; i++)
+       vfs_kwrite(device, loc++, (int)(x / (power(0x100, i)) & 0xff));
+    return;
+}
+
 uint64_t rd_qword(uint64_t loc) {
     uint64_t x = 0;
     for (uint64_t i = 0; i < 8; i++)
@@ -110,11 +127,25 @@ uint64_t rd_qword(uint64_t loc) {
     return x;
 }
 
+void wr_qword(uint64_t loc, uint64_t x) {
+    for (uint64_t i = 0; i < 8; i++)
+       vfs_kwrite(device, loc++, (int)(x / (power(0x100, i)) & 0xff));
+    return;
+}
+
 void fstrcpy_in(char* str, uint64_t loc) {
     int i = 0;
     while (rd_byte(loc))
         str[i++] = (char)rd_byte(loc++);
     str[i] = 0;
+    return;
+}
+
+void fstrcpy_out(uint64_t loc, const char* str) {
+    int i = 0;
+    while (str[i])
+        wr_byte(loc++, (uint8_t)str[i++]);
+    wr_byte(loc, 0);
     return;
 }
 
@@ -145,6 +176,34 @@ entry_t rd_entry(uint64_t entry) {
     res.size = rd_qword(loc);
     
     return res;
+}
+
+void wr_entry(uint64_t entry, entry_t entry_src) {
+    uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
+
+    wr_qword(loc, entry_src.parent_id);
+    loc += sizeof(uint64_t);
+    wr_byte(loc++, entry_src.type);
+    fstrcpy_out(loc, entry_src.name);
+    loc += FILENAME_LEN;
+    wr_byte(loc++, entry_src.perms);
+    wr_word(loc, entry_src.owner);
+    loc += sizeof(uint16_t);
+    wr_word(loc, entry_src.group);
+    loc += sizeof(uint16_t);
+    wr_byte(loc++, entry_src.hundreths);
+    wr_byte(loc++, entry_src.seconds);
+    wr_byte(loc++, entry_src.minutes);
+    wr_byte(loc++, entry_src.hours);
+    wr_byte(loc++, entry_src.day);
+    wr_byte(loc++, entry_src.month);
+    wr_word(loc, entry_src.year);
+    loc += sizeof(uint16_t);
+    wr_qword(loc, entry_src.payload);
+    loc += sizeof(uint64_t);
+    wr_qword(loc, entry_src.size);
+    
+    return;
 }
 
 int fstrcmp(uint64_t loc, const char* str) {
@@ -382,6 +441,62 @@ search_out:
     return cached_files[cached_file].cache[offset];
 }
 
+int echfs_remove(char* path, char* dev) {
+    int dev_n = find_device(dev);
+
+    device = dev;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    
+    int cached_file;
+    
+    entry_t deleted_entry = {0};
+    deleted_entry.parent_id = DELETED_ENTRY;
+    
+    path_result_t path_result;
+
+    if (cached_files_ptr) {
+
+        for (cached_file = 0; kstrcmp(cached_files[cached_file].path, path); cached_file++)
+            if (cached_file == (cached_files_ptr - 1)) goto no_cached;
+        
+        path_result = cached_files[cached_file].path_result;
+
+        /* free the cached file */
+        
+        kfree(cached_files[cached_file].alloc_map);
+        
+        for (int i = cached_file; i < cached_files_ptr; i++)
+            cached_files[i] = cached_files[i+1];
+        
+        krealloc(cached_files, sizeof(cached_file_t) * --cached_files_ptr);
+        
+        goto cached;
+
+    }
+
+no_cached:
+    path_result = path_resolver(path, FILE_TYPE);
+cached:
+    
+    if (path_result.not_found) return FAILURE;
+
+    uint64_t block = path_result.target.payload;
+    while (block != END_OF_CHAIN) {
+        uint64_t new_block = rd_qword((fatstart * BYTES_PER_BLOCK) + (block * sizeof(uint64_t)));
+        wr_qword((fatstart * BYTES_PER_BLOCK) + (block * sizeof(uint64_t)), 0);
+        block = new_block;
+    }
+    
+    wr_entry(path_result.target_entry, deleted_entry);
+    
+    return SUCCESS;
+}
+
 int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) {
     int dev_n = find_device(dev);
     
@@ -412,5 +527,6 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
 }
 
 void install_echfs(void) {
-    vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_get_metadata, &echfs_list, &echfs_mount);
+    vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_remove,
+                            &echfs_get_metadata, &echfs_list, &echfs_mount);
 }

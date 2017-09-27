@@ -147,6 +147,27 @@ int vfs_kread(char* path, uint64_t loc) {
     return (*filesystems[filesystem].read)(local_path, loc, mountpoints[mountpoint].device);
 }
 
+int vfs_remove(char* path) {
+    path += task_table[current_task]->base;
+    return vfs_kremove(path);
+}
+
+int vfs_kremove(char* path) {
+    char* local_path;
+    char absolute_path[2048];
+
+
+    vfs_get_absolute_path(absolute_path, path);
+
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
+    if (mountpoint == FAILURE) return FAILURE;
+
+    int filesystem = vfs_translate_fs(mountpoint);
+    if (filesystem == FAILURE) return FAILURE;
+
+    return (*filesystems[filesystem].remove)(local_path, mountpoints[mountpoint].device);
+}
+
 int vfs_write(char* path, uint64_t loc, uint8_t val) {
     path += task_table[current_task]->base;
     return vfs_kwrite(path, loc, val);
@@ -239,6 +260,7 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
 void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
+                    int (*remove)(char* path, char* dev),
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device) ) {
@@ -248,6 +270,7 @@ void vfs_install_fs(char* name,
     kstrcpy(filesystems[filesystems_ptr].name, name);
     filesystems[filesystems_ptr].read = read;
     filesystems[filesystems_ptr].write = write;
+    filesystems[filesystems_ptr].remove = remove;
     filesystems[filesystems_ptr].get_metadata = get_metadata;
     filesystems[filesystems_ptr].list = list;
     filesystems[filesystems_ptr].mount = mount;

@@ -82,6 +82,12 @@ int main(int argc, char** argv) {
             fputs(s_argv[1], stdout);
         }
         
+        else if (!strcmp("rm", s_argv[0])) {
+            if (s_argc == 1) continue;
+            if (OS_vfs_remove(s_argv[1]) == VFS_FAILURE)
+                fprintf(stderr, "couldn't remove `%s`.\n", s_argv[1]);
+        }
+        
         else if (!strcmp("fork", s_argv[0])) {
             
             pid_t pid = fork();

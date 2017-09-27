@@ -202,6 +202,16 @@ typedef struct {
     return_val;                                \
 })
 
+#define OS_vfs_remove(path) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x34;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)      \
+                     : "c" (path)  \
+                     : "edx" );         \
+    return_val;                                \
+})
+
 #define OS_general_execute(value) ({               \
     int ret; \
     asm volatile (  "mov eax, 0x01;"    \

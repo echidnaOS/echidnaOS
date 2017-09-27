@@ -240,6 +240,7 @@ typedef struct {
     int esc_default1;
     int raw;
     int noblock;
+    int noscroll;
 } tty_t;
 
 extern uint32_t memory_size;

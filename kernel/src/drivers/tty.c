@@ -97,10 +97,12 @@ void text_putchar(char c, uint8_t which_tty) {
             if (which_tty == current_tty)
                 video_mem[tty[which_tty].cursor_offset] = c;
             if (tty[which_tty].cursor_offset >= (VIDEO_BOTTOM - 1)) {
+                if (tty[which_tty].noscroll) goto dont_move;
                 scroll(which_tty);
                 tty[which_tty].cursor_offset = VIDEO_BOTTOM - (VD_COLS - 1);
             } else
                 tty[which_tty].cursor_offset += 2;
+dont_move:
             draw_cursor(which_tty);
     }
     return;
@@ -204,6 +206,10 @@ void escape_parse(char c, uint8_t which_tty) {
         case 'b': /* enter/exit non-blocking mode */
             tty[which_tty].noblock = !tty[which_tty].noblock;
             break;
+        case 's': /* enter/exit non-scrolling mode */
+            tty[which_tty].noscroll = !tty[which_tty].noscroll;
+            break;
+        /* end non-standard sequences */
         default:
             tty[which_tty].escape = 0;
             text_putchar('?', which_tty);
@@ -282,6 +288,7 @@ void init_tty(void) {
         tty[i].text_palette = TTY_DEF_TXT_PAL;
         tty[i].raw = 0;
         tty[i].noblock = 0;
+        tty[i].noscroll = 0;
         for (uint32_t ii=0; ii<VIDEO_BOTTOM; ii += 2) {
             tty[i].field[ii] = ' ';
             tty[i].field[ii+1] = TTY_DEF_TXT_PAL;

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define ROWS 24
@@ -23,8 +24,9 @@ void escape_cursor_reset() {
 void render_grid(int* grid) {
     escape_cursor_reset();
     for (int i = 0; i < ROWS * COLS; i++) {
-        escape_bg(grid[i] ? 7 : 0);
-        putchar(' ');
+        escape_bg(grid[i] % 2 ? 7 : 0);
+        escape_fg(grid[i] % 2 ? 0 : 7);
+        putchar(grid[i] > 1 ? '#' : ' ');
     }
 }
 
@@ -64,6 +66,11 @@ void random_generate(char* seed, int* grid) {
     }
 }
 
+void quit() {
+    puts("\e[30m");
+    exit(0);
+}
+
 void edit_generate(int* grid) {
     int x = 0; int y = 0;
     for (;;) {
@@ -72,6 +79,8 @@ void edit_generate(int* grid) {
         switch (c) {
             case '\n':
                 return;
+            case 'q':
+                quit();
             case 'h': case 'a':
                 x = (--x + COLS) % COLS;
                 break;
@@ -89,7 +98,9 @@ void edit_generate(int* grid) {
                 break;
         }
 
+        grid[y * COLS + x] ^= 2;
         render_grid(grid);
+        grid[y * COLS + x] ^= 2;
     }
 }
 
@@ -113,6 +124,8 @@ int main(int argc, char** argv) {
         tick(grid1, grid2);
 
         int* tmp = grid1; grid1 = grid2; grid2 = tmp;
+
+        if (getchar() == 'q') quit();
     }
 
     getchar();

@@ -5,15 +5,17 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#define NULL (void*)0
 #define SEEK_SET 0
 #define SEEK_END 1
 #define SEEK_CUR 2
+#define EOF -1
 
 typedef struct {
     char* path;
-    uint64_t stream_ptr;
-    uint64_t stream_begin;
-    uint64_t stream_end;
+    long stream_ptr;
+    long stream_begin;
+    long stream_end;
 } FILE;
 
 extern FILE* stdin;

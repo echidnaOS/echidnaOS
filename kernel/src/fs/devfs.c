@@ -42,13 +42,14 @@ int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
     }
     
     if (type == DEVICE_TYPE) {
+        if (*path == '/') path++;
         for (int i = 0; i < device_ptr; i++) {
             if (!kstrcmp(path, device_list[i].name)) {
                 kstrcpy(metadata->filename, device_list[i].name);
                 metadata->filetype = DEVICE_TYPE;
                 metadata->size = device_list[i].size;
+                return SUCCESS;
             }
-            return SUCCESS;
         }
         return FAILURE;
     }

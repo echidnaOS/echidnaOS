@@ -105,8 +105,9 @@ int main(int argc, char** argv) {
             for (int i = 0; ; i++) {
                 if (OS_vfs_list(ls_path, &metadata, i) == -2) break;
                 if (metadata.filetype == 1) fputs("\e[36m", stdout);
+                if (metadata.filetype == 2) fputs("\e[33m", stdout);
                 printf("%s", metadata.filename);
-                if (metadata.filetype == 1) fputs("\e[37m", stdout);
+                fputs("\e[37m", stdout);
                 putchar('\n');
             }
         }
@@ -130,11 +131,16 @@ int main(int argc, char** argv) {
         else if (!strcmp("exit", s_argv[0])) return 0;
         
         else if (!strcmp("dump", s_argv[0])) {
+            FILE* fp;
             if (s_argc == 1) continue;
-            for (i = 0; ((c = OS_vfs_read(s_argv[1], i)) != -1); i++) {
-                if (c == -2) break;
-                putchar(c);
+            if (!(fp = fopen(s_argv[1], "r"))) {
+                fprintf(stderr, "can't open `%s`.\n", s_argv[1]);
+                continue;
             }
+            while ((c = fgetc(fp)) != EOF)
+                putchar(c);
+            printf("\nFile length: %d\n", (int)ftell(fp));
+            fclose(fp);
         }
         
         else if (!strcmp("dumpr", s_argv[0])) {

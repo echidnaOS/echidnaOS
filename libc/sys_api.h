@@ -10,6 +10,7 @@
 typedef struct {
     char filename[2048];
     int filetype;
+    uint64_t size;
 } vfs_metadata_t;
 
 typedef struct {
@@ -23,6 +24,12 @@ typedef struct {
     int argc;
     char** argv;
 } task_info_t;
+
+#define VFS_FILE_TYPE 0
+#define VFS_DIRECTORY_TYPE 1
+#define VFS_DEVICE_TYPE 2
+#define VFS_SUCCESS 0
+#define VFS_FAILURE -2
 
 #define OS_alloc(value) ({              \
     void* addr;                         \
@@ -140,6 +147,18 @@ typedef struct {
                      : "c" (path),  \
                        "d" (metadata), \
                        "D" (entry) \
+                     :  );         \
+    return_val;                                \
+})
+
+#define OS_vfs_get_metadata(path, metadata, type) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x33;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (path),  \
+                       "d" (metadata), \
+                       "D" (type) \
                      :  );         \
     return_val;                                \
 })

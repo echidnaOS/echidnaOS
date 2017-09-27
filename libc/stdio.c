@@ -17,18 +17,33 @@ char pool[4096];
 int pool_ptr = 0;
 
 FILE* fopen(const char* path, const char* mode) {
-    // fetch metadata (TODO)
+    vfs_metadata_t metadata;
 
     // use malloc (TODO)
     //FILE* file_ptr = malloc(sizeof(FILE));
     FILE* file_ptr = &file_list[files_ptr++];
-    
+
+    // fetch metadata
+    if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
+        if (OS_vfs_get_metadata(path, &metadata, VFS_DEVICE_TYPE) == VFS_FAILURE)
+            return (FILE*)0;
+        else {
+            if (metadata.size)
+                file_ptr->stream_end = metadata.size;
+            else
+                file_ptr->stream_end = -1;
+            goto got_metadata;
+        }
+        return (FILE*)0;
+    } else
+        file_ptr->stream_end = metadata.size;
+
+got_metadata:
     file_ptr->stream_ptr = 0;
     //file_ptr->path = malloc(strlen(path) + 1);
     file_ptr->path = &pool[pool_ptr];
     pool_ptr += strlen(path) + 1;
     strcpy(file_ptr->path, path);
-    file_ptr->stream_end = 0x1000000; // dummy file size
     file_ptr->stream_begin = 0;
     
     return file_ptr;
@@ -42,18 +57,22 @@ int fclose(FILE* stream) {
 int fseek(FILE* stream, long int offset, int type) {
     switch (type) {
         case SEEK_SET:
-            stream->stream_ptr = (uint64_t)offset;
+            if (stream->stream_end == -1) return -1;
+            stream->stream_ptr = (long)offset;
             return 0;
         case SEEK_END:
-            stream->stream_ptr = (uint64_t)(stream->stream_end + offset);
+            if (stream->stream_end == -1) return -1;
+            stream->stream_ptr = (long)(stream->stream_end + offset);
             return 0;
         case SEEK_CUR:
-            stream->stream_ptr += (uint64_t)offset;
+            if (stream->stream_end == -1) return -1;
+            stream->stream_ptr += (long)offset;
             return 0;
     }
 }
 
 int fgetc(FILE* stream) {
+    if (stream->stream_ptr == stream->stream_end) return EOF;
     int c = OS_vfs_read(stream->path, stream->stream_ptr);
     stream->stream_ptr++;
     return c;

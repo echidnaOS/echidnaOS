@@ -37,6 +37,7 @@ extern vfs_cd
 extern vfs_read
 extern vfs_write
 extern vfs_list
+extern vfs_get_metadata
 extern general_execute
 extern general_execute_block
 
@@ -96,6 +97,7 @@ routine_list:
         dd      0 ;vfs_read             ; 0x30 - dummy entry
         dd      vfs_write               ; 0x31
         dd      vfs_list                ; 0x32
+        dd      vfs_get_metadata        ; 0x33
 
 section .text
 

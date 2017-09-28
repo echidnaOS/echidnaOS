@@ -212,6 +212,47 @@ typedef struct {
     return_val;                                \
 })
 
+#define OS_vdev_in_ready(value) ({               \
+    int ret; \
+    asm volatile (  "mov eax, 0x21;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret) \
+                     : "c" (value)      \
+                     : "edx" );  \
+    ret; \
+})
+
+#define OS_vdev_out_ready(value) ({               \
+    int ret; \
+    asm volatile (  "mov eax, 0x22;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret) \
+                     : "c" (value)      \
+                     : "edx" );  \
+    ret; \
+})
+
+#define OS_vdev_register(in, out) ({ \
+    int ret; \
+    asm volatile (  "mov eax, 0x20;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret)                 \
+                     : "c" (in),        \
+                       "d" (out)    \
+                     :  );         \
+    ret; \
+})
+
+#define OS_vdev_await() ({                \
+    int ret; \
+    asm volatile (  "mov eax, 0x23;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret)                 \
+                     :                    \
+                     : "edx" );  \
+    ret; \
+})
+
 #define OS_general_execute(value) ({               \
     int ret; \
     asm volatile (  "mov eax, 0x01;"    \

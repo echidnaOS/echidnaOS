@@ -158,11 +158,18 @@ void* realloc(void* prev_ptr, uint32_t size) {
     return (void*)0;
 }
 
-void enter_iowait_status(char* dev, uint64_t loc) {
+void enter_iowait_status(char* dev, uint64_t loc, uint8_t payload, int type) {
     dev += task_table[current_task]->base;
     kstrcpy(task_table[current_task]->iowait_dev, dev);
     task_table[current_task]->iowait_loc = loc;
     task_table[current_task]->status = KRN_STAT_IOWAIT_TASK;
+    task_table[current_task]->iowait_type = type;
+    task_table[current_task]->iowait_payload = payload;
+    return;
+}
+
+void enter_vdevwait_status(void) {
+    task_table[current_task]->status = KRN_STAT_VDEVWAIT_TASK;
     return;
 }
 

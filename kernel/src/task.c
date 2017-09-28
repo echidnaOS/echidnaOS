@@ -341,13 +341,32 @@ void task_scheduler(void) {
         
         switch (task_table[current_task]->status) {
             case KRN_STAT_IOWAIT_TASK:
-                if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
-                    // embed the result in EAX and continue
-                    task_table[current_task]->eax_p = (uint32_t)c;
-                    task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
-                } else {
-                    current_task++;
-                    continue;
+                switch (task_table[current_task]->iowait_type) {
+                case 0:
+asm("xchg bx,bx");
+                    if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
+                        // embed the result in EAX and continue
+                        task_table[current_task]->eax_p = (uint32_t)c;
+                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                    } else {
+                        current_task++;
+                        continue;
+                    }
+                    break;
+                case 1:
+asm("xchg bx,bx");
+                    if ((c = vfs_kwrite(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc,
+                                        task_table[current_task]->iowait_payload)) != IO_NOT_READY) {
+                        // embed the result in EAX and continue
+                        task_table[current_task]->eax_p = (uint32_t)c;
+                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                    } else {
+                        current_task++;
+                        continue;
+                    }
+                    break;
+                //default:
+                    //panic("unrecognised iowait_type");
                 }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;
@@ -356,6 +375,7 @@ void task_scheduler(void) {
                 task_spinup((void*)task_table[current_task]);
             case KRN_STAT_IPCWAIT_TASK:
             case KRN_STAT_PROCWAIT_TASK:
+            case KRN_STAT_VDEVWAIT_TASK:
             case KRN_STAT_RES_TASK:
             default:
                 current_task++;

@@ -24,6 +24,7 @@ extern free
 extern realloc
 extern enter_iowait_status
 extern enter_ipcwait_status
+extern enter_vdevwait_status
 extern pwd
 extern what_stdin
 extern what_stdout
@@ -41,6 +42,9 @@ extern vfs_list
 extern vfs_get_metadata
 extern general_execute
 extern general_execute_block
+extern register_vdev
+extern vdev_in_ready
+extern vdev_out_ready
 
 section .data
 
@@ -79,10 +83,10 @@ routine_list:
         dd      what_stderr             ; 0x1d
         dd      0                       ; 0x1e
         dd      0                       ; 0x1f
-        dd      0                       ; 0x20
-        dd      0                       ; 0x21
-        dd      0                       ; 0x22
-        dd      0                       ; 0x23
+        dd      register_vdev           ; 0x20
+        dd      vdev_in_ready           ; 0x21
+        dd      vdev_out_ready          ; 0x22
+        dd      0 ;vdev_await           ; 0x23 - dummy entry
         dd      0                       ; 0x24
         dd      0                       ; 0x25
         dd      0                       ; 0x26
@@ -96,7 +100,7 @@ routine_list:
         dd      0                       ; 0x2e
         dd      vfs_cd                  ; 0x2f
         dd      0 ;vfs_read             ; 0x30 - dummy entry
-        dd      vfs_write               ; 0x31
+        dd      0 ;vfs_write            ; 0x31 - dummy entry
         dd      vfs_list                ; 0x32
         dd      vfs_get_metadata        ; 0x33
         dd      vfs_remove              ; 0x34
@@ -204,6 +208,8 @@ syscall:
         ; special routines check
         cmp eax, 0x0d
         je ipc_await
+        cmp eax, 0x23
+        je vdev_await
         cmp eax, 0x05
         je fork_isr
         ; disable task switch, reenable all interrupts
@@ -216,6 +222,8 @@ syscall:
         ; special routines check
         cmp eax, 0x30
         je vfs_read_isr
+        cmp eax, 0x31
+        je vfs_write_isr
         cmp eax, 0x02
         je gen_exec_block_isr
         ; end special routines check
@@ -302,12 +310,71 @@ vfs_read_isr:
         mov es, ax
         mov fs, ax
         mov gs, ax
+        push 0      ; VFS read type
         push esi
         push edi
         push edx
         push ecx
         call enter_iowait_status
+        add esp, 20
+        call task_switch
+
+vfs_write_isr:
+        ; check if I/O is ready
+        push ebx
+        push ecx
+        push esi
+        push edi
+        push ebp
+        push ds
+        push es
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
+        push esi
+        push edi
+        push edx
+        push ecx
+        call vfs_write
         add esp, 16
+        ; disable all interrupts, reenable task switch
+        cli
+        mov dword [ts_enable], 1
+        ; done
+        pop es
+        pop ds
+        pop ebp
+        pop edi
+        pop esi
+        pop ecx
+        pop ebx
+        cmp eax, -5     ; if I/O is not ready
+        je .enter_iowait
+        iretd           ; else, just return
+    .enter_iowait:
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        push 1      ; VFS write type
+        push esi
+        push edi
+        push edx
+        push ecx
+        call enter_iowait_status
+        add esp, 20
         call task_switch
 
 gen_exec_block_isr:
@@ -376,6 +443,27 @@ ipc_await:
         mov fs, ax
         mov gs, ax
         call enter_ipcwait_status
+        call task_switch
+
+vdev_await:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        call enter_vdevwait_status
         call task_switch
 
 fork_isr:

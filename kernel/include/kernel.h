@@ -37,6 +37,7 @@
 #define KRN_STAT_IOWAIT_TASK    3
 #define KRN_STAT_IPCWAIT_TASK   4
 #define KRN_STAT_PROCWAIT_TASK  5
+#define KRN_STAT_VDEVWAIT_TASK  6
 
 #define EMPTY_PID               (task_t*)0xffffffff
 #define TASK_RESERVED_SPACE     0x10000
@@ -131,6 +132,8 @@ typedef struct {
     
     char iowait_dev[2048];
     uint64_t iowait_loc;
+    int iowait_type;
+    uint8_t iowait_payload;
     
     ipc_packet_t* ipc_queue;
     uint32_t ipc_queue_ptr;
@@ -271,9 +274,6 @@ uint32_t ipc_payload_sender(void);
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
 uint32_t detect_mem(void);
-
-void enter_iowait_status(char* dev, uint64_t loc);
-void enter_ipcwait_status(void);
 
 void* alloc(uint32_t size);
 

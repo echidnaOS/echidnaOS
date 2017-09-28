@@ -32,6 +32,11 @@ task_info_t prog_info = {
     0
 };
 
+int vdev;
+int vdev_reg = 0;
+uint8_t vdev_in;
+uint8_t vdev_out;
+
 // built in shell
 
 int main(int argc, char** argv) {
@@ -61,6 +66,46 @@ int main(int argc, char** argv) {
 
         else if (!strcmp("col", s_argv[0]))
             puts("\e[40m \e[41m \e[42m \e[43m \e[44m \e[45m \e[46m \e[47m \e[40m");
+        
+        else if (!strcmp("vdev", s_argv[0])) {
+            if (vdev_reg) {
+                puts("vdev already registered");
+                continue;
+            }
+            puts("registering vdev");
+            vdev = OS_vdev_register(&vdev_in, &vdev_out);
+            if (vdev == -1) {
+                puts("vdev registration failed");
+                continue;
+            }
+            vdev_reg = 1;
+            printf("vdev%d registered successfully\n", vdev);
+            continue;
+        }
+        
+        else if (!strcmp("vdevin", s_argv[0])) {
+            if (!vdev_reg) {
+                puts("vdev not registered");
+                continue;
+            }
+            OS_vdev_in_ready(vdev);
+            int vdevw = OS_vdev_await();
+            printf("activity on vdev%d: `%c`\n", vdevw, (char)vdev_in);
+            continue;
+        }
+        
+        else if (!strcmp("vdevout", s_argv[0])) {
+            if (s_argc == 1) continue;
+            if (!vdev_reg) {
+                puts("vdev not registered");
+                continue;
+            }
+            vdev_out = (uint8_t)(*(s_argv[1]));
+            OS_vdev_out_ready(vdev);
+            int vdevw = OS_vdev_await();
+            printf("activity on vdev%d\n", vdevw);
+            continue;
+        }
 
         else if ((!strcmp("cowsay", s_argv[0])) || (!strcmp("tuxsay", s_argv[0])) || (!strcmp("daemonsay", s_argv[0])))
             cowsay_cmd(s_argv, s_argc);

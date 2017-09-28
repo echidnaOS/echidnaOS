@@ -64,16 +64,16 @@ void kernel_init(void) {
     // ******* END OF FILE SYSTEM INSTALLATION CALLS *******
     
     char shell_path[] = "/bin/sh";
-    char tty1_path[] = "/dev/tty1";
+    char tty_path[256];
     char root_path[] = "/";
     char shell_name[] = "shell";
     char shell_ser_name[] = "";
 
     task_info_t shell_exec = {
         shell_path,
-        tty1_path,
-        tty1_path,
-        tty1_path,
+        tty_path,
+        tty_path,
+        tty_path,
         root_path,
         shell_name,
         shell_ser_name,
@@ -86,6 +86,11 @@ void kernel_init(void) {
 
     // launch the shell
     kputs("\nKERNEL INIT DONE! LAUNCHING: "); kputs(shell_exec.path);
+    kstrcpy(tty_path, "/dev/tty1");
+    general_execute(&shell_exec);
+    kstrcpy(tty_path, "/dev/tty2");
+    general_execute(&shell_exec);
+    kstrcpy(tty_path, "/dev/tty3");
     general_execute(&shell_exec);
     
     // setup the PIC's mask

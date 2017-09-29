@@ -69,7 +69,13 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
 int register_vdev(uint32_t payload_in_addr, uint32_t payload_in_flag,
                   uint32_t payload_out_addr, uint32_t payload_out_flag) {
     if (vdev_ptr >= VDEV_MAX) return -1;
-
+    
+    if (    (payload_in_addr > (task_table[current_task]->pages * PAGE_SIZE))
+         || (payload_in_flag > (task_table[current_task]->pages * PAGE_SIZE))
+         || (payload_out_addr > (task_table[current_task]->pages * PAGE_SIZE))
+         || (payload_out_flag > (task_table[current_task]->pages * PAGE_SIZE)) )
+        return -1;
+    
     vdev_t* tmp_ptr = krealloc(vdevs, (vdev_ptr + 1) * sizeof(vdev_t));
     if (!tmp_ptr) return -1;
     

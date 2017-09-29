@@ -48,7 +48,7 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
             task_table[vdevs[vdev].pid]->eax_p = vdev;
         }
         vdevs[vdev].status_out = NOT_READY;
-        *( (int*)(vdevs[vdev].payload_out_flag) ) = 1;
+        *( (int*)(vdevs[vdev].payload_out_flag + task_table[vdevs[vdev].pid]->base) ) = 1;
         return *( (uint8_t*)(vdevs[vdev].payload_out_addr + task_table[vdevs[vdev].pid]->base) );
     } else if (type == 1) {
         if (vdevs[vdev].status_in != READY)
@@ -59,7 +59,7 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
             task_table[vdevs[vdev].pid]->eax_p = vdev;
         }
         vdevs[vdev].status_in = NOT_READY;
-        *( (int*)(vdevs[vdev].payload_in_flag) ) = 1;
+        *( (int*)(vdevs[vdev].payload_in_flag + task_table[vdevs[vdev].pid]->base) ) = 1;
         *( (uint8_t*)(vdevs[vdev].payload_in_addr + task_table[vdevs[vdev].pid]->base) ) = payload;
         return 0;
     }

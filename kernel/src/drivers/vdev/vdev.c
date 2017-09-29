@@ -70,10 +70,10 @@ int register_vdev(uint32_t payload_in_addr, uint32_t payload_in_flag,
                   uint32_t payload_out_addr, uint32_t payload_out_flag) {
     if (vdev_ptr >= VDEV_MAX) return -1;
     
-    if (    (payload_in_addr > (task_table[current_task]->pages * PAGE_SIZE))
-         || (payload_in_flag > (task_table[current_task]->pages * PAGE_SIZE))
-         || (payload_out_addr > (task_table[current_task]->pages * PAGE_SIZE))
-         || (payload_out_flag > (task_table[current_task]->pages * PAGE_SIZE)) )
+    if (    (payload_in_addr > (task_table[current_task]->pages * PAGE_SIZE - sizeof(void*)))
+         || (payload_in_flag > (task_table[current_task]->pages * PAGE_SIZE - sizeof(void*)))
+         || (payload_out_addr > (task_table[current_task]->pages * PAGE_SIZE - sizeof(void*)))
+         || (payload_out_flag > (task_table[current_task]->pages * PAGE_SIZE - sizeof(void*))) )
         return -1;
     
     vdev_t* tmp_ptr = krealloc(vdevs, (vdev_ptr + 1) * sizeof(vdev_t));

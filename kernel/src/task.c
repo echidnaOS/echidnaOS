@@ -343,7 +343,6 @@ void task_scheduler(void) {
             case KRN_STAT_IOWAIT_TASK:
                 switch (task_table[current_task]->iowait_type) {
                 case 0:
-asm("xchg bx,bx");
                     if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
                         task_table[current_task]->eax_p = (uint32_t)c;
@@ -354,7 +353,6 @@ asm("xchg bx,bx");
                     }
                     break;
                 case 1:
-asm("xchg bx,bx");
                     if ((c = vfs_kwrite(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc,
                                         task_table[current_task]->iowait_payload)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
@@ -365,8 +363,8 @@ asm("xchg bx,bx");
                         continue;
                     }
                     break;
-                //default:
-                    //panic("unrecognised iowait_type");
+                default:
+                    panic("unrecognised iowait_type");
                 }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;

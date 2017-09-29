@@ -17,6 +17,10 @@
 #define EOF -1
 #define SUCCESS 0
 
+#define CACHE_NOTREADY 0
+#define CACHE_READY 1
+#define CACHE_DIRTY 2
+
 char* device;
 uint64_t blocks;
 uint64_t fatsize;
@@ -353,8 +357,6 @@ next:
             
 }
 
-int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return FAILURE; }
-
 int echfs_mkdir(char* path, uint16_t perms, char* dev) {
     int dev_n = find_device(dev);
 
@@ -515,13 +517,144 @@ search_out:
        (cached_files[cached_file].cached_block == block))
         return cached_files[cached_file].cache[offset];
     
+    // write possible dirty cache
+    if (cached_files[cached_file].cache_status == CACHE_DIRTY) {
+        uint64_t cached_block = cached_files[cached_file].cached_block;        
+        for (i = 0; i < BYTES_PER_BLOCK; i++)
+            wr_byte((cached_files[cached_file].alloc_map[cached_block] * BYTES_PER_BLOCK) + i, cached_files[cached_file].cache[i]);
+    }
+    
     // copy block in cache
-    cached_files[cached_file].cache_status = 1;
+    cached_files[cached_file].cache_status = CACHE_READY;
     cached_files[cached_file].cached_block = block;
     for (i = 0; i < BYTES_PER_BLOCK; i++)
         cached_files[cached_file].cache[i] = rd_byte((cached_files[cached_file].alloc_map[block] * BYTES_PER_BLOCK) + i);
     
     return cached_files[cached_file].cache[offset];
+}
+
+int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) {
+    uint64_t i;
+    
+    int dev_n = find_device(dev);
+
+    device = dev;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    
+    int cached_file;
+    
+    path_result_t path_result;
+
+    if (!cached_files_ptr) goto skip_search;
+
+    for (cached_file = 0; kstrcmp(cached_files[cached_file].path, path); cached_file++)
+        if (cached_file == (cached_files_ptr - 1)) goto skip_search;
+        
+    path_result = cached_files[cached_file].path_result;
+    goto search_out;
+
+skip_search:
+
+    cached_files = krealloc(cached_files, sizeof(cached_file_t) * (cached_files_ptr+1));
+
+    kstrcpy(cached_files[cached_files_ptr].path, path);
+    cached_files[cached_files_ptr].path_result = path_resolver(path, FILE_TYPE);
+
+    path_result = cached_files[cached_files_ptr].path_result;
+    
+    cached_file = cached_files_ptr;
+    
+    // cache the allocation map
+    cached_files[cached_file].alloc_map = kalloc(sizeof(uint64_t));
+    cached_files[cached_file].alloc_map[0] = path_result.target.payload;
+    for (i = 1; cached_files[cached_file].alloc_map[i-1] != END_OF_CHAIN; i++) {
+        cached_files[cached_file].alloc_map = krealloc(cached_files[cached_file].alloc_map, sizeof(uint64_t) * (i+1));
+        cached_files[cached_file].alloc_map[i] = rd_qword((fatstart * BYTES_PER_BLOCK) + (cached_files[cached_file].alloc_map[i-1] * sizeof(uint64_t)));
+    }
+    
+    cached_files_ptr++;
+
+search_out:
+    if (path_result.not_found) return FAILURE;
+    
+    uint64_t block_count = path_result.target.size / BYTES_PER_BLOCK;
+    if (path_result.target.size % BYTES_PER_BLOCK) block_count++;
+    uint64_t new_block_count = (loc + 1) / BYTES_PER_BLOCK;
+    if ((loc + 1) % BYTES_PER_BLOCK) new_block_count++;
+    
+    if (loc >= path_result.target.size) {
+        cached_files[cached_file].path_result.target.size = loc + 1;
+        path_result.target = cached_files[cached_file].path_result.target;
+        wr_entry(path_result.target_entry, path_result.target);
+    }
+    
+    if (new_block_count > block_count) {
+        /* do the big work of padding and altering the directory and cache */
+        uint64_t t_block;
+        uint64_t t_loc;
+        
+        for (i = block_count; i < new_block_count; i++) {
+            // find empty block
+            t_loc = (fatstart * BYTES_PER_BLOCK);
+            for (t_block = 0; rd_qword(t_loc); t_block++) t_loc += sizeof(uint64_t);
+            // write it in the allocation map
+            cached_files[cached_file].alloc_map = krealloc(cached_files[cached_file].alloc_map, sizeof(uint64_t) * (i + 1));
+            cached_files[cached_file].alloc_map[i] = t_block;
+            
+            // write it in the allocation table
+            t_loc = (fatstart * BYTES_PER_BLOCK);
+            
+            if (!i) {
+                cached_files[cached_file].path_result.target.payload = t_block;
+                path_result.target = cached_files[cached_file].path_result.target;
+                wr_entry(path_result.target_entry, path_result.target);
+            } else
+                wr_qword(t_loc + (cached_files[cached_file].alloc_map[i - 1] * sizeof(uint64_t)), t_block);
+        }
+        // write end of chain
+        t_loc = (fatstart * BYTES_PER_BLOCK);
+        wr_qword(t_loc + (cached_files[cached_file].alloc_map[i - 1] * sizeof(uint64_t)), END_OF_CHAIN);
+        cached_files[cached_file].alloc_map = krealloc(cached_files[cached_file].alloc_map, sizeof(uint64_t) * (i + 1));
+        cached_files[cached_file].alloc_map[i] = END_OF_CHAIN;
+        
+        for (i = block_count; cached_files[cached_file].alloc_map[i] != END_OF_CHAIN; i++) {
+            /* zero out the block */
+            for (uint64_t ii = 0; ii < BYTES_PER_BLOCK; ii++)
+                wr_byte((cached_files[cached_file].alloc_map[i] * BYTES_PER_BLOCK) + ii, 0);
+        }
+    }
+    
+    uint64_t block = loc / BYTES_PER_BLOCK;
+    uint64_t offset = loc % BYTES_PER_BLOCK;
+    
+    if (cached_files[cached_file].cache_status &&
+       (cached_files[cached_file].cached_block == block)) {
+        cached_files[cached_file].cache[offset] = val;
+        cached_files[cached_file].cache_status = CACHE_DIRTY;
+        return SUCCESS;
+    }
+    
+    // write possible dirty cache
+    if (cached_files[cached_file].cache_status == CACHE_DIRTY) {
+        uint64_t cached_block = cached_files[cached_file].cached_block;        
+        for (i = 0; i < BYTES_PER_BLOCK; i++)
+            wr_byte((cached_files[cached_file].alloc_map[cached_block] * BYTES_PER_BLOCK) + i, cached_files[cached_file].cache[i]);
+    }
+    
+    // copy block in cache
+    cached_files[cached_file].cache_status = CACHE_DIRTY;
+    cached_files[cached_file].cached_block = block;
+    for (i = 0; i < BYTES_PER_BLOCK; i++)
+        cached_files[cached_file].cache[i] = rd_byte((cached_files[cached_file].alloc_map[block] * BYTES_PER_BLOCK) + i);
+    
+    cached_files[cached_file].cache[offset] = val;
+    
+    return SUCCESS;
 }
 
 int echfs_remove(char* path, char* dev) {

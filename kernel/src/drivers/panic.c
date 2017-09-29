@@ -1,6 +1,7 @@
 #include <kernel.h>
 
 void panic(const char *msg) {
+    asm volatile ("cli");
     text_set_text_palette(0x4E, current_tty);
     text_clear(current_tty);
     text_disable_cursor(current_tty);

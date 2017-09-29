@@ -38,6 +38,7 @@ extern vfs_cd
 extern vfs_read
 extern vfs_write
 extern vfs_remove
+extern vfs_mkdir
 extern vfs_list
 extern vfs_get_metadata
 extern general_execute
@@ -104,6 +105,7 @@ routine_list:
         dd      vfs_list                ; 0x32
         dd      vfs_get_metadata        ; 0x33
         dd      vfs_remove              ; 0x34
+        dd      vfs_mkdir               ; 0x35
 
 section .text
 

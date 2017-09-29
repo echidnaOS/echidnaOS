@@ -230,6 +230,20 @@ uint64_t search(char* name, uint64_t parent, uint8_t type) {
     }
 }
 
+uint64_t get_free_id(void) {
+    uint64_t id = 1;
+    uint64_t i;
+    
+    entry_t entry;
+
+    for (i = 0; (entry = rd_entry(i)).parent_id; i++) {
+        if ((entry.type == 1) && (entry.payload == id))
+            id = (entry.payload + 1);
+    }
+    
+    return id;
+}
+
 path_result_t path_resolver(char* path, uint8_t type) {
     // returns a struct of useful info
     // failure flag set upon failure
@@ -340,6 +354,39 @@ next:
 }
 
 int echfs_write(char* path, uint8_t val, uint64_t loc, char* dev) { return FAILURE; }
+
+int echfs_mkdir(char* path, uint16_t perms, char* dev) {
+    int dev_n = find_device(dev);
+
+    device = dev;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    
+    uint64_t i;
+    entry_t entry = {0};
+    path_result_t path_result = path_resolver(path, DIRECTORY_TYPE);
+    
+    // find empty entry
+    for (i = 0; ; i++) {
+        entry_t findentry;
+        findentry = rd_entry(i);
+        if ((findentry.parent_id == 0) || (findentry.parent_id == DELETED_ENTRY))
+            break;
+    }
+    
+    entry.parent_id = path_result.parent.payload;
+    entry.type = DIRECTORY_TYPE;
+    kstrcpy(entry.name, path_result.name);
+    entry.payload = get_free_id();
+    
+    wr_entry(i, entry);
+
+    return SUCCESS;
+}
 
 int echfs_mount(char* dev) {
     device = dev;
@@ -527,6 +574,6 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
 }
 
 void install_echfs(void) {
-    vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_remove,
+    vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_remove, &echfs_mkdir,
                             &echfs_get_metadata, &echfs_list, &echfs_mount);
 }

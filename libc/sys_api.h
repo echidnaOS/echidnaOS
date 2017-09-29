@@ -192,6 +192,17 @@ typedef struct {
     return_val;                                \
 })
 
+#define OS_vfs_mkdir(path, perms) ({ \
+    int ret; \
+    asm volatile (  "mov eax, 0x35;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret)                 \
+                     : "c" (path),        \
+                       "d" (perms)    \
+                     :  );         \
+    ret; \
+})
+
 #define OS_vfs_cd(path) ({  \
     int return_val;                            \
     asm volatile (  "mov eax, 0x2f;"    \

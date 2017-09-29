@@ -133,6 +133,12 @@ int main(int argc, char** argv) {
                 fprintf(stderr, "couldn't remove `%s`.\n", s_argv[1]);
         }
         
+        else if (!strcmp("mkdir", s_argv[0])) {
+            if (s_argc == 1) continue;
+            if (OS_vfs_mkdir(s_argv[1], 0))
+                fprintf(stderr, "couldn't create directory `%s`.\n", s_argv[1]);
+        }
+        
         else if (!strcmp("fork", s_argv[0])) {
             
             pid_t pid = fork();

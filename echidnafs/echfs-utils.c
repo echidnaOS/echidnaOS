@@ -390,30 +390,6 @@ void mkdir_cmd(int argc, char** argv) {
     
     wr_entry(i, entry);
     
-    if (verbose) fprintf(stdout, "creating `.` entry\n");
-    // find empty entry
-    for (i = 0; ; i++) {
-        if ((rd_entry(i).parent_id == 0) || (rd_entry(i).parent_id == DELETED_ENTRY))
-            break;
-    }
-    extra_entry.parent_id = entry.payload;
-    extra_entry.payload = entry.payload;
-    extra_entry.type = DIRECTORY_TYPE;
-    strcpy(extra_entry.name, ".");
-    wr_entry(i, extra_entry);
-    
-    if (verbose) fprintf(stdout, "creating `..` entry\n");
-    // find empty entry
-    for (i = 0; ; i++) {
-        if ((rd_entry(i).parent_id == 0) || (rd_entry(i).parent_id == DELETED_ENTRY))
-            break;
-    }
-    extra_entry.parent_id = entry.payload;
-    extra_entry.payload = entry.parent_id;
-    extra_entry.type = DIRECTORY_TYPE;
-    strcpy(extra_entry.name, "..");
-    wr_entry(i, extra_entry);    
-    
     if (verbose) fprintf(stdout, "created directory `%s`\n", argv[3]);
 
     return;

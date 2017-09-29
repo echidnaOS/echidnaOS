@@ -163,6 +163,7 @@ typedef struct {
     int (*read)(char* path, uint64_t loc, char* dev);
     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev);
     int (*remove)(char* path, char* dev);
+    int (*mkdir)(char* path, uint16_t perms, char* dev);
     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev);
     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev);
     int (*mount)(char* device);
@@ -190,6 +191,8 @@ int vfs_write(char* path, uint64_t loc, uint8_t val);
 int vfs_kwrite(char* path, uint64_t loc, uint8_t val);
 int vfs_remove(char* path);
 int vfs_kremove(char* path);
+int vfs_mkdir(char* path, uint16_t perms);
+int vfs_kmkdir(char* path, uint16_t perms);
 int vfs_cd(char* path);
 
 int vfs_mount(char* mountpoint, char* device, char* filesystem);
@@ -197,6 +200,7 @@ void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
                     int (*remove)(char* path, char* dev),
+                    int (*mkdir)(char* path, uint16_t perms, char* dev),
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device) );

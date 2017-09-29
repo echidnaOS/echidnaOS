@@ -10,8 +10,10 @@ typedef struct {
     int pid;
     int status_in;
     uint32_t payload_in_addr;
+    uint32_t payload_in_flag;
     int status_out;
     uint32_t payload_out_addr;
+    uint32_t payload_out_flag;
 } vdev_t;
 
 char* vdev_names[] = {
@@ -46,6 +48,7 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
             task_table[vdevs[vdev].pid]->eax_p = vdev;
         }
         vdevs[vdev].status_out = NOT_READY;
+        *( (int*)(vdevs[vdev].payload_out_flag) ) = 1;
         return *( (uint8_t*)(vdevs[vdev].payload_out_addr + task_table[vdevs[vdev].pid]->base) );
     } else if (type == 1) {
         if (vdevs[vdev].status_in != READY)
@@ -56,12 +59,15 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
             task_table[vdevs[vdev].pid]->eax_p = vdev;
         }
         vdevs[vdev].status_in = NOT_READY;
+        *( (int*)(vdevs[vdev].payload_in_flag) ) = 1;
         *( (uint8_t*)(vdevs[vdev].payload_in_addr + task_table[vdevs[vdev].pid]->base) ) = payload;
+        return 0;
     }
 
 }
 
-int register_vdev(uint32_t payload_in_addr, uint32_t payload_out_addr) {
+int register_vdev(uint32_t payload_in_addr, uint32_t payload_in_flag,
+                  uint32_t payload_out_addr, uint32_t payload_out_flag) {
     if (vdev_ptr >= VDEV_MAX) return -1;
 
     vdev_t* tmp_ptr = krealloc(vdevs, (vdev_ptr + 1) * sizeof(vdev_t));
@@ -72,8 +78,10 @@ int register_vdev(uint32_t payload_in_addr, uint32_t payload_out_addr) {
     vdevs[vdev_ptr].pid = current_task;
     vdevs[vdev_ptr].status_in = NOT_READY;
     vdevs[vdev_ptr].payload_in_addr = payload_in_addr;
+    vdevs[vdev_ptr].payload_in_flag = payload_in_flag;
     vdevs[vdev_ptr].status_out = NOT_READY;
     vdevs[vdev_ptr].payload_out_addr = payload_out_addr;
+    vdevs[vdev_ptr].payload_out_flag = payload_out_flag;
     
     kernel_add_device(vdev_names[vdev_ptr], vdev_ptr, 0, &vdev_io_wrapper);
     

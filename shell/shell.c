@@ -35,7 +35,9 @@ task_info_t prog_info = {
 int vdev;
 int vdev_reg = 0;
 uint8_t vdev_in;
+int vdev_in_flag = 0;
 uint8_t vdev_out;
+int vdev_out_flag = 0;
 
 // built in shell
 
@@ -73,7 +75,7 @@ int main(int argc, char** argv) {
                 continue;
             }
             puts("registering vdev");
-            vdev = OS_vdev_register(&vdev_in, &vdev_out);
+            vdev = OS_vdev_register(&vdev_in, &vdev_in_flag, &vdev_out, &vdev_out_flag);
             if (vdev == -1) {
                 puts("vdev registration failed");
                 continue;

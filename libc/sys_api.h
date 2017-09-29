@@ -254,13 +254,15 @@ typedef struct {
     ret; \
 })
 
-#define OS_vdev_register(in, out) ({ \
+#define OS_vdev_register(in, fin, out, fout) ({ \
     int ret; \
     asm volatile (  "mov eax, 0x20;"    \
                     "int 0x80;"         \
                      : "=a" (ret)                 \
                      : "c" (in),        \
-                       "d" (out)    \
+                       "d" (fin),    \
+                       "D" (out), \
+                       "S" (fout) \
                      :  );         \
     ret; \
 })

@@ -388,6 +388,42 @@ int echfs_mkdir(char* path, uint16_t perms, char* dev) {
     return SUCCESS;
 }
 
+int echfs_create(char* path, uint16_t perms, char* dev) {
+    int dev_n = find_device(dev);
+
+    device = dev;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    
+    uint64_t i;
+    entry_t entry = {0};
+    path_result_t path_result = path_resolver(path, FILE_TYPE);
+    
+    if (path_result.failure) return FAILURE;
+    
+    // find empty entry
+    for (i = 0; ; i++) {
+        entry_t findentry;
+        findentry = rd_entry(i);
+        if ((findentry.parent_id == 0) || (findentry.parent_id == DELETED_ENTRY))
+            break;
+    }
+    
+    entry.parent_id = path_result.parent.payload;
+    entry.type = FILE_TYPE;
+    kstrcpy(entry.name, path_result.name);
+    entry.size = 0;
+    entry.payload = END_OF_CHAIN;
+    
+    wr_entry(i, entry);
+
+    return SUCCESS;
+}
+
 int echfs_mount(char* dev) {
     device = dev;
     
@@ -575,5 +611,5 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
 
 void install_echfs(void) {
     vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_remove, &echfs_mkdir,
-                            &echfs_get_metadata, &echfs_list, &echfs_mount);
+                            &echfs_create, &echfs_get_metadata, &echfs_list, &echfs_mount);
 }

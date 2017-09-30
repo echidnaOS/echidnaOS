@@ -50,7 +50,7 @@ img: echidnafs/echfs-utils
 	echidnafs/echfs-utils echidna.img import ./coreinutils/build/mv /bin/mv
 	echidnafs/echfs-utils echidna.img import ./coreinutils/build/echo /bin/echo
 	echidnafs/echfs-utils echidna.img import ./coreinutils/build/false /bin/false
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/[ /bin/[
+#	echidnafs/echfs-utils echidna.img import ./coreinutils/build/[ /bin/[
 	echidnafs/echfs-utils echidna.img import ./coreinutils/build/cat /bin/cat
 	echidnafs/echfs-utils echidna.img import ./coreinutils/build/touch /bin/touch
 	echidnafs/echfs-utils echidna.img import ./coreinutils/build/printf /bin/printf

@@ -62,7 +62,7 @@ all: $(C_FILES)
 	make mv
 	make echo
 	make false
-	make test
+#	make test
 	make cat
 	make touch
 	make printf

@@ -17,7 +17,7 @@ true: ./src/true.c
 	mv true ./build/true
 
 cp: ./src/cp.c
-	$(CC) ./src/cp.c -o cp
+	$(CC) ./src/cp.c ./src/_copy.c -o cp
 	mv cp ./build/cp
 
 rm: ./src/rm.c
@@ -25,7 +25,7 @@ rm: ./src/rm.c
 	mv rm ./build/rm
 
 mv: ./src/mv.c
-	$(CC) ./src/mv.c -o mv
+	$(CC) ./src/mv.c ./src/_copy.c -o mv
 	mv mv ./build/mv
 
 echo: ./src/echo.c

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "coreinutils.h"
 
@@ -24,34 +23,13 @@ void usage(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-    char* str;
-    uint32_t len = 0, octal = 0, curargs = 2;
-
+    uint32_t len = 0, curargs = 2;
     uint64_t integer = 0;
 
-    if (argc == 1)
-        usage(argc, argv);
-    else if (argc == 2)
-        curargs = 0;
+    if (argc == 1) usage(argc, argv);
+    else if (argc == 2) curargs = 0;
 
-    str = argv[1];
-/*
-    for (uint16_t i = 1; i < argc; i++)
-        len += strlen(argv[i]) + 2;
-
-    str = malloc(len + 1);
-    if (str == NULL) {
-        fputs("malloc error\n", stderr);
-        exit(EXIT_FAILURE);
-    }
-    strcpy(str, "");
-
-    for (uint16_t i = 1; i < argc; i++) {
-        strcat(str, argv[i]);
-        if (i != argc - 1)
-            strcat(str, " ");
-    }
-*/
+    char* str = argv[1];
 
     for (; *str; str++) {
         if (*str == '\\') {
@@ -112,9 +90,8 @@ int main(int argc, char** argv) {
                     break;
                     
             }
-        } else {
+        } else
             putchar(*str);
-        }
     }
 
     return 0;

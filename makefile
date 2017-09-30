@@ -1,13 +1,16 @@
 notarget:
 	$(error No target specified)
 
-distro: libc_target shell/shell.bin misc/life.bin kernel/echidna.bin
+distro: libc_target coreinutils_target shell/shell.bin misc/life.bin kernel/echidna.bin
 	make img
 	make clean
 
 libc_target:
 	cp gccwrappers/* tools/bin/
 	export PATH=`pwd`/tools/bin:$$PATH && cd libc && make
+
+coreinutils_target:
+	export PATH=`pwd`/tools/bin:$$PATH && cd coreinutils && make all
 
 misc/life.bin:
 	export PATH=`pwd`/tools/bin:$$PATH && cd misc && make
@@ -23,6 +26,7 @@ echidnafs/echfs-utils: echidnafs/echfs-utils.c
 
 clean:
 	cd shell && make clean
+	cd coreinutils && make clean
 	cd libc && make clean
 	cd misc && make clean
 	cd kernel && make clean
@@ -37,6 +41,20 @@ img: echidnafs/echfs-utils
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
 	echidnafs/echfs-utils echidna.img import ./misc/life /bin/life
+
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/yes /bin/yes
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/hello /bin/hello
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/true /bin/true
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/cp /bin/cp
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/rm /bin/rm
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/mv /bin/mv
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/echo /bin/echo
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/false /bin/false
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/[ /bin/[
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/cat /bin/cat
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/touch /bin/touch
+	echidnafs/echfs-utils echidna.img import ./coreinutils/build/printf /bin/printf
+
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
 
 clean-tools:

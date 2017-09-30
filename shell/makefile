@@ -1,7 +1,7 @@
 CC = cc
 PREFIX = 
 
-C_FILES = shell.c help.c echo.c cowsay.c
+C_FILES = shell.c
 OBJ_FILES = $(C_FILES:.c=.o)
 
 CHARDFLAGS = -std=gnu99 -masm=intel

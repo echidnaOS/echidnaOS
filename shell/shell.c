@@ -6,8 +6,6 @@
 
 #include <sys_api.h>
 
-#include "cmds.h"
-
 void getstring(char* string, uint32_t limit);
 int get_argc(const char* string);
 void get_argv(char** argv, char* string);
@@ -52,7 +50,7 @@ int main(int argc, char** argv) {
     
     vfs_metadata_t metadata = {0};
 
-    while (1) {
+    for (;;) {
         OS_pwd(pwd);
         printf("\e[32mechidnaOS\e[37m:\e[36m%s\e[37m# ", pwd);
 
@@ -60,13 +58,7 @@ int main(int argc, char** argv) {
         s_argc = get_argc(input);
         get_argv(s_argv, input);
 
-        if (!strcmp("help", s_argv[0]))
-            help_cmd(s_argc, s_argv);
-
-        else if (!strcmp("echo", s_argv[0]))
-            echo_cmd(s_argv, s_argc);
-
-        else if (!strcmp("heap", s_argv[0])) {
+        if (!strcmp("heap", s_argv[0])) {
             printf("heap base: %d\n"
                    "heap size: %d\n", OS_get_heap_base(), OS_get_heap_size());
             OS_resize_heap(0x100);
@@ -114,15 +106,6 @@ int main(int argc, char** argv) {
             printf("activity on vdev%d\n", vdevw);
             continue;
         }
-
-        else if ((!strcmp("cowsay", s_argv[0])) || (!strcmp("tuxsay", s_argv[0])) || (!strcmp("daemonsay", s_argv[0])))
-            cowsay_cmd(s_argv, s_argc);
-
-        else if ((!strcmp("bcowsay", s_argv[0])) || (!strcmp("dcowsay", s_argv[0])) || (!strcmp("gcowsay", s_argv[0])))
-            cowsay_cmd(s_argv, s_argc);
-
-        else if ((!strcmp("pcowsay",s_argv[0])) || (!strcmp("scowsay", s_argv[0])) || (!strcmp("tcowsay", s_argv[0])))
-            cowsay_cmd(s_argv, s_argc);
         
         else if (!strcmp("div0", s_argv[0])) {/*
             int a = 0;
@@ -135,22 +118,10 @@ int main(int argc, char** argv) {
             fputs(s_argv[1], stdout);
         }
         
-        else if (!strcmp("rm", s_argv[0])) {
-            if (s_argc == 1) continue;
-            if (remove(s_argv[1]))
-                fprintf(stderr, "couldn't remove `%s`.\n", s_argv[1]);
-        }
-        
         else if (!strcmp("mkdir", s_argv[0])) {
             if (s_argc == 1) continue;
             if (OS_vfs_mkdir(s_argv[1], 0))
                 fprintf(stderr, "couldn't create directory `%s`.\n", s_argv[1]);
-        }
-        
-        else if (!strcmp("touch", s_argv[0])) {
-            if (s_argc == 1) continue;
-            if (OS_vfs_create(s_argv[1], 0))
-                fprintf(stderr, "couldn't create file `%s`.\n", s_argv[1]);
         }
         
         else if (!strcmp("fork", s_argv[0])) {
@@ -212,23 +183,6 @@ int main(int argc, char** argv) {
                 putchar(c);
             printf("\nFile length: %d\n", (int)ftell(fp));
             fclose(fp);
-        }
-        
-        else if (!strcmp("cp", s_argv[0])) {
-            FILE* src;
-            FILE* dest;
-            if (s_argc < 3) continue;
-            if (!(src = fopen(s_argv[1], "rb"))) {
-                fprintf(stderr, "can't open `%s`.\n", s_argv[1]);
-                continue;
-            }
-            if (!(dest = fopen(s_argv[2], "wb"))) {
-                fprintf(stderr, "can't open `%s`.\n", s_argv[2]);
-                continue;
-            }
-            while ((c = fgetc(src)) != EOF)
-                fputc(c, dest);
-            continue;
         }
         
         else if (!strcmp("dumpr", s_argv[0])) {

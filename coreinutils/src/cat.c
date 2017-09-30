@@ -5,10 +5,7 @@
 
 #define MAX_FILES 4096
 
-const uint16_t LINE_PAD_SIZE = 6;
-
 int line_num = 1, nopt = 0, fnum = 0;
-
 char* files[MAX_FILES];
 
 void cat(FILE* stream) {
@@ -17,21 +14,7 @@ void cat(FILE* stream) {
     while ((c = fgetc(stream)) != EOF) {
         if (nopt && start_of_line) {
             int num = line_num++;
-            char buf[21] = "";     /* 2^64 is 20 digits long */
-            char* str = buf + 21;   /* where to print from */
-            char line_num_size = 0; /* amount of chars printed */
-
-            for (; num > 0; num = num / 10) {
-                *(--str) = (num % 10) + '0';
-                line_num_size++;
-            }
-
-            while (line_num_size++ < LINE_PAD_SIZE)
-                putchar(' ');
-
-            fputs(str, stdout);
-            putchar('\t');
-
+            printf(" %*d ", 6, num);
             start_of_line = 0;
         }
 
@@ -49,14 +32,10 @@ void parseargs(int argc, char** argv) {
             strcpy(files[fnum], "stdin");
             fnum++;
         } else if (!strcmp("-n", argv[i])) {
-            nopt = 1;
+            nopt++;
         } else {
-            if (fopen(argv[i], "r+b") == NULL) {
-                if (fopen(argv[i], "rb") != NULL)
-                    fputs("cannot open file: is directory\n", stderr);
-                else
-                    fputs("cannot open file.\n", stderr);
-
+            if (fopen(argv[i], "rb") == NULL) {
+                fputs("Could not open file.\n", stderr);
                 exit(EXIT_FAILURE);
             } else {
                 files[fnum] = malloc(strlen(argv[i]) + 1);

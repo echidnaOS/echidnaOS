@@ -31,22 +31,34 @@ typedef struct {
 #define VFS_SUCCESS 0
 #define VFS_FAILURE -2
 
-#define OS_alloc(value) ({              \
-    void* addr;                         \
+#define OS_get_heap_base() ({              \
+    uint32_t val;                         \
     asm volatile (  "mov eax, 0x10;"    \
                     "int 0x80;"         \
-                     : "=a" (addr)      \
-                     : "c" (value)      \
+                     : "=a" (val)      \
+                     : \
                      : "edx" );         \
-    addr;                               \
+    val;                               \
 })
 
-#define OS_free(value) ({               \
+#define OS_get_heap_size() ({              \
+    uint32_t val;                         \
     asm volatile (  "mov eax, 0x11;"    \
                     "int 0x80;"         \
-                     :                  \
-                     : "c" (value)      \
-                     : "eax", "edx" );  \
+                     : "=a" (val)      \
+                     : \
+                     : "edx" );         \
+    val;                               \
+})
+
+#define OS_resize_heap(val) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x12;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)      \
+                     : "c" (val)  \
+                     : "edx" );         \
+    return_val;                                \
 })
 
 #define OS_pwd(value) ({                \

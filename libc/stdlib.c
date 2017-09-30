@@ -10,11 +10,37 @@ void exit(int status) {
 }
 
 void* malloc(size_t size) {
-    return OS_alloc(size);
+    /* stub malloc implementation that can't be free'd */
+    uint32_t ptr = OS_get_heap_base() + OS_get_heap_size() + sizeof(uint32_t);
+    OS_resize_heap(OS_get_heap_size() + (uint32_t)size + sizeof(uint32_t));
+    *( (uint32_t*)(ptr - sizeof(uint32_t)) ) = (uint32_t)size;
+    return (void*)ptr;
+}
+
+void* realloc(void* addr, size_t new_size) {
+    if (!addr) return malloc(new_size);
+    if (!new_size) {
+        free(addr);
+        return (void*)0;
+    }
+    
+    uint32_t old_size = *( (uint32_t*)(addr - sizeof(uint32_t)) );
+    
+    char* new_ptr;
+    if ((new_ptr = malloc(new_size)) == 0)
+        return (void*)0;
+    
+    if (old_size > new_size)
+        memcpy(new_ptr, (char*)addr, new_size);
+    else
+        memcpy(new_ptr, (char*)addr, old_size);
+    
+    free(addr);
+    
+    return new_ptr;
 }
 
 void free(void* ptr) {
-    OS_free(ptr);
     return;
 }
 

@@ -29,7 +29,8 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                "","","",
                                "","","",
-                               "",0,
+                               "",0,0,0,
+                               0,0,
                                0,0};
 
 int task_create(task_t new_task) {
@@ -163,6 +164,9 @@ int general_execute(task_info_t* task_info) {
     
     task_table[new_pid]->esp_p = ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0;
     task_table[new_pid]->eip_p = TASK_RESERVED_SPACE;
+    
+    task_table[new_pid]->heap_base = new_task.pages * PAGE_SIZE;
+    task_table[new_pid]->heap_size = 0;
     
     kstrcpy(task_table[new_pid]->pwd, pwd);
     kstrcpy(task_table[new_pid]->name, name);

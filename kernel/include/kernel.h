@@ -137,6 +137,9 @@ typedef struct {
     
     ipc_packet_t* ipc_queue;
     uint32_t ipc_queue_ptr;
+    
+    uint32_t heap_base;
+    uint32_t heap_size;
 
 } task_t;
 

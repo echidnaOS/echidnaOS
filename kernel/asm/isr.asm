@@ -47,6 +47,9 @@ extern general_execute_block
 extern register_vdev
 extern vdev_in_ready
 extern vdev_out_ready
+extern get_heap_base
+extern get_heap_size
+extern resize_heap
 
 section .data
 
@@ -69,9 +72,9 @@ routine_list:
         dd      0 ;ipc_await              0x0d - dummy entry
         dd      0                       ; 0x0e
         dd      0                       ; 0x0f
-        dd      alloc                   ; 0x10
-        dd      free                    ; 0x11
-        dd      realloc                 ; 0x12
+        dd      get_heap_base           ; 0x10
+        dd      get_heap_size           ; 0x11
+        dd      resize_heap             ; 0x12
         dd      0                       ; 0x13
         dd      0                       ; 0x14
         dd      0                       ; 0x15
@@ -238,9 +241,13 @@ syscall:
         push ebp
         push ds
         push es
+        push fs
+        push gs
         mov bx, 0x10
         mov ds, bx
         mov es, bx
+        mov fs, bx
+        mov gs, bx
         mov ebx, 4
         push edx
         mul ebx
@@ -256,6 +263,8 @@ syscall:
         cli
         mov dword [ts_enable], 1
         ; return
+        pop gs
+        pop fs
         pop es
         pop ds
         pop ebp
@@ -274,9 +283,13 @@ vfs_read_isr:
         push ebp
         push ds
         push es
+        push fs
+        push gs
         mov bx, 0x10
         mov ds, bx
         mov es, bx
+        mov fs, bx
+        mov gs, bx
         push esi
         push edi
         push edx
@@ -287,6 +300,8 @@ vfs_read_isr:
         cli
         mov dword [ts_enable], 1
         ; done
+        pop gs
+        pop fs
         pop es
         pop ds
         pop ebp
@@ -332,9 +347,13 @@ vfs_write_isr:
         push ebp
         push ds
         push es
+        push fs
+        push gs
         mov bx, 0x10
         mov ds, bx
         mov es, bx
+        mov fs, bx
+        mov gs, bx
         push esi
         push edi
         push edx
@@ -345,6 +364,8 @@ vfs_write_isr:
         cli
         mov dword [ts_enable], 1
         ; done
+        pop gs
+        pop fs
         pop es
         pop ds
         pop ebp

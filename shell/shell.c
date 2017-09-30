@@ -66,6 +66,12 @@ int main(int argc, char** argv) {
         else if (!strcmp("echo", s_argv[0]))
             echo_cmd(s_argv, s_argc);
 
+        else if (!strcmp("heap", s_argv[0])) {
+            printf("heap base: %d\n"
+                   "heap size: %d\n", OS_get_heap_base(), OS_get_heap_size());
+            OS_resize_heap(0x100);
+        }
+
         else if (!strcmp("col", s_argv[0]))
             puts("\e[40m \e[41m \e[42m \e[43m \e[44m \e[45m \e[46m \e[47m \e[40m");
         

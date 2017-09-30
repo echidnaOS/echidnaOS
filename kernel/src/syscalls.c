@@ -93,6 +93,34 @@ uint32_t ipc_read_packet(char* payload) {
     return pid;
 }
 
+uint32_t get_heap_base(void) {
+    return task_table[current_task]->heap_base;
+}
+
+uint32_t get_heap_size(void) {
+    return task_table[current_task]->heap_size;
+}
+
+int resize_heap(uint32_t heap_size) {
+    uint32_t heap_pages = heap_size / PAGE_SIZE;
+    if (heap_size % PAGE_SIZE) heap_pages++;
+
+    uint32_t new_ptr = (uint32_t)krealloc((char*)task_table[current_task]->base,
+                                        task_table[current_task]->heap_base + heap_pages * PAGE_SIZE);
+
+    if (!new_ptr) return -1;
+    task_table[current_task]->base = new_ptr;
+    task_table[current_task]->pages = (task_table[current_task]->heap_base / PAGE_SIZE) + heap_pages;
+    
+    task_table[current_task]->heap_size = heap_size;
+    
+    /* reload segments */
+    set_segment(0x3, task_table[current_task]->base, task_table[current_task]->pages);
+    set_segment(0x4, task_table[current_task]->base, task_table[current_task]->pages);
+    
+    return 0;
+}
+
 void* alloc(uint32_t size) { /*
     // search of a big enough, free, heap chunk
     heap_chunk_t* heap_chunk = (heap_chunk_t*)task_table[current_task]->heap_begin;

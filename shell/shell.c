@@ -208,12 +208,38 @@ int main(int argc, char** argv) {
             fclose(fp);
         }
         
-        else if (!strcmp("dumpr", s_argv[0])) {
+        else if (!strcmp("cp", s_argv[0])) {
+            FILE* src;
+            FILE* dest;
             if (s_argc < 3) continue;
-            for (i = 0; ((c = OS_vfs_read(s_argv[1], i)) != -1); i++) {
-                if (c == -2) break;
-                OS_vfs_write(s_argv[2], i, c);
+            if (!(src = fopen(s_argv[1], "rb"))) {
+                fprintf(stderr, "can't open `%s`.\n", s_argv[1]);
+                continue;
             }
+            if (!(dest = fopen(s_argv[2], "wb"))) {
+                fprintf(stderr, "can't open `%s`.\n", s_argv[2]);
+                continue;
+            }
+            while ((c = fgetc(src)) != EOF)
+                fputc(c, dest);
+            continue;
+        }
+        
+        else if (!strcmp("dumpr", s_argv[0])) {
+            FILE* src;
+            FILE* dest;
+            if (s_argc < 3) continue;
+            if (!(src = fopen(s_argv[1], "rb"))) {
+                fprintf(stderr, "can't open `%s`.\n", s_argv[1]);
+                continue;
+            }
+            if (!(dest = fopen(s_argv[2], "rb+"))) {
+                fprintf(stderr, "can't open `%s`.\n", s_argv[2]);
+                continue;
+            }
+            while ((c = fgetc(src)) != EOF)
+                fputc(c, dest);
+            continue;
         }
         
         else if (!strcmp("cd", s_argv[0])) {

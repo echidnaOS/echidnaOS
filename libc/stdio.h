@@ -13,6 +13,7 @@
 
 typedef struct {
     char* path;
+    char mode[16];
     long stream_ptr;
     long stream_begin;
     long stream_end;
@@ -25,7 +26,9 @@ extern FILE* stderr;
 int putchar(int);
 int getchar(void);
 int fputc(int, FILE*);
+int putc(int, FILE*);
 int fgetc(FILE*);
+int getc(FILE*);
 int puts(const char*);
 int fputs(const char*, FILE*);
 int printf(const char*, ...);

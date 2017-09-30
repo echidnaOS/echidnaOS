@@ -27,31 +27,95 @@ FILE* fopen(const char* path, const char* mode) {
     // use malloc (TODO)
     //FILE* file_ptr = malloc(sizeof(FILE));
     FILE* file_ptr = &file_list[files_ptr++];
-
-    // fetch metadata
-    if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
-        if (OS_vfs_get_metadata(path, &metadata, VFS_DEVICE_TYPE) == VFS_FAILURE)
-            return (FILE*)0;
-        else {
-            if (metadata.size)
-                file_ptr->stream_end = metadata.size;
-            else
-                file_ptr->stream_end = -1;
-            goto got_metadata;
-        }
-        return (FILE*)0;
-    } else
-        file_ptr->stream_end = metadata.size;
-
-got_metadata:
-    file_ptr->stream_ptr = 0;
-    //file_ptr->path = malloc(strlen(path) + 1);
-    file_ptr->path = &pool[pool_ptr];
-    pool_ptr += strlen(path) + 1;
-    strcpy(file_ptr->path, path);
-    file_ptr->stream_begin = 0;
     
-    return file_ptr;
+    if (!strcmp(mode, "r") || !strcmp(mode, "rb") ||
+        !strcmp(mode, "r+") || !strcmp(mode, "r+b") || !strcmp(mode, "rb+")) {
+        strcpy(file_ptr->mode, mode);
+        // fetch metadata
+        if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
+            if (OS_vfs_get_metadata(path, &metadata, VFS_DEVICE_TYPE) != VFS_FAILURE) {
+                if (metadata.size)
+                    file_ptr->stream_end = metadata.size;
+                else
+                    file_ptr->stream_end = -1;
+            } else goto fail;
+        } else
+            file_ptr->stream_end = metadata.size;
+
+        file_ptr->stream_ptr = 0;
+        //file_ptr->path = malloc(strlen(path) + 1);
+        file_ptr->path = &pool[pool_ptr];
+        pool_ptr += strlen(path) + 1;
+        strcpy(file_ptr->path, path);
+        file_ptr->stream_begin = 0;
+    
+        return file_ptr;
+    }
+    else if (!strcmp(mode, "w") || !strcmp(mode, "wb") ||
+             !strcmp(mode, "w+") || !strcmp(mode, "w+b") || !strcmp(mode, "wb+")) {
+        strcpy(file_ptr->mode, mode);
+        // fetch metadata
+        if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
+            /* the file doesn't exist, create it */
+            
+            /* attempt to create file */
+            if (OS_vfs_create(path, 0))
+                goto fail;
+        } else {
+            /* the file does exist, remove it and recreate it */
+            if (remove(path))
+                goto fail;
+            
+            /* attempt to create file */
+            if (OS_vfs_create(path, 0))
+                goto fail;
+        }
+        
+        file_ptr->stream_end = 0;
+        file_ptr->stream_ptr = 0;
+        //file_ptr->path = malloc(strlen(path) + 1);
+        file_ptr->path = &pool[pool_ptr];
+        pool_ptr += strlen(path) + 1;
+        strcpy(file_ptr->path, path);
+        file_ptr->stream_begin = 0;
+    
+        return file_ptr;
+    }
+    else if (!strcmp(mode, "a") || !strcmp(mode, "ab") ||
+             !strcmp(mode, "a+") || !strcmp(mode, "a+b") || !strcmp(mode, "ab+")) {
+        strcpy(file_ptr->mode, mode);
+        // fetch metadata
+        if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
+            /* the file doesn't exist, create it */
+            
+            /* attempt to create file */
+            if (OS_vfs_create(path, 0))
+                goto fail;
+            
+            file_ptr->stream_end = 0;
+            file_ptr->stream_ptr = 0;
+            file_ptr->stream_begin = 0;
+        } else {
+            file_ptr->stream_end = metadata.size;
+            file_ptr->stream_ptr = metadata.size;
+            file_ptr->stream_begin = metadata.size;
+        }
+        
+        //file_ptr->path = malloc(strlen(path) + 1);
+        file_ptr->path = &pool[pool_ptr];
+        pool_ptr += strlen(path) + 1;
+        strcpy(file_ptr->path, path);
+    
+        return file_ptr;
+    } else {
+        fprintf(stderr, "libc: fopen runtime error: invalid mode `%s`.\n", mode);
+        goto fail;
+    }
+    
+fail:
+    // free memory
+    return (FILE*)0;
+        
 }
 
 int fclose(FILE* stream) {
@@ -63,46 +127,71 @@ int fseek(FILE* stream, long int offset, int type) {
     switch (type) {
         case SEEK_SET:
             if (stream->stream_end == -1) return -1;
-            stream->stream_ptr = (long)offset;
+            if ((stream->stream_begin + offset) > stream->stream_end ||
+                (stream->stream_begin + offset) < stream->stream_begin) return -1;
+            stream->stream_ptr = stream->stream_begin + offset;
             return 0;
         case SEEK_END:
             if (stream->stream_end == -1) return -1;
-            stream->stream_ptr = (long)(stream->stream_end + offset);
+            if ((stream->stream_end + offset) > stream->stream_end ||
+                (stream->stream_end + offset) < stream->stream_begin) return -1;
+            stream->stream_ptr = stream->stream_end + offset;
             return 0;
         case SEEK_CUR:
             if (stream->stream_end == -1) return -1;
-            stream->stream_ptr += (long)offset;
+            if ((stream->stream_ptr + offset) > stream->stream_end ||
+                (stream->stream_ptr + offset) < stream->stream_begin) return -1;
+            stream->stream_ptr += offset;
             return 0;
+        default:
+            fputs("libc: fseek runtime error: invalid mode.\n", stderr);
+            return -1;
     }
 }
 
 int fgetc(FILE* stream) {
+    if (!strcmp(stream->mode, "w") || !strcmp(stream->mode, "wb") ||
+        !strcmp(stream->mode, "a") || !strcmp(stream->mode, "ab")) return -1;
     if (stream->stream_ptr == stream->stream_end) return EOF;
     int c = OS_vfs_read(stream->path, stream->stream_ptr);
     stream->stream_ptr++;
     return c;
 }
 
+int getc(FILE* stream) {
+    return fgetc(stream);
+}
+
 int fputc(int c, FILE* stream) {
+    if (!strcmp(stream->mode, "r") || !strcmp(stream->mode, "rb")) return -1;
     int ret = OS_vfs_write(stream->path, stream->stream_ptr, c);
+    if (ret == VFS_FAILURE) return -1;
     stream->stream_ptr++;
+    if (stream->stream_end < stream->stream_ptr)
+        stream->stream_end = stream->stream_ptr;
     return c;
 }
 
+int putc(int c, FILE* stream) {
+    return fputc(c, stream);
+}
+
 long int ftell(FILE* stream) {
-    return (long int)stream->stream_ptr;
+    return stream->stream_ptr;
 }
 
 void rewind(FILE* stream) {
-    stream->stream_ptr = 0;
+    stream->stream_ptr = stream->stream_begin;
     return;
 }
 
 int fputs(const char* str, FILE* stream) {
-    for (int i = 0; str[i]; i++) {
-        fputc(str[i], stream);
-    }
-    return 0;
+    int i;
+    
+    for (i = 0; str[i]; i++)
+        if (fputc(str[i], stream) == -1) return -1;
+    
+    return i;
 }
 
 char stdin_path[] = "/dev/stdin";
@@ -111,6 +200,7 @@ char stderr_path[] = "/dev/stderr";
 
 FILE stdin_struct = {
     stdin_path,
+    "r+",
     0,
     0,
     -1
@@ -118,6 +208,7 @@ FILE stdin_struct = {
 
 FILE stdout_struct = {
     stdout_path,
+    "r+",
     0,
     0,
     -1
@@ -125,6 +216,7 @@ FILE stdout_struct = {
 
 FILE stderr_struct = {
     stderr_path,
+    "r+",
     0,
     0,
     -1
@@ -135,22 +227,18 @@ FILE* stdout = &stdout_struct;
 FILE* stderr = &stderr_struct;
 
 int putchar(int c) {
-    fputc(c, stdout);
-    return c;
+    return fputc(c, stdout);
 }
 
 int getchar(void) {
     return fgetc(stdin);
 }
 
-int puts(const char *str) {
-    int i;
-    int len = strlen(str);
-    for (i=0; str[i]!=0; i++) {
-        putchar(str[i]);
-    }
-    putchar('\n');
-    return ++len;
+int puts(const char* str) {
+    int len;
+    if ((len = fputs(str, stdout)) == -1) return -1;
+    if (fputc('\n', stdout) == -1) return -1;
+    return len + 1;
 }
 
 // internal puts with no newline and no return value

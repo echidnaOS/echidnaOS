@@ -48,7 +48,7 @@ To remove build files and sources that aren't needed anymore.
 Now that every requirement is satisfied, let's build the kernel, the shell,
 and create the image:
 
-    make distro
+    make echidna.img
 
 If make didn't error, congratulations, you managed to build echidnaOS.
 There should be a bootable "echidna.img" image in the project's root now.

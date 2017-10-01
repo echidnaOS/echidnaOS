@@ -2,34 +2,34 @@ notarget:
 	$(error No target specified)
 
 distro: libc_target coreinutils_target shell/shell.bin misc/life.bin kernel/echidna.bin
-	make img
-	make clean
+	$(MAKE) img
+	$(MAKE) clean
 
 libc_target:
 	cp gccwrappers/* tools/bin/
-	export PATH=`pwd`/tools/bin:$$PATH && cd libc && make
+	export PATH=`pwd`/tools/bin:$$PATH && cd libc && $(MAKE)
 
 coreinutils_target:
-	export PATH=`pwd`/tools/bin:$$PATH && cd coreinutils && make all
+	export PATH=`pwd`/tools/bin:$$PATH && cd coreinutils && $(MAKE) all
 
 misc/life.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd misc && make
+	export PATH=`pwd`/tools/bin:$$PATH && cd misc && $(MAKE)
 
 shell/shell.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd shell && make
+	export PATH=`pwd`/tools/bin:$$PATH && cd shell && $(MAKE)
 
 kernel/echidna.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd kernel && make
+	export PATH=`pwd`/tools/bin:$$PATH && cd kernel && $(MAKE)
 
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils
 
 clean:
-	cd shell && make clean
-	cd coreinutils && make clean
-	cd libc && make clean
-	cd misc && make clean
-	cd kernel && make clean
+	cd shell && $(MAKE) clean
+	cd coreinutils && $(MAKE) clean
+	cd libc && $(MAKE) clean
+	cd misc && $(MAKE) clean
+	cd kernel && $(MAKE) clean
 
 img: echidnafs/echfs-utils kernel/echidna.bin
 	nasm bootloader/bootloader.asm -f bin -o echidna.img

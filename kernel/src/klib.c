@@ -59,7 +59,7 @@ void init_kalloc(void) {
 }
 
 void* kalloc(uint32_t size) {
-    // search of a big enough, free, heap chunk
+    // search for a big enough, free heap chunk
     heap_chunk_t* heap_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
     heap_chunk_t* new_chunk;
     uint32_t heap_chunk_ptr;
@@ -144,6 +144,8 @@ void kfree(void* addr) {
         heap_chunk->size += next_chunk->size + sizeof(heap_chunk_t);
         // update next chunk ptr
         next_chunk = (heap_chunk_t*)((uint32_t)next_chunk + next_chunk->size + sizeof(heap_chunk_t));
+        // update new next chunk's prev to ourselves
+        next_chunk->prev_chunk = (uint32_t)heap_chunk;
     }
 
 skip_next_chunk:

@@ -7,19 +7,19 @@ distro: libc_target coreinutils_target shell/shell.bin misc/life.bin kernel/echi
 
 libc_target:
 	cp gccwrappers/* tools/bin/
-	export PATH=`pwd`/tools/bin:$$PATH && cd libc && $(MAKE)
+	$(MAKE) -C libc
 
 coreinutils_target:
-	export PATH=`pwd`/tools/bin:$$PATH && cd coreinutils && $(MAKE) all
+	$(MAKE) -C coreinutils all
 
 misc/life.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd misc && $(MAKE)
+	$(MAKE) -C misc
 
 shell/shell.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd shell && $(MAKE)
+	$(MAKE) -C shell
 
 kernel/echidna.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd kernel && $(MAKE)
+	$(MAKE) -C kernel
 
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils

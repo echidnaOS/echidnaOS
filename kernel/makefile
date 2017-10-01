@@ -1,3 +1,4 @@
+export PATH := ../tools/bin:$(PATH)
 CC = kcc
 PREFIX = 
 

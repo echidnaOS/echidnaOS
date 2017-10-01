@@ -1,3 +1,4 @@
+export PATH := ../tools/bin:$(PATH)
 CC = cc
 C_FILES = $(shell find ./src/ -type f -name '*.c')
 

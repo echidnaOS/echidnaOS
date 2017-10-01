@@ -1,25 +1,25 @@
+LIBC_C_FILES = $(shell find libc -type f -name '*.c')
+COREINUTILS_C_FILES = $(shell find coreinutils/src -type f -name '*.c')
+KERNEL_ASM_FILES = $(shell find kernel -type f -name '*.asm')
+KERNEL_C_FILES = $(shell find kernel -type f -name '*.c')
+
 notarget:
 	$(error No target specified)
 
-distro: libc_target coreinutils_target shell/shell.bin misc/life.bin kernel/echidna.bin
-	$(MAKE) img
-	$(MAKE) clean
+libc/libc: $(LIBC_C_FILES)
+	$(MAKE) -C libc
 
-libc_target:
-	cp gccwrappers/* tools/bin/
-	export PATH=`pwd`/tools/bin:$$PATH && cd libc && $(MAKE)
+coreinutils/coreinutils: libc/libc $(COREINUTILS_C_FILES)
+	$(MAKE) -C coreinutils all
 
-coreinutils_target:
-	export PATH=`pwd`/tools/bin:$$PATH && cd coreinutils && $(MAKE) all
+misc/life: libc/libc misc/life.c
+	$(MAKE) -C misc
 
-misc/life.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd misc && $(MAKE)
+shell/sh: libc/libc shell/shell.c
+	$(MAKE) -C shell
 
-shell/shell.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd shell && $(MAKE)
-
-kernel/echidna.bin:
-	export PATH=`pwd`/tools/bin:$$PATH && cd kernel && $(MAKE)
+kernel/echidna.bin: $(KERNEL_ASM_FILES) $(KERNEL_C_FILES)
+	$(MAKE) -C kernel
 
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils
@@ -31,7 +31,7 @@ clean:
 	cd misc && $(MAKE) clean
 	cd kernel && $(MAKE) clean
 
-img: echidnafs/echfs-utils kernel/echidna.bin
+echidna.img: echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh misc/life
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format

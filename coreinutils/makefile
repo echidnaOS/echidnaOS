@@ -1,71 +1,50 @@
+export PATH := ../tools/bin:$(PATH)
 CC = cc
-C_FILES = $(shell find ./src/ -type f -name '*.c')
+BINARY_NAMES = yes hello true cp rm mv echo false [ cat touch printf
+BINARY_PATHS = $(addprefix build/,$(BINARY_NAMES))
 
 notarget:
 	$(error No target specified)
 
-yes: ./src/yes.c
-	$(CC) ./src/yes.c -o yes
-	mv yes ./build/yes
+build/yes: ./src/yes.c
+	$(CC) ./src/yes.c -o build/yes
 
-hello: ./src/hello.c
-	$(CC) ./src/hello.c -o hello
-	mv hello ./build/hello
+build/hello: ./src/hello.c
+	$(CC) ./src/hello.c -o build/hello
 
-true: ./src/true.c
-	$(CC) ./src/true.c -o true
-	mv true ./build/true
+build/true: ./src/true.c
+	$(CC) ./src/true.c -o build/true
 
-cp: ./src/cp.c
-	$(CC) ./src/cp.c ./src/_copy.c -o cp
-	mv cp ./build/cp
+build/cp: ./src/cp.c
+	$(CC) ./src/cp.c ./src/_copy.c -o build/cp
 
-rm: ./src/rm.c
-	$(CC) ./src/rm.c -o rm
-	mv rm ./build/rm
+build/rm: ./src/rm.c
+	$(CC) ./src/rm.c -o build/rm
 
-mv: ./src/mv.c
-	$(CC) ./src/mv.c ./src/_copy.c -o mv
-	mv mv ./build/mv
+build/mv: ./src/mv.c
+	$(CC) ./src/mv.c ./src/_copy.c -o build/mv
 
-echo: ./src/echo.c
-	$(CC) ./src/echo.c -o echo
-	mv echo ./build/echo
+build/echo: ./src/echo.c
+	$(CC) ./src/echo.c -o build/echo
 
-false: ./src/false.c
-	$(CC) ./src/false.c -o false
-	mv false ./build/false
+build/false: ./src/false.c
+	$(CC) ./src/false.c -o build/false
 
-test: ./src/test.c
-	$(CC) ./src/test.c -o [
-	mv [ ./build/[
+build/[: ./src/test.c
+	$(CC) ./src/test.c -o build/[
 
-cat: ./src/cat.c
-	$(CC) ./src/cat.c -o cat
-	mv cat ./build/cat
+build/cat: ./src/cat.c
+	$(CC) ./src/cat.c -o build/cat
 
-touch: ./src/touch.c
-	$(CC) ./src/touch.c -o touch
-	mv touch ./build/touch
+build/touch: ./src/touch.c
+	$(CC) ./src/touch.c -o build/touch
 
-printf: ./src/printf.c
-	$(CC) ./src/printf.c -o printf
-	mv printf ./build/printf
+build/printf: ./src/printf.c
+	$(CC) ./src/printf.c -o build/printf
 
-all: $(C_FILES)
-	mkdir build 2> /dev/null || true
-	make yes
-	make hello
-	make true
-	make cp
-	make rm
-	make mv
-	make echo
-	make false
-#	make test
-	make cat
-	make touch
-	make printf
+all: $(BINARY_PATHS)
+	mkdir -p build
+	touch coreinutils
 
 clean:
 	rm -rf build

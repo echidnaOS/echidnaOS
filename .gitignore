@@ -10,6 +10,7 @@
 /echidnafs/echfs-utils
 /kernel/**/*.o
 /libc/*.o
+/libc/libc
 /misc/*.o
 /shell/*.o
 /misc/life
@@ -17,3 +18,4 @@
 /kernel/blobs/*.bin
 /kernel/echidna.bin
 /coreinutils/build/
+/coreinutils/coreinutils

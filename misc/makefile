@@ -9,4 +9,4 @@ life: life.c
 	$(CC) -o life life.o
 
 clean:
-	rm life.o life
+	rm -f life.o life

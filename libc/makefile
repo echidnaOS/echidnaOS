@@ -17,7 +17,7 @@ entry.o: entry.asm
 	nasm entry.asm -f elf32 -o entry.o
 
 clean:
-	rm $(OBJ_FILES)
+	rm -f $(OBJ_FILES)
 
 install:
 	mkdir -p $(PREFIX)/lib

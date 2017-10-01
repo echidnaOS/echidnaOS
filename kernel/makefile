@@ -24,7 +24,7 @@ echidna.bin: $(BINS) $(OBJ) $(H_FILES)
 	nasm $< -f elf32 -o $@
 
 clean:
-	rm $(OBJ) $(BINS) echidna.bin
+	rm -f $(OBJ) $(BINS) echidna.bin
 
 install:
 	cp echidna.bin $(PREFIX)/

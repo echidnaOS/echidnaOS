@@ -59,7 +59,7 @@ img: echidnafs/echfs-utils
 
 clean-tools:
 	rm -rf gcc-7.1.0 binutils-2.28 build-gcc build-binutils
-	rm gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2
+	rm -f gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2
 
 tools32: packages gcc-7.1.0 binutils-2.28
 	rm -rf build-gcc/

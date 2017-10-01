@@ -14,7 +14,7 @@ sh: $(OBJ_FILES)
 	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm $(OBJ_FILES) sh
+	rm -f $(OBJ_FILES) sh
 
 install:
 	mkdir -p $(PREFIX)/bin

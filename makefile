@@ -31,7 +31,7 @@ clean:
 	cd misc && make clean
 	cd kernel && make clean
 
-img: echidnafs/echfs-utils
+img: echidnafs/echfs-utils kernel/echidna.bin
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format

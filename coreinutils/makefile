@@ -4,7 +4,7 @@ BINARY_NAMES = yes hello true cp rm mv echo false [ cat touch printf
 BINARY_PATHS = $(addprefix build/,$(BINARY_NAMES))
 
 CHARDFLAGS = -masm=intel
-CFLAGS = -O1
+CFLAGS = 
 
 coreinutils: $(BINARY_PATHS)
 	touch coreinutils

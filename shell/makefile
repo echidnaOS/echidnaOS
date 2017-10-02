@@ -6,7 +6,7 @@ C_FILES = shell.c
 OBJ_FILES = $(C_FILES:.c=.o)
 
 CHARDFLAGS = -std=gnu99 -masm=intel
-CFLAGS = -O1
+CFLAGS = 
 
 sh: $(OBJ_FILES)
 	$(CC) -o sh $(OBJ_FILES)

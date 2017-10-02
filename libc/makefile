@@ -6,7 +6,7 @@ C_FILES = $(shell find ./ -type f -name '*.c')
 OBJ_FILES = entry.o $(C_FILES:.c=.o)
 
 CHARDFLAGS = -std=gnu99 -masm=intel
-CFLAGS = -O1
+CFLAGS = 
 
 libc: $(OBJ_FILES)
 	touch libc

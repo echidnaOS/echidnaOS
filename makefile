@@ -3,8 +3,7 @@ COREINUTILS_C_FILES = $(shell find coreinutils/src -type f -name '*.c')
 KERNEL_ASM_FILES = $(shell find kernel -type f -name '*.asm') $(shell find kernel -type f -name '*.real')
 KERNEL_C_FILES = $(shell find kernel -type f -name '*.c')
 
-notarget:
-	$(error No target specified)
+notarget: echidna.img
 
 libc/libc: $(LIBC_C_FILES)
 	$(MAKE) -C libc
@@ -61,16 +60,10 @@ clean-tools:
 	rm -rf gcc-7.1.0 binutils-2.28 build-gcc build-binutils
 	rm -f gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2
 
-tools32: packages gcc-7.1.0 binutils-2.28
+tools: packages gcc-7.1.0 binutils-2.28
 	rm -rf build-gcc/
 	rm -rf build-binutils/
 	export MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" && export PREFIX="`pwd`/tools" && export TARGET=i386-elf && export PATH="$$PREFIX/bin:$$PATH" && mkdir build-binutils && cd build-binutils && ../binutils-2.28/configure --target=$$TARGET --prefix="$$PREFIX" --with-sysroot --disable-nls --disable-werror && make && make install && cd ../gcc-7.1.0 && contrib/download_prerequisites && cd .. && mkdir build-gcc && cd build-gcc && ../gcc-7.1.0/configure --target=$$TARGET --prefix="$$PREFIX" --disable-nls --enable-languages=c --without-headers && make all-gcc && make all-target-libgcc && make install-gcc && make install-target-libgcc
-	cp gccwrappers/* tools/bin/
-
-tools64: packages gcc-7.1.0 binutils-2.28
-	rm -rf build-gcc/
-	rm -rf build-binutils/
-	export MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" && export PREFIX="`pwd`/tools" && export TARGET=x86_64-elf && export PATH="$$PREFIX/bin:$$PATH" && mkdir build-binutils && cd build-binutils && ../binutils-2.28/configure --target=$$TARGET --prefix="$$PREFIX" --with-sysroot --disable-nls --disable-werror && make && make install && cd ../gcc-7.1.0 && contrib/download_prerequisites && cd .. && mkdir build-gcc && cd build-gcc && ../gcc-7.1.0/configure --target=$$TARGET --prefix="$$PREFIX" --disable-nls --enable-languages=c --without-headers && make all-gcc && make all-target-libgcc && make install-gcc && make install-target-libgcc
 	cp gccwrappers/* tools/bin/
 
 gcc-7.1.0.tar.bz2:

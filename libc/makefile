@@ -6,7 +6,7 @@ C_FILES = $(shell find ./ -type f -name '*.c')
 OBJ_FILES = entry.o $(C_FILES:.c=.o)
 
 CHARDFLAGS = -std=gnu99 -masm=intel
-CFLAGS = 
+CFLAGS = -O1
 
 libc: $(OBJ_FILES)
 	touch libc
@@ -18,7 +18,7 @@ entry.o: entry.asm
 	nasm entry.asm -f elf32 -o entry.o
 
 clean:
-	rm -f $(OBJ_FILES)
+	rm -f $(OBJ_FILES) libc
 
 install:
 	mkdir -p $(PREFIX)/lib

@@ -1,6 +1,6 @@
 LIBC_C_FILES = $(shell find libc -type f -name '*.c')
 COREINUTILS_C_FILES = $(shell find coreinutils/src -type f -name '*.c')
-KERNEL_ASM_FILES = $(shell find kernel -type f -name '*.asm')
+KERNEL_ASM_FILES = $(shell find kernel -type f -name '*.asm') $(shell find kernel -type f -name '*.real')
 KERNEL_C_FILES = $(shell find kernel -type f -name '*.c')
 
 notarget:
@@ -10,7 +10,7 @@ libc/libc: $(LIBC_C_FILES)
 	$(MAKE) -C libc
 
 coreinutils/coreinutils: libc/libc $(COREINUTILS_C_FILES)
-	$(MAKE) -C coreinutils all
+	$(MAKE) -C coreinutils
 
 misc/life: libc/libc misc/life.c
 	$(MAKE) -C misc
@@ -31,7 +31,7 @@ clean:
 	cd misc && $(MAKE) clean
 	cd kernel && $(MAKE) clean
 
-echidna.img: echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh misc/life
+echidna.img: echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh coreinutils/coreinutils misc/life
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format

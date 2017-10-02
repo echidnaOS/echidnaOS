@@ -23,14 +23,18 @@ kernel/echidna.bin: $(KERNEL_ASM_FILES) $(KERNEL_C_FILES)
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc echfs-utils.c -o echfs-utils
 
+update_wrappers:
+	cp gccwrappers/* tools/bin/
+
 clean:
+	cd echidnafs && rm -f echfs-utils
 	cd shell && $(MAKE) clean
 	cd coreinutils && $(MAKE) clean
 	cd libc && $(MAKE) clean
 	cd misc && $(MAKE) clean
 	cd kernel && $(MAKE) clean
 
-echidna.img: echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh coreinutils/coreinutils misc/life
+echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh coreinutils/coreinutils misc/life
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 BINDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LIBC_OBJ=$(find $BINDIR/../../libc/ -type f -name '*.o')
+TEMP_ELF=$(mktemp)
 
 for i in "$@" ; do
     if [[ $i == "-c" ]] ; then
@@ -25,22 +27,17 @@ done
 
 i386-elf-gcc -ffreestanding -mpreferred-stack-boundary=2 \
     -isystem $BINDIR/../../libc \
-    $BINDIR/../../libc/entry.o \
-    $BINDIR/../../libc/stdio.o \
-    $BINDIR/../../libc/stdlib.o \
-    $BINDIR/../../libc/ctype.o \
-    $BINDIR/../../libc/string.o \
-    $BINDIR/../../libc/unistd.o \
+    $LIBC_OBJ \
     $ARGS_STR \
     -nostdlib \
     -static-libgcc -lgcc \
     -fdata-sections -ffunction-sections -Wl,--gc-sections \
     -Wl,--entry,_entry \
     -Wl,-r \
-    -o .cc-tmp.elf
+    -o $TEMP_ELF
 
-i386-elf-ld .cc-tmp.elf -o $OUTPUT_NAME --gc-sections \
+i386-elf-ld $TEMP_ELF -o $OUTPUT_NAME --gc-sections \
     -T $BINDIR/../../libc/default_linker.ld \
     --oformat=binary
 
-rm .cc-tmp.elf
+rm $TEMP_ELF

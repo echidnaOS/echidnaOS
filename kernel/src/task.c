@@ -388,6 +388,8 @@ void task_scheduler(void) {
 
 }
 
+extern int ts_enable;
+
 void task_quit(uint64_t return_value) {
     int parent = task_table[current_task]->parent;
     if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
@@ -396,6 +398,8 @@ void task_quit(uint64_t return_value) {
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
     }
     task_terminate(current_task);
+    asm volatile ("cli");
+    ts_enable = 1;
     task_scheduler();
 }
 

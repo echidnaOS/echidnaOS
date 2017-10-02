@@ -1,15 +1,10 @@
-LIBC_C_FILES = $(shell find libc -type f -name '*.c')
-COREINUTILS_C_FILES = $(shell find coreinutils/src -type f -name '*.c')
-KERNEL_ASM_FILES = $(shell find kernel -type f -name '*.asm') $(shell find kernel -type f -name '*.real')
-KERNEL_C_FILES = $(shell find kernel -type f -name '*.c')
+LIBC_FILES = $(shell find libc -type f -name '*.c') $(shell find libc -type f -name '*.h')
+KERNEL_FILES = $(shell find kernel -type f -name '*.c') $(shell find kernel -type f -name '*.asm') $(shell find kernel -type f -name '*.real') $(shell find kernel -type f -name '*.h')
 
 notarget: echidna.img
 
-libc/libc: $(LIBC_C_FILES)
+libc/libc: $(LIBC_FILES)
 	$(MAKE) -C libc
-
-coreinutils/coreinutils: libc/libc $(COREINUTILS_C_FILES)
-	$(MAKE) -C coreinutils
 
 misc/life: libc/libc misc/life.c
 	$(MAKE) -C misc
@@ -17,7 +12,7 @@ misc/life: libc/libc misc/life.c
 shell/sh: libc/libc shell/shell.c
 	$(MAKE) -C shell
 
-kernel/echidna.bin: $(KERNEL_ASM_FILES) $(KERNEL_C_FILES)
+kernel/echidna.bin: $(KERNEL_FILES)
 	$(MAKE) -C kernel
 
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
@@ -28,13 +23,12 @@ update_wrappers:
 
 clean:
 	cd echidnafs && rm -f echfs-utils
-	cd shell && $(MAKE) clean
-	cd coreinutils && $(MAKE) clean
-	cd libc && $(MAKE) clean
-	cd misc && $(MAKE) clean
-	cd kernel && $(MAKE) clean
+	$(MAKE) clean -C shell
+	$(MAKE) clean -C libc
+	$(MAKE) clean -C misc
+	$(MAKE) clean -C kernel
 
-echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh coreinutils/coreinutils misc/life
+echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh misc/life
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
 	echidnafs/echfs-utils echidna.img format
@@ -44,20 +38,6 @@ echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm ker
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
 	echidnafs/echfs-utils echidna.img import ./misc/life /bin/life
-
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/yes /bin/yes
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/hello /bin/hello
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/true /bin/true
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/cp /bin/cp
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/rm /bin/rm
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/mv /bin/mv
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/echo /bin/echo
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/false /bin/false
-#	echidnafs/echfs-utils echidna.img import ./coreinutils/build/[ /bin/[
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/cat /bin/cat
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/touch /bin/touch
-	echidnafs/echfs-utils echidna.img import ./coreinutils/build/printf /bin/printf
-
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
 
 clean-tools:

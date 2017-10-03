@@ -8,6 +8,7 @@
 // kernel tunables
 
 #define _BIG_FONTS_
+//#define _SERIAL_KERNEL_OUTPUT_
 
 #ifdef _BIG_FONTS_
   #define VD_ROWS 25
@@ -92,6 +93,11 @@ void kuitoa(uint64_t x);
 void tty_kuitoa(uint64_t x, uint8_t which_tty);
 void kxtoa(uint64_t x);
 void tty_kxtoa(uint64_t x, uint8_t which_tty);
+
+#ifdef _SERIAL_KERNEL_OUTPUT_
+  void debug_kernel_console_init(void);
+  int com_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload);
+#endif
 
 int kstrcmp(char* dest, char* source);
 int kstrncmp(char* dest, char* source, uint32_t len);

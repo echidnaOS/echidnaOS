@@ -4,6 +4,11 @@
 uint32_t memory_size;
 
 void kernel_init(void) {
+
+    #ifdef _SERIAL_KERNEL_OUTPUT_
+      debug_kernel_console_init();
+    #endif
+
     // setup the PIC's mask
     set_PIC0_mask(0b11111111); // disable all IRQs
     set_PIC1_mask(0b11111111);

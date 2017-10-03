@@ -28,6 +28,16 @@ com_device devices[MAX_PORTS];
 
 com_device init_com_device(uint16_t port);
 
+#ifdef _SERIAL_KERNEL_OUTPUT_
+  void debug_kernel_console_init(void) {
+
+      devices[0] = init_com_device(com_ports[0]);
+
+      return;
+
+  }
+#endif
+
 int com_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload) {
     if (type == 0) {
         if (!(port_in_b(devices[dev].line_stat_reg) & 0x01))

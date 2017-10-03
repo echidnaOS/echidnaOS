@@ -170,7 +170,18 @@ uint64_t power(uint64_t x, uint64_t y) {
 }
 
 void kputs(const char* string) {
-    tty_kputs(string, 0);
+
+    #ifdef _SERIAL_KERNEL_OUTPUT_
+      for (int i = 0; string[i]; i++) {
+          if (string[i] == '\n') {
+              com_io_wrapper(0, 0, 1, 0x0d);
+              com_io_wrapper(0, 0, 1, 0x0a);
+          } else
+              com_io_wrapper(0, 0, 1, string[i]);
+      }
+    #else
+      tty_kputs(string, 0);
+    #endif
     
     return;
 }
@@ -183,8 +194,14 @@ void tty_kputs(const char* string, uint8_t which_tty) {
 }
 
 void knputs(const char* string, uint32_t count) {
-    tty_knputs(string, count, 0);
-    
+
+    #ifdef _SERIAL_KERNEL_OUTPUT_
+      for (int i = 0; i < count; i++)
+          com_io_wrapper(0, 0, 1, string[i]);
+    #else
+      tty_knputs(string, count, 0);
+    #endif
+
     return;
 }
 
@@ -196,7 +213,21 @@ void tty_knputs(const char* string, uint32_t count, uint8_t which_tty) {
 }
 
 void kuitoa(uint64_t x) {
-    tty_kuitoa(x, 0);
+    uint8_t i;
+    char buf[21] = {0};
+
+    if (!x) {
+        kputs("0");
+        return;
+    }
+
+    for (i = 19; x; i--) {
+        buf[i] = (x % 10) + 0x30;
+        x = x / 10;
+    }
+
+    i++;
+    kputs(buf + i);
 
     return;
 }
@@ -226,7 +257,22 @@ static const char hex_to_ascii_tab[] = {
 };
 
 void kxtoa(uint64_t x) {
-    tty_kxtoa(x, 0);
+    uint8_t i;
+    char buf[17] = {0};
+
+    if (!x) {
+        kputs("0x0");
+        return;
+    }
+
+    for (i = 15; x; i--) {
+        buf[i] = hex_to_ascii_tab[(x % 16)];
+        x = x / 16;
+    }
+
+    i++;
+    kputs("0x");
+    kputs(buf + i);
 
     return;
 }

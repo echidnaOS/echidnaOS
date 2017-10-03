@@ -61,7 +61,6 @@ void init_kalloc(void) {
 void* kalloc(uint32_t size) {
     // search for a big enough, free heap chunk
     heap_chunk_t* heap_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
-    heap_chunk_t* new_chunk;
     uint32_t heap_chunk_ptr;
     char* area;
     
@@ -71,12 +70,18 @@ void* kalloc(uint32_t size) {
     for (;;) {
         if ((heap_chunk->free) && (heap_chunk->size > (size + sizeof(heap_chunk_t)))) {
             // split off a new heap_chunk
+            heap_chunk_t* new_chunk;
             new_chunk = (heap_chunk_t*)((uint32_t)heap_chunk + size + sizeof(heap_chunk_t));
             new_chunk->free = 1;
             new_chunk->size = heap_chunk->size - (size + sizeof(heap_chunk_t));
             new_chunk->prev_chunk = (uint32_t)heap_chunk;
+            // resize the old chunk
             heap_chunk->free = !heap_chunk->free;
             heap_chunk->size = size;
+            // tell the next chunk where the old chunk is now
+            heap_chunk_t* next_chunk;
+            next_chunk = (heap_chunk_t*)((uint32_t)new_chunk + new_chunk->size + sizeof(heap_chunk_t));
+            next_chunk->prev_chunk = new_chunk;
             area = (char*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
             break;
         } else {

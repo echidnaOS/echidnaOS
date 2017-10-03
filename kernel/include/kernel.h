@@ -49,6 +49,19 @@
 
 #define IO_NOT_READY -5
 
+// macros
+
+#define DISABLE_INTERRUPTS      asm volatile ("cli")
+#define ENABLE_INTERRUPTS       asm volatile ("sti")
+#define ENTER_IDLE              \
+    asm volatile (              \
+                    "sti;"      \
+                    "1:"        \
+                    "mov esp, 0xefffff;"    \
+                    "hlt;"      \
+                    "jmp 1b;"   \
+                 )
+
 // driver inits
 
 void init_ata(void);

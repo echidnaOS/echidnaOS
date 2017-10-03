@@ -326,13 +326,7 @@ void task_scheduler(void) {
             if (idle_cpu) {
             // if no process took CPU time, wait for the next
             // context switch idling
-                asm volatile (
-                                "sti;"
-                                "1:"
-                                "mov esp, 0xefffff;"
-                                "hlt;"
-                                "jmp 1b;"
-                             );
+                ENTER_IDLE;
             }
             idle_cpu = 1;
             continue;
@@ -379,9 +373,10 @@ void task_scheduler(void) {
             case KRN_STAT_PROCWAIT_TASK:
             case KRN_STAT_VDEVWAIT_TASK:
             case KRN_STAT_RES_TASK:
-            default:
                 current_task++;
                 continue;
+            default:
+                panic("unrecognised task status");
         }
 
     }
@@ -398,7 +393,7 @@ void task_quit(uint64_t return_value) {
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
     }
     task_terminate(current_task);
-    asm volatile ("cli");
+    DISABLE_INTERRUPTS;
     ts_enable = 1;
     task_scheduler();
 }

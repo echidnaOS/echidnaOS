@@ -98,12 +98,6 @@ void kernel_init(void) {
     set_PIC1_mask(0b11111111);
     
     // wait for task scheduler
-    asm volatile (
-                    "sti;"
-                    "1:"
-                    "mov esp, 0xefffff;"
-                    "hlt;"
-                    "jmp 1b;"
-                 );
+    ENTER_IDLE;
 
 }

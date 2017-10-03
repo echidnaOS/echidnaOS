@@ -81,7 +81,7 @@ void* kalloc(uint32_t size) {
             // tell the next chunk where the old chunk is now
             heap_chunk_t* next_chunk;
             next_chunk = (heap_chunk_t*)((uint32_t)new_chunk + new_chunk->size + sizeof(heap_chunk_t));
-            next_chunk->prev_chunk = new_chunk;
+            next_chunk->prev_chunk = (uint32_t)new_chunk;
             area = (char*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
             break;
         } else {

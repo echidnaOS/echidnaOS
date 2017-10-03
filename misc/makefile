@@ -6,8 +6,7 @@ CHARDFLAGS = -std=gnu99 -masm=intel
 CFLAGS = 
 
 life: life.c
-	$(CC) $(CHARDFLAGS) -o life.o -c life.c
-	$(CC) -o life life.o
+	$(CC) $(CHARDFLAGS) $(CFLAGS) life.c -o life
 
 clean:
-	rm -f life.o life
+	rm -f life

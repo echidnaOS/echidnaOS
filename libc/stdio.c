@@ -16,6 +16,66 @@ int files_ptr = 0;
 char pool[4096];
 int pool_ptr = 0;
 
+static size_t _fwrite_writememb(const char* memb_ptr, size_t size, FILE* stream) {
+    size_t i;
+
+    for (i = 0; i < size; i++)
+        fputc(memb_ptr[i], stream);
+
+    return i;
+}
+
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream) {
+    // this function is a stub
+    size_t i;
+
+    for (i = 0; i < nmemb; i++)
+        _fwrite_writememb((char*)(ptr + i * size), size, stream);
+    
+    return i;
+}
+
+static char* _getline_growbuf(char* buf, size_t* n) {
+    char* new_ptr = realloc(buf, *n + 256);
+    
+    if (!new_ptr) return (char*)0;
+    
+    *n += 256;
+    
+    return new_ptr;
+}
+
+ssize_t getline(char** lineptr, size_t* n, FILE* stream) {
+    ssize_t i;
+    
+    int c = fgetc(stream);
+    
+    if (c == EOF) return -1;
+    
+    if ((!*lineptr) && (!*n)) {
+        *lineptr = _getline_growbuf(*lineptr, n);
+        if (!*lineptr) return -1;
+    }
+    
+    for (i = 0; ; i++) {
+        if (i == (*n - 2)) {
+            char* tmp_ptr = _getline_growbuf(*lineptr, n);
+            if (!tmp_ptr) return -1;
+            *lineptr = tmp_ptr;
+        }
+        if (c == EOF) goto clean_exit;
+        (*lineptr)[i] = (char)c;
+        if (c == '\n') goto clean_exit;
+        c = fgetc(stream);
+    }
+
+clean_exit:
+    i++;
+    (*lineptr)[i] = 0;
+    return i;
+
+}
+
 int remove(const char* filename) {
     if (OS_vfs_remove(filename) == VFS_FAILURE) return -1;
     else return 0;

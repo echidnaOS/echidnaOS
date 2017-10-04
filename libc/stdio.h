@@ -19,6 +19,8 @@ typedef struct {
     long stream_end;
 } FILE;
 
+typedef int32_t ssize_t;
+
 extern FILE* stdin;
 extern FILE* stdout;
 extern FILE* stderr;
@@ -40,6 +42,8 @@ void rewind(FILE*);
 FILE* fopen(const char*, const char*);
 int fclose(FILE*);
 int remove(const char*);
+ssize_t getline(char**, size_t*, FILE*);
+size_t fwrite(const void*, size_t, size_t, FILE*);
 
 
 

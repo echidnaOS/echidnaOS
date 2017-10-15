@@ -18,6 +18,8 @@ char prog_pwd[128];
 char prog_name[128];
 char prog_ser_name[128];
 
+int pid;
+
 task_info_t prog_info = {
     prog_path,
     prog_stdin,
@@ -36,6 +38,8 @@ uint8_t vdev_in;
 int vdev_in_flag = 0;
 uint8_t vdev_out;
 int vdev_out_flag = 0;
+
+int no_block = 0;
 
 // built in shell
 
@@ -124,6 +128,18 @@ int main(int argc, char** argv) {
                 fprintf(stderr, "couldn't create directory `%s`.\n", s_argv[1]);
         }
         
+        else if (!strcmp("touch", s_argv[0])) {
+            if (s_argc == 1) continue;
+            if (OS_vfs_create(s_argv[1], 0))
+                fprintf(stderr, "couldn't create file `%s`.\n", s_argv[1]);
+        }
+        
+        else if (!strcmp("rm", s_argv[0])) {
+            if (s_argc == 1) continue;
+            if (OS_vfs_remove(s_argv[1]))
+                fprintf(stderr, "couldn't remove file `%s`.\n", s_argv[1]);
+        }
+        
         else if (!strcmp("fork", s_argv[0])) {
             
             pid_t pid = fork();
@@ -205,7 +221,7 @@ int main(int argc, char** argv) {
         else if (!strcmp("cd", s_argv[0])) {
             if (s_argc == 1) continue;
             if (OS_vfs_cd(s_argv[1]) == -2)
-                printf("shell: invalid directory: `%s`.\n", s_argv[1]);
+                fprintf(stderr, "shell: invalid directory: `%s`.\n", s_argv[1]);
         }
 
         // return to prompt if no input
@@ -215,15 +231,19 @@ int main(int argc, char** argv) {
         else {
             strcpy(prog_path, s_argv[0]);
             strcpy(prog_name, s_argv[0]);
-            OS_what_stdin(prog_stdin);
-            OS_what_stdout(prog_stdout);
-            OS_what_stderr(prog_stderr);
             OS_pwd(prog_pwd);
             prog_info.argc = s_argc;
             prog_info.argv = s_argv;
             *prog_ser_name = 0;
-            if (OS_general_execute_block(&prog_info) == -1)
-                printf("shell: invalid command: `%s`.\n", input);
+            if (!no_block) {
+                if (OS_general_execute_block(&prog_info) == -1)
+                    fprintf(stderr, "shell: invalid command: `%s`.\n", input);
+            } else {
+                if ((pid = OS_general_execute(&prog_info)) == -1)
+                    fprintf(stderr, "shell: invalid command: `%s`.\n", input);
+                else
+                    fprintf(stderr, "PID %d launched.\n", pid);
+            }
         }
     }
     
@@ -239,10 +259,31 @@ int get_argc(const char* string) {
             index++;
             continue;
         }
-        while ((string[index]!=' ') && (string[index]!='\0'))
+        if (!strncmp(&string[index], "2>", 2) || !strncmp(&string[index], "&>", 2)) {
+            index += 2;
+            while (string[index] == ' ')
+                index++;
+            while ((string[index] != ' ') && (string[index]))
+                index++;
+            continue;
+        }
+        if (string[index] == '>' || string[index] == '<') {
+            index++;
+            while (string[index] == ' ')
+                index++;
+            while ((string[index] != ' ') && (string[index]))
+                index++;
+            continue;
+        }
+        if (string[index] == '&') {
+            index++;
+            continue;
+        }
+        while ((string[index] != ' ') && (string[index]))
             index++;
         argc++;
     }
+    //printf("argc: %d\n", argc);
     return argc;
 }
 
@@ -250,15 +291,124 @@ void get_argv(char** argv, char* string) {
     uint32_t index=0;
     uint8_t arg=0;
     
+    no_block = 0;
+    
+    OS_what_stdin(prog_stdin);
+    OS_what_stdout(prog_stdout);
+    OS_what_stderr(prog_stderr);
+    
     while (string[index]) {
         if (string[index] == ' ') {
             string[index++] = 0;
             continue;
         }
+        if (string[index] == '>') {
+            int i = 0;
+            string[index++] = 0;
+            //puts("> parsed");
+            while (string[index] == ' ')
+                string[index++] = 0;
+            while ((string[index] != ' ') && (string[index])) {
+                prog_stdout[i++] = string[index];
+                string[index++] = 0;
+            }
+            prog_stdout[i] = 0;
+            remove(prog_stdout);
+            if (OS_vfs_create(prog_stdout, 0) == VFS_FAILURE) {
+                // error handler
+                //fprintf(stderr, "error: couldn't create %s.\n", prog_stdout);
+            } else {
+                //fprintf(stderr, "creating stdout %s\n", prog_stdout);
+            }
+            continue;
+        }
+        if (string[index] == '<') {
+            int i = 0;
+            vfs_metadata_t metadata;
+            string[index++] = 0;
+            //puts("< parsed");
+            while (string[index] == ' ')
+                string[index++] = 0;
+            while ((string[index] != ' ') && (string[index])) {
+                prog_stdin[i++] = string[index];
+                string[index++] = 0;
+            }
+            prog_stdin[i] = 0;
+            if (OS_vfs_get_metadata(prog_stdin, &metadata, VFS_FILE_TYPE) == VFS_FAILURE &&
+                OS_vfs_get_metadata(prog_stdin, &metadata, VFS_DEVICE_TYPE) == VFS_FAILURE) {
+                // error handler
+                //fprintf(stderr, "error: couldn't access %s.\n", prog_stdin);
+            } else {
+                //fprintf(stderr, "reading %s\n", prog_stdin);
+            }
+            continue;
+        }
+        if (!strncmp(&string[index], "2>", 2)) {
+            int i = 0;
+            string[index++] = 0;
+            string[index++] = 0;
+            //puts("2> parsed");
+            while (string[index] == ' ')
+                string[index++] = 0;
+            while ((string[index] != ' ') && (string[index])) {
+                prog_stderr[i++] = string[index];
+                string[index++] = 0;
+            }
+            prog_stderr[i] = 0;
+            remove(prog_stderr);
+            if (OS_vfs_create(prog_stderr, 0) == VFS_FAILURE) {
+                // error handler
+                //fprintf(stderr, "error: couldn't create %s.\n", prog_stderr);
+            } else {
+                //fprintf(stderr, "creating stderr %s\n", prog_stderr);
+            }
+            continue;
+        }
+        if (!strncmp(&string[index], "&>", 2)) {
+            int i = 0;
+            string[index++] = 0;
+            string[index++] = 0;
+            //puts("&> parsed");
+            while (string[index] == ' ')
+                string[index++] = 0;
+            while ((string[index] != ' ') && (string[index])) {
+                prog_stdout[i] = string[index];
+                prog_stderr[i++] = string[index];
+                string[index++] = 0;
+            }
+            prog_stdout[i] = 0;
+            prog_stderr[i] = 0;
+            remove(prog_stdout);
+            remove(prog_stderr);
+            if (OS_vfs_create(prog_stdout, 0) == VFS_FAILURE) {
+                // error handler
+                //fprintf(stderr, "error: couldn't create stdout %s.\n", prog_stdout);
+            } else {
+                //fprintf(stderr, "creating stdout %s\n", prog_stdout);
+            }
+            if (OS_vfs_create(prog_stderr, 0) == VFS_FAILURE) {
+                // error handler
+                //fprintf(stderr, "error: couldn't create stderr %s.\n", prog_stderr);
+            } else {
+                //fprintf(stderr, "creating stderr %s\n", prog_stderr);
+            }
+            continue;
+        }
+        if (string[index] == '&') {
+            string[index++] = 0;
+            no_block = 1;
+            continue;
+        }
+        
+        // point the argv argument
         argv[arg++] = &string[index];
-        while ((string[index]!=' ') && (string[index]!='\0'))
+        
+        // skip over string and set 0 terminator
+        while ((string[index] != ' ') && (string[index]))
             index++;
-        string[index++] = 0;
+        if (string[index])
+            string[index++] = 0;
+        else break;
     }
     return;
 }
@@ -266,13 +416,9 @@ void get_argv(char** argv, char* string) {
 void getstring(char* string, uint32_t limit) {
     uint32_t x=0;
     int c;
-    while (1) {
+    for (;;) {
         c = getchar();
-        if (c=='\b') {
-            if (x) {
-                x--;
-            }
-        } else if (c=='\n') break;
+        if (c=='\n') break;
         else if (x<(limit-1)) {
             string[x] = c;
             x++;

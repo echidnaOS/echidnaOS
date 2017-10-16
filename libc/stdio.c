@@ -16,6 +16,67 @@ int files_ptr = 0;
 char pool[4096];
 int pool_ptr = 0;
 
+int _sscanf_calls = 0;
+int sscanf(const char *str, const char *format, ...) {
+
+    fputs("libc: `sscanf` is just a stub function.\n", stderr);
+    fprintf(stderr, "libc: %d calls to sscanf so far.\n", ++_sscanf_calls);
+
+    return -1;
+}
+
+int ungetc(int c, FILE* stream) {
+    long orig_pos = ftell(stream);
+
+    if (stream->stream_end == -1) return EOF;
+    if (!stream->stream_ptr) return EOF;
+    
+    fseek(stream, -1, SEEK_CUR);
+    if (fputc(c, stream) == EOF) {
+        fseek(stream, orig_pos, SEEK_SET);
+        return EOF;
+    }
+    fseek(stream, -1, SEEK_CUR);
+    
+    return c;
+}
+
+int ferror(FILE* stream) {
+    return 0;
+}
+
+int fflush(FILE* stream) {
+    return 0;
+}
+
+int feof(FILE* stream) {
+
+    if (stream->stream_ptr == stream->stream_end)
+        return EOF;
+
+    return 0;
+
+}
+
+char* fgets(char* buf, int limit, FILE* stream) {
+    int i;
+    for (i = 0; i < (limit - 1); i++) {
+        int c = fgetc(stream);
+        if (c == '\n') break;
+        buf[i] = c;
+    }
+    buf[i] = 0;
+    return buf;
+}
+
+void perror(const char* errmsg) {
+
+    fputs(errmsg, stderr);
+    
+    return;
+
+}
+
 static size_t _fwrite_writememb(const char* memb_ptr, size_t size, FILE* stream) {
     size_t i;
 
@@ -31,6 +92,25 @@ size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream) {
 
     for (i = 0; i < nmemb; i++)
         _fwrite_writememb((char*)(ptr + i * size), size, stream);
+    
+    return i;
+}
+
+static size_t _fread_readmemb(char* memb_ptr, size_t size, FILE* stream) {
+    size_t i;
+
+    for (i = 0; i < size; i++)
+        memb_ptr[i] = fgetc(stream);
+
+    return i;
+}
+
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream) {
+    // this function is a stub
+    size_t i;
+
+    for (i = 0; i < nmemb; i++)
+        _fread_readmemb((char*)(ptr + i * size), size, stream);
     
     return i;
 }
@@ -88,8 +168,8 @@ FILE* fopen(const char* path, const char* mode) {
     //FILE* file_ptr = malloc(sizeof(FILE));
     FILE* file_ptr = &file_list[files_ptr++];
     
-    if (!strcmp(mode, "r") || !strcmp(mode, "rb") ||
-        !strcmp(mode, "r+") || !strcmp(mode, "r+b") || !strcmp(mode, "rb+")) {
+    if (!strcmp(mode, "r") || !strcmp(mode, "rb") || !strcmp(mode, "rt") ||
+        !strcmp(mode, "r+") || !strcmp(mode, "r+b") || !strcmp(mode, "rb+") || !strcmp(mode, "r+t") || !strcmp(mode, "rt+")) {
         strcpy(file_ptr->mode, mode);
         // fetch metadata
         if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
@@ -111,8 +191,8 @@ FILE* fopen(const char* path, const char* mode) {
     
         return file_ptr;
     }
-    else if (!strcmp(mode, "w") || !strcmp(mode, "wb") ||
-             !strcmp(mode, "w+") || !strcmp(mode, "w+b") || !strcmp(mode, "wb+")) {
+    else if (!strcmp(mode, "w") || !strcmp(mode, "wb") || !strcmp(mode, "wt") ||
+             !strcmp(mode, "w+") || !strcmp(mode, "w+b") || !strcmp(mode, "wb+") || !strcmp(mode, "w+t") || !strcmp(mode, "wt+")) {
         strcpy(file_ptr->mode, mode);
         // fetch metadata
         if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
@@ -141,8 +221,8 @@ FILE* fopen(const char* path, const char* mode) {
     
         return file_ptr;
     }
-    else if (!strcmp(mode, "a") || !strcmp(mode, "ab") ||
-             !strcmp(mode, "a+") || !strcmp(mode, "a+b") || !strcmp(mode, "ab+")) {
+    else if (!strcmp(mode, "a") || !strcmp(mode, "ab") || !strcmp(mode, "at") ||
+             !strcmp(mode, "a+") || !strcmp(mode, "a+b") || !strcmp(mode, "ab+") || !strcmp(mode, "a+t") || !strcmp(mode, "at+")) {
         strcpy(file_ptr->mode, mode);
         // fetch metadata
         if (OS_vfs_get_metadata(path, &metadata, VFS_FILE_TYPE) == VFS_FAILURE) {
@@ -210,8 +290,8 @@ int fseek(FILE* stream, long int offset, int type) {
 }
 
 int fgetc(FILE* stream) {
-    if (!strcmp(stream->mode, "w") || !strcmp(stream->mode, "wb") ||
-        !strcmp(stream->mode, "a") || !strcmp(stream->mode, "ab")) return -1;
+    if (!strcmp(stream->mode, "w") || !strcmp(stream->mode, "wb") || !strcmp(stream->mode, "wt") ||
+        !strcmp(stream->mode, "a") || !strcmp(stream->mode, "ab") || !strcmp(stream->mode, "at")) return -1;
     if (stream->stream_ptr == stream->stream_end) return EOF;
     int c = OS_vfs_read(stream->path, stream->stream_ptr);
     stream->stream_ptr++;
@@ -223,7 +303,7 @@ int getc(FILE* stream) {
 }
 
 int fputc(int c, FILE* stream) {
-    if (!strcmp(stream->mode, "r") || !strcmp(stream->mode, "rb")) return -1;
+    if (!strcmp(stream->mode, "r") || !strcmp(stream->mode, "rb") || !strcmp(stream->mode, "rt")) return -1;
     int ret = OS_vfs_write(stream->path, stream->stream_ptr, c);
     if (ret == VFS_FAILURE) return -1;
     stream->stream_ptr++;
@@ -346,6 +426,25 @@ int fprintf(FILE* stream, const char* format, ...) {
     
     if (ret == -1) return -1;
     fputs(printf_buf, stream);
+    return ret;
+}
+
+int vfprintf(FILE* stream, const char* format, va_list args) {
+    int ret = vsnprintf(printf_buf, PRINTF_BUF_MAX, format, args);
+    
+    if (ret == -1) return -1;
+    fputs(printf_buf, stream);
+    return ret;
+}
+
+int sprintf(char* buf, const char* format, ...) {
+    va_list args;
+    int ret;
+    
+    va_start(args, format);
+    ret = vsnprintf(buf, 0x7fffffff, format, args);
+    va_end(args);
+    
     return ret;
 }
 

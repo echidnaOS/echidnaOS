@@ -2,6 +2,14 @@
 #include <stddef.h>
 #include <ctype.h>
 
+static char _inv_strerror[] = "strerror is a stub.";
+
+char* strerror(int errnum) {
+
+    return _inv_strerror;
+
+}
+
 size_t strlen(const char *s)
 {
   size_t len;
@@ -55,6 +63,29 @@ char *strcpy(char *dest, const char *src)
   return dest;
 }
 
+size_t strspn(const char* str1, const char* str2) {
+    int pos;
+    
+    for (pos = 0; str1[pos]; pos++) {
+        for (int i = 0; str2[i]; i++)
+            if (str1[pos] != str2[i]) goto out;
+    }
+
+out:
+    return pos;
+}
+
+size_t strcspn(const char* str1, const char* str2) {
+    int pos;
+    
+    for (pos = 0; str1[pos]; pos++) {
+        for (int i = 0; str2[i]; i++)
+            if (str1[pos] == str2[i]) goto out;
+    }
+
+out:
+    return pos;
+}
 
  /*
  * if src contains less than len non-null bytes, null bytes will be

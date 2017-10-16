@@ -4,6 +4,30 @@
 #include <stdint.h>
 #include <sys_api.h>
 #include <stddef.h>
+#include <stdio.h>
+
+int _qsort_calls = 0;
+void qsort(void* base, size_t nitems, size_t size, int (*compar)(const void*, const void*)) {
+
+    fputs("libc: `qsort` is just a stub function.\n", stderr);
+    fprintf(stderr, "libc: %d calls to qsort so far.\n", ++_qsort_calls);
+    return;
+}
+
+void abort(void) {
+    exit(EXIT_FAILURE);
+}
+
+int abs(int x) {
+    if (x < 0)
+        return -x;
+    else
+        return x;
+}
+
+char* getenv(const char* var) {
+    return (char*)0;
+}
 
 void exit(int status) {
     OS_exit(status);
@@ -14,6 +38,16 @@ void* malloc(size_t size) {
     uint32_t ptr = OS_get_heap_base() + OS_get_heap_size() + sizeof(uint32_t);
     OS_resize_heap(OS_get_heap_size() + (uint32_t)size + sizeof(uint32_t));
     *( (uint32_t*)(ptr - sizeof(uint32_t)) ) = (uint32_t)size;
+    return (void*)ptr;
+}
+
+void* calloc(size_t nitems, size_t size) {
+    size_t bytes = nitems * size;
+    char* ptr = malloc(bytes);
+
+    for (size_t i = 0; i < bytes; i++)
+        ptr[i] = 0;
+
     return (void*)ptr;
 }
 
@@ -47,32 +81,30 @@ void free(void* ptr) {
 const char *base_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 /* converts a base 10 number in ascii to an int */
-int atoi(const char *str)
-{
-	int res = 0;
-	int sign = 1;
+int atoi(const char* str) {
+    int res = 0;
+    int neg = 0;
 
-	while ( isspace(*str) ) str++;
+    while (*str == ' ') str++;
 
-	if ( *str == '-' )
-	{
-		sign = -1;
-		str++;
-	}
-	else if ( *str == '+' )
-	{
-		str++;
-	}
+    if (*str == '-') {
+        neg = 1;
+        str++;
+    }
+    else if (*str == '+')
+        str++;
 
-	for ( ; *str; str++ )
-	{
-		if ( isdigit(*str) )
-			res = res * 10 + (*str - '0');
-		else
-			return res;
-	}
+    for ( ; *str; str++) {
+        if (isdigit(*str))
+            res = res * 10 + (*str - '0');
+        else
+            break;
+    }
 
-	return res;
+    if (neg)
+        res = -res;
+
+    return res;
 }
 
 long atol(const char *str)

@@ -50,6 +50,17 @@
 
 #define IO_NOT_READY -5
 
+// signals
+
+#define SIGABRT                 0
+#define SIGFPE                  1
+#define SIGILL                  2
+#define SIGINT                  3
+#define SIGSEGV                 4
+#define SIGTERM                 5
+
+#define SIG_ERR                 0xffffffff
+
 // macros
 
 #define DISABLE_INTERRUPTS      asm volatile ("cli")
@@ -159,6 +170,14 @@ typedef struct {
     
     uint32_t heap_base;
     uint32_t heap_size;
+    
+    // signals
+    uint32_t sigabrt;
+    uint32_t sigfpe;
+    uint32_t sigill;
+    uint32_t sigint;
+    uint32_t sigsegv;
+    uint32_t sigterm;
 
 } task_t;
 

@@ -1,6 +1,40 @@
 #include <stdint.h>
 #include <kernel.h>
 
+uint32_t signal(int sig, uint32_t handler) {
+
+    switch (sig) {
+        uint32_t old_handler;
+        case SIGABRT:
+            old_handler = task_table[current_task]->sigabrt;
+            task_table[current_task]->sigabrt = handler;
+            return old_handler;
+        case SIGFPE:
+            old_handler = task_table[current_task]->sigfpe;
+            task_table[current_task]->sigfpe = handler;
+            return old_handler;
+        case SIGILL:
+            old_handler = task_table[current_task]->sigill;
+            task_table[current_task]->sigill = handler;
+            return old_handler;
+        case SIGINT:
+            old_handler = task_table[current_task]->sigint;
+            task_table[current_task]->sigint = handler;
+            return old_handler;
+        case SIGSEGV:
+            old_handler = task_table[current_task]->sigsegv;
+            task_table[current_task]->sigsegv = handler;
+            return old_handler;
+        case SIGTERM:
+            old_handler = task_table[current_task]->sigterm;
+            task_table[current_task]->sigterm = handler;
+            return old_handler;
+        default:
+            return SIG_ERR;
+    }
+
+}
+
 int getpid(void) {
 
     return current_task;

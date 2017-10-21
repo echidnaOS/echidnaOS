@@ -18,6 +18,7 @@ extern get_PIC0_mask
 
 ; API calls
 extern getpid
+extern signal
 extern task_fork
 extern task_quit
 extern alloc
@@ -79,7 +80,7 @@ routine_list:
         dd      0                       ; 0x13
         dd      0                       ; 0x14
         dd      getpid                  ; 0x15
-        dd      0                       ; 0x16
+        dd      signal                  ; 0x16
         dd      0                       ; 0x17
         dd      0                       ; 0x18
         dd      0                       ; 0x19

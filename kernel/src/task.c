@@ -31,7 +31,8 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                "","","",
                                "",0,0,0,
                                0,0,
-                               0,0};
+                               0,0,
+                               0,0,0,0,0,0};
 
 int task_create(task_t new_task) {
     // find an empty entry in the task table

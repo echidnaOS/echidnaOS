@@ -31,6 +31,17 @@ typedef struct {
 #define VFS_SUCCESS 0
 #define VFS_FAILURE -2
 
+#define OS_signal(sig, handler) ({ \
+    int ret; \
+    asm volatile (  "mov eax, 0x16;"    \
+                    "int 0x80;"         \
+                     : "=a" (ret)                 \
+                     : "c" (sig),        \
+                       "d" (handler)    \
+                     :  );         \
+    ret; \
+})
+
 #define OS_getpid() ({              \
     uint32_t val;                         \
     asm volatile (  "mov eax, 0x15;"    \

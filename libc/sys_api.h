@@ -31,6 +31,16 @@ typedef struct {
 #define VFS_SUCCESS 0
 #define VFS_FAILURE -2
 
+#define OS_getpid() ({              \
+    uint32_t val;                         \
+    asm volatile (  "mov eax, 0x15;"    \
+                    "int 0x80;"         \
+                     : "=a" (val)      \
+                     : \
+                     : "edx" );         \
+    val;                               \
+})
+
 #define OS_get_heap_base() ({              \
     uint32_t val;                         \
     asm volatile (  "mov eax, 0x10;"    \

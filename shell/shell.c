@@ -111,6 +111,10 @@ int main(int argc, char** argv) {
             continue;
         }
         
+        else if (!strcmp("pid", s_argv[0])) {
+            printf("pid: %d\n", OS_getpid());
+        }
+        
         else if (!strcmp("div0", s_argv[0])) {/*
             int a = 0;
             a = a / 0;

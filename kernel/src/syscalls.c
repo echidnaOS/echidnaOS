@@ -1,6 +1,12 @@
 #include <stdint.h>
 #include <kernel.h>
 
+int getpid(void) {
+
+    return current_task;
+
+}
+
 void ipc_send_packet(uint32_t pid, char* payload, uint32_t len) {
     // check for a limit overflow
     if (((uint32_t)payload + len) >= (task_table[current_task]->pages * PAGE_SIZE)) {

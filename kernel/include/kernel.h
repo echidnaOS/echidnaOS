@@ -128,6 +128,17 @@ typedef struct {
 } ipc_packet_t;
 
 typedef struct {
+    int free;
+    char path[1024];
+    int flags;
+    int mode;
+    uint64_t stream_ptr;
+    uint64_t stream_begin;
+    uint64_t stream_end;
+    int isblock;
+} file_handle_t;
+
+typedef struct {
 
     int status;
     int parent;
@@ -178,6 +189,9 @@ typedef struct {
     uint32_t sigint;
     uint32_t sigsegv;
     uint32_t sigterm;
+    
+    file_handle_t* file_handles;
+    int file_handles_ptr;
 
 } task_t;
 
@@ -223,6 +237,8 @@ typedef struct {
     uint64_t size;
     int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
 } device_t;
+
+int create_file_handle(int pid, file_handle_t handle);
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
 int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type);

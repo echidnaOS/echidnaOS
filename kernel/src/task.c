@@ -32,7 +32,8 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                "",0,0,0,
                                0,0,
                                0,0,
-                               0,0,0,0,0,0};
+                               0,0,0,0,0,0,
+                               0,0};
 
 int task_create(task_t new_task) {
     // find an empty entry in the task table
@@ -91,6 +92,17 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
         task_scheduler();
     }
     
+    // allocate memory for the file descriptors
+    if (!(new_process.file_handles = kalloc(task_table[current_task]->file_handles_ptr * sizeof(file_handle_t)))) {
+        // fail
+        kfree((void*)new_process.base);
+        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_scheduler();
+    }
+    
+    // clone the parent's file descriptors
+    kmemcpy((char*)new_process.file_handles, (char*)task_table[current_task]->file_handles, task_table[current_task]->file_handles_ptr * sizeof(file_handle_t));
+    
     // clone the process's memory
     kmemcpy((char*)new_process.base, (char*)task_table[current_task]->base, task_size);
     
@@ -100,6 +112,7 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
     if (new_pid == FAILURE) {
         // fail
         kfree((void*)new_process.base);
+        kfree(new_process.file_handles);
         task_table[current_task]->eax_p = (uint32_t)(FAILURE);
         task_scheduler();
     }
@@ -176,6 +189,17 @@ int general_execute(task_info_t* task_info) {
     kstrcpy(task_table[new_pid]->stdin, ptr_stdin);
     kstrcpy(task_table[new_pid]->stdout, ptr_stdout);
     kstrcpy(task_table[new_pid]->stderr, ptr_stderr);
+    
+    // create file handles 0, 1, and 2
+    file_handle_t handle = {0};
+    handle.isblock = 1;
+    
+    kstrcpy(handle.path, ptr_stdin);
+    create_file_handle(new_pid, handle);
+    kstrcpy(handle.path, ptr_stdout);
+    create_file_handle(new_pid, handle);
+    kstrcpy(handle.path, ptr_stderr);
+    create_file_handle(new_pid, handle);
     
     *((int*)(task_table[new_pid]->base + 0x1000)) = task_info->argc;
     int argv_limit = 0x4000;
@@ -400,6 +424,7 @@ void task_quit(uint64_t return_value) {
 }
 
 void task_terminate(int pid) {
+    kfree((void*)task_table[pid]->file_handles);
     kfree((void*)task_table[pid]->base);
     kfree((void*)task_table[pid]);
     task_table[pid] = EMPTY_PID;

@@ -115,6 +115,23 @@ int main(int argc, char** argv) {
             printf("pid: %d\n", OS_getpid());
         }
         
+        else if (!strcmp("open", s_argv[0])) {
+            char buf[6] = {0};
+            if (s_argc == 1) continue;
+            int handle = OS_open(s_argv[1], O_RDWR, 0);
+            if (handle == -1) fputs("couldn't open file\n", stderr);
+            printf("received handle %d\n", handle);
+            if (OS_read(handle, buf, 5) == -1)
+                printf("couldn't read\n");
+            else
+                printf("read 5 bytes\n");
+            puts(buf);
+            if (OS_close(handle) == -1)
+                printf("couldn't close\n");
+            else
+                printf("handle closed\n");
+        }
+        
         else if (!strcmp("div0", s_argv[0])) {/*
             int a = 0;
             a = a / 0;

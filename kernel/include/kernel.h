@@ -31,6 +31,13 @@
 
 #define DEFAULT_STACK 0x10000
 
+#define O_RDONLY        0b0001
+#define O_WRONLY        0b0010
+#define O_RDWR          0b0100
+
+#define O_APPEND        0b001000
+#define O_CREAT         0b010000
+
 // memory statuses
 
 #define KRN_STAT_ACTIVE_TASK    1
@@ -132,9 +139,9 @@ typedef struct {
     char path[1024];
     int flags;
     int mode;
-    uint64_t stream_ptr;
-    uint64_t stream_begin;
-    uint64_t stream_end;
+    uint64_t ptr;
+    uint64_t begin;
+    uint64_t end;
     int isblock;
 } file_handle_t;
 

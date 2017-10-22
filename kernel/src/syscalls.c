@@ -1,6 +1,105 @@
 #include <stdint.h>
 #include <kernel.h>
 
+int read(int handle, char* ptr, int len) {
+
+    ptr += task_table[current_task]->base;
+    
+    if (handle < 0)
+        return -1;
+
+    if (handle >= task_table[current_task]->file_handles_ptr)
+        return -1;
+    
+    if (task_table[current_task]->file_handles[handle].free)
+        return -1;
+        
+    if (task_table[current_task]->file_handles[handle].flags & O_WRONLY)
+        return -1;
+
+    int i;
+
+    for (i = 0; i < len; i++) {
+        if (task_table[current_task]->file_handles[handle].ptr == task_table[current_task]->file_handles[handle].end)
+            if (!task_table[current_task]->file_handles[handle].isblock)
+                break;
+        int c = vfs_kread(task_table[current_task]->file_handles[handle].path, task_table[current_task]->file_handles[handle].ptr++);
+        if (c == -1)
+            break;
+        if (c == -2)
+            return -1;
+        *(ptr++) = (char)c;
+    }
+    
+    return i;
+
+}
+
+int open(char* path, int flags, int mode) {
+    vfs_metadata_t metadata;
+    
+    path += task_table[current_task]->base;
+
+    if ( vfs_kget_metadata(path, &metadata, FILE_TYPE) != -2
+      && vfs_kget_metadata(path, &metadata, DEVICE_TYPE) != -2 ) {
+        if (flags & O_CREAT) {
+            if (vfs_kcreate(path, 0) == -2)
+                return -1;
+        } else
+            return -1;
+    }
+    if (vfs_kget_metadata(path, &metadata, FILE_TYPE) != -2) {
+        file_handle_t new_handle = {0};
+        kstrcpy(new_handle.path, path);
+        new_handle.flags = flags;
+        new_handle.mode = mode;
+        new_handle.end = metadata.size;
+        if (flags & O_APPEND) {
+            new_handle.ptr = metadata.size;
+            new_handle.begin = metadata.size;
+        } else {
+            new_handle.ptr = 0;
+            new_handle.begin = 0;
+        }
+        return create_file_handle(current_task, new_handle);
+    }
+    if (vfs_kget_metadata(path, &metadata, DEVICE_TYPE) != -2) {
+        file_handle_t new_handle = {0};
+        kstrcpy(new_handle.path, path);
+        new_handle.flags = flags;
+        new_handle.mode = mode;
+        new_handle.end = metadata.size;
+        if (!metadata.size)
+            new_handle.isblock = 1;
+        if (flags & O_APPEND) {
+            new_handle.ptr = metadata.size;
+            new_handle.begin = metadata.size;
+        } else {
+            new_handle.ptr = 0;
+            new_handle.begin = 0;
+        }
+        return create_file_handle(current_task, new_handle);
+    }
+
+}
+
+int close(int handle) {
+
+    if (handle < 0)
+        return -1;
+        
+    if (handle >= task_table[current_task]->file_handles_ptr)
+        return -1;
+    
+    if (task_table[current_task]->file_handles[handle].free)
+        return -1;
+    
+    task_table[current_task]->file_handles[handle].free = 1;
+    
+    return 0;
+    
+}
+
 uint32_t signal(int sig, uint32_t handler) {
 
     switch (sig) {

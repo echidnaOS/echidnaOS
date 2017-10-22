@@ -31,6 +31,47 @@ typedef struct {
 #define VFS_SUCCESS 0
 #define VFS_FAILURE -2
 
+#define O_RDONLY        0b0001
+#define O_WRONLY        0b0010
+#define O_RDWR          0b0100
+
+#define O_APPEND        0b001000
+#define O_CREAT         0b010000
+
+#define OS_open(path, flags, mode) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x2a;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (path),  \
+                       "d" (flags), \
+                       "D" (mode) \
+                     :  );         \
+    return_val;                                \
+})
+
+#define OS_close(handle) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x2b;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (handle) \
+                     : "edx" );         \
+    return_val;                                \
+})
+
+#define OS_read(handle, buf, len) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x2c;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (handle),  \
+                       "d" (buf), \
+                       "D" (len) \
+                     :  );         \
+    return_val;                                \
+})
+
 #define OS_signal(sig, handler) ({ \
     int ret; \
     asm volatile (  "mov eax, 0x16;"    \

@@ -17,6 +17,9 @@ extern set_PIC0_mask
 extern get_PIC0_mask
 
 ; API calls
+extern open
+extern close
+extern read
 extern getpid
 extern signal
 extern task_fork
@@ -100,9 +103,9 @@ routine_list:
         dd      0                       ; 0x27
         dd      0                       ; 0x28
         dd      0                       ; 0x29
-        dd      0                       ; 0x2a
-        dd      0                       ; 0x2b
-        dd      0                       ; 0x2c
+        dd      open                    ; 0x2a
+        dd      close                   ; 0x2b
+        dd      read                    ; 0x2c
         dd      0                       ; 0x2d
         dd      0                       ; 0x2e
         dd      vfs_cd                  ; 0x2f

@@ -182,6 +182,10 @@ typedef struct {
     uint64_t iowait_loc;
     int iowait_type;
     uint8_t iowait_payload;
+    int iowait_handle;
+    uint32_t iowait_ptr;
+    int iowait_len;
+    int iowait_done;
     
     ipc_packet_t* ipc_queue;
     uint32_t ipc_queue_ptr;
@@ -246,6 +250,7 @@ typedef struct {
 } device_t;
 
 int create_file_handle(int pid, file_handle_t handle);
+int read(int handle, char* ptr, int len);
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
 int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type);

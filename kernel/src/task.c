@@ -29,7 +29,7 @@ const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
                                0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
                                "","","",
                                "","","",
-                               "",0,0,0,
+                               "",0,0,0,0,0,0,0,
                                0,0,
                                0,0,
                                0,0,0,0,0,0,
@@ -342,6 +342,8 @@ void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r,
     task_scheduler();
 }
 
+extern int read_stat;
+
 void task_scheduler(void) {
     int c;
 
@@ -365,6 +367,7 @@ void task_scheduler(void) {
         switch (task_table[current_task]->status) {
             case KRN_STAT_IOWAIT_TASK:
                 switch (task_table[current_task]->iowait_type) {
+                int done;
                 case 0:
                     if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
@@ -384,6 +387,19 @@ void task_scheduler(void) {
                     } else {
                         current_task++;
                         continue;
+                    }
+                    break;
+                case 2:
+                    done = read(    task_table[current_task]->iowait_handle,
+                                    (char*)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
+                                    task_table[current_task]->iowait_len - task_table[current_task]->iowait_done);
+                    if (read_stat) {
+                        task_table[current_task]->iowait_done += done;
+                        current_task++;
+                        continue;
+                    } else {
+                        task_table[current_task]->eax_p = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
                 default:

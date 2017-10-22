@@ -8,6 +8,7 @@ global keyboard_isr
 global syscall
 
 global ts_enable
+global read_stat
 
 extern keyboard_handler
 extern task_switch
@@ -28,6 +29,7 @@ extern alloc
 extern free
 extern realloc
 extern enter_iowait_status
+extern enter_iowait_status1
 extern enter_ipcwait_status
 extern enter_vdevwait_status
 extern pwd
@@ -59,6 +61,7 @@ extern resize_heap
 section .data
 
 ts_enable dd 1
+read_stat dd 0
 
 routine_list:
         dd      task_quit               ; 0x00
@@ -105,7 +108,7 @@ routine_list:
         dd      0                       ; 0x29
         dd      open                    ; 0x2a
         dd      close                   ; 0x2b
-        dd      read                    ; 0x2c
+        dd      0 ;read                 ; 0x2c - dummy entry
         dd      0                       ; 0x2d
         dd      0                       ; 0x2e
         dd      vfs_cd                  ; 0x2f
@@ -236,6 +239,8 @@ syscall:
         je vfs_read_isr
         cmp eax, 0x31
         je vfs_write_isr
+        cmp eax, 0x2c
+        je read_isr
         cmp eax, 0x02
         je gen_exec_block_isr
         ; end special routines check
@@ -404,6 +409,70 @@ vfs_write_isr:
         push edx
         push ecx
         call enter_iowait_status
+        add esp, 20
+        call task_switch
+
+read_isr:
+        ; check if I/O is ready
+        push ebx
+        push ecx
+        push esi
+        push edi
+        push ebp
+        push ds
+        push es
+        push fs
+        push gs
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
+        mov fs, bx
+        mov gs, bx
+        push esi
+        push edi
+        push edx
+        push ecx
+        call read
+        add esp, 16
+        ; disable all interrupts, reenable task switch
+        cli
+        mov dword [ts_enable], 1
+        cmp dword [read_stat], 1     ; if I/O is not ready
+        ; done
+        pop gs
+        pop fs
+        pop es
+        pop ds
+        pop ebp
+        pop edi
+        pop esi
+        pop ecx
+        pop ebx
+        je .enter_iowait
+        iretd           ; else, just return
+    .enter_iowait:
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
+        mov fs, bx
+        mov gs, bx
+        push eax
+        push 2      ; read type
+        push edi
+        push edx
+        push ecx
+        call enter_iowait_status1
         add esp, 20
         call task_switch
 

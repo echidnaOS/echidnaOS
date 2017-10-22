@@ -1,9 +1,13 @@
 #include <stdint.h>
 #include <kernel.h>
 
+extern int read_stat;
+
 int read(int handle, char* ptr, int len) {
 
     ptr += task_table[current_task]->base;
+    
+    read_stat = 0;
     
     if (handle < 0)
         return -1;
@@ -23,11 +27,16 @@ int read(int handle, char* ptr, int len) {
         if (task_table[current_task]->file_handles[handle].ptr == task_table[current_task]->file_handles[handle].end)
             if (!task_table[current_task]->file_handles[handle].isblock)
                 break;
-        int c = vfs_kread(task_table[current_task]->file_handles[handle].path, task_table[current_task]->file_handles[handle].ptr++);
+        int c = vfs_kread(task_table[current_task]->file_handles[handle].path, task_table[current_task]->file_handles[handle].ptr);
         if (c == -1)
             break;
         if (c == -2)
             return -1;
+        if (c == IO_NOT_READY) {
+            read_stat = 1;
+            return i;
+        }
+        task_table[current_task]->file_handles[handle].ptr++;
         *(ptr++) = (char)c;
     }
     
@@ -332,6 +341,16 @@ void enter_iowait_status(char* dev, uint64_t loc, uint8_t payload, int type) {
     task_table[current_task]->status = KRN_STAT_IOWAIT_TASK;
     task_table[current_task]->iowait_type = type;
     task_table[current_task]->iowait_payload = payload;
+    return;
+}
+
+void enter_iowait_status1(int handle, uint32_t ptr, int len, int type, int done) {
+    task_table[current_task]->status = KRN_STAT_IOWAIT_TASK;
+    task_table[current_task]->iowait_type = type;
+    task_table[current_task]->iowait_handle = handle;
+    task_table[current_task]->iowait_ptr = ptr;
+    task_table[current_task]->iowait_len = len;
+    task_table[current_task]->iowait_done = done;
     return;
 }
 

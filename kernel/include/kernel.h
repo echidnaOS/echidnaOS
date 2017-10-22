@@ -39,6 +39,10 @@
 #define O_CREAT         0b010000
 #define O_TRUNC         0b100000
 
+#define SEEK_SET 0
+#define SEEK_END 1
+#define SEEK_CUR 2
+
 // memory statuses
 
 #define KRN_STAT_ACTIVE_TASK    1
@@ -140,9 +144,9 @@ typedef struct {
     char path[1024];
     int flags;
     int mode;
-    uint64_t ptr;
-    uint64_t begin;
-    uint64_t end;
+    long ptr;
+    long begin;
+    long end;
     int isblock;
 } file_handle_t;
 

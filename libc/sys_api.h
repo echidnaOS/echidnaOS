@@ -85,6 +85,18 @@ typedef struct {
     return_val;                                \
 })
 
+#define OS_lseek(a, b, c) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x2e;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (a),  \
+                       "d" (b), \
+                       "D" (c) \
+                     :  );         \
+    return_val;                                \
+})
+
 #define OS_signal(sig, handler) ({ \
     int ret; \
     asm volatile (  "mov eax, 0x16;"    \

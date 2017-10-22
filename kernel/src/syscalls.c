@@ -1,6 +1,41 @@
 #include <stdint.h>
 #include <kernel.h>
 
+int lseek(int handle, int offset, int type) {
+    
+    if (handle < 0)
+        return -1;
+
+    if (handle >= task_table[current_task]->file_handles_ptr)
+        return -1;
+    
+    if (task_table[current_task]->file_handles[handle].free)
+        return -1;
+    
+    if (task_table[current_task]->file_handles[handle].isblock)
+        return -1;
+        
+    switch (type) {
+        case SEEK_SET:
+            if ((task_table[current_task]->file_handles[handle].begin + offset) > task_table[current_task]->file_handles[handle].end ||
+                (task_table[current_task]->file_handles[handle].begin + offset) < task_table[current_task]->file_handles[handle].begin) return -1;
+            task_table[current_task]->file_handles[handle].ptr = task_table[current_task]->file_handles[handle].begin + offset;
+            return task_table[current_task]->file_handles[handle].ptr;
+        case SEEK_END:
+            if ((task_table[current_task]->file_handles[handle].end + offset) > task_table[current_task]->file_handles[handle].end ||
+                (task_table[current_task]->file_handles[handle].end + offset) < task_table[current_task]->file_handles[handle].begin) return -1;
+            task_table[current_task]->file_handles[handle].ptr = task_table[current_task]->file_handles[handle].end + offset;
+            return task_table[current_task]->file_handles[handle].ptr;
+        case SEEK_CUR:
+            if ((task_table[current_task]->file_handles[handle].ptr + offset) > task_table[current_task]->file_handles[handle].end ||
+                (task_table[current_task]->file_handles[handle].ptr + offset) < task_table[current_task]->file_handles[handle].begin) return -1;
+            task_table[current_task]->file_handles[handle].ptr += offset;
+            return task_table[current_task]->file_handles[handle].ptr;
+        default:
+            return -1;
+    }
+}
+
 extern int read_stat;
 
 int read(int handle, char* ptr, int len) {

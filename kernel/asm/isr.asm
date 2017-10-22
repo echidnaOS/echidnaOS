@@ -23,6 +23,7 @@ extern open
 extern close
 extern read
 extern write
+extern lseek
 extern getpid
 extern signal
 extern task_fork
@@ -113,7 +114,7 @@ routine_list:
         dd      close                   ; 0x2b
         dd      0 ;read                 ; 0x2c - dummy entry
         dd      0 ;write                ; 0x2d - dummy entry
-        dd      0                       ; 0x2e
+        dd      lseek                   ; 0x2e
         dd      vfs_cd                  ; 0x2f
         dd      0 ;vfs_read             ; 0x30 - dummy entry
         dd      0 ;vfs_write            ; 0x31 - dummy entry

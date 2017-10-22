@@ -135,13 +135,13 @@ int main(int argc, char** argv) {
         else if (!strcmp("write", s_argv[0])) {
             char buf[6] = "12345";
             if (s_argc == 1) continue;
-            int handle = OS_open(s_argv[1], O_WRONLY | O_CREAT, 0);
+            int handle = OS_open(s_argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0);
             if (handle == -1) fputs("couldn't open file\n", stderr);
             printf("received handle %d\n", handle);
-            if (OS_read(handle, buf, 5) == -1)
-                printf("couldn't read\n");
+            if (OS_write(handle, buf, 5) == -1)
+                printf("couldn't write\n");
             else
-                printf("read 5 bytes\n");
+                printf("wrote 5 bytes\n");
             puts(buf);
             if (OS_close(handle) == -1)
                 printf("couldn't close\n");

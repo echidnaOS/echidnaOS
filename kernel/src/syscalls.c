@@ -44,6 +44,46 @@ int read(int handle, char* ptr, int len) {
 
 }
 
+extern int write_stat;
+
+int write(int handle, char* ptr, int len) {
+
+    ptr += task_table[current_task]->base;
+    
+    write_stat = 0;
+    
+    if (handle < 0)
+        return -1;
+
+    if (handle >= task_table[current_task]->file_handles_ptr)
+        return -1;
+    
+    if (task_table[current_task]->file_handles[handle].free)
+        return -1;
+        
+    if (task_table[current_task]->file_handles[handle].flags & O_RDONLY)
+        return -1;
+
+    int i;
+
+    for (i = 0; i < len; i++) {
+        int c = vfs_kwrite(task_table[current_task]->file_handles[handle].path, task_table[current_task]->file_handles[handle].ptr, *(ptr++));
+        if (c == -2)
+            return -1;
+        if (c == IO_NOT_READY) {
+            write_stat = 1;
+            return i;
+        }
+        if (task_table[current_task]->file_handles[handle].ptr == task_table[current_task]->file_handles[handle].end)
+            if (!task_table[current_task]->file_handles[handle].isblock)
+                task_table[current_task]->file_handles[handle].end++;
+        task_table[current_task]->file_handles[handle].ptr++;
+    }
+    
+    return i;
+
+}
+
 int open(char* path, int flags, int mode) {
     vfs_metadata_t metadata;
     
@@ -58,6 +98,11 @@ int open(char* path, int flags, int mode) {
             return -1;
     }
     if (vfs_kget_metadata(path, &metadata, FILE_TYPE) != -2) {
+        if (flags & O_TRUNC) {
+            vfs_kremove(path);
+            vfs_kcreate(path, 0);
+            vfs_kget_metadata(path, &metadata, FILE_TYPE);
+        }
         file_handle_t new_handle = {0};
         kstrcpy(new_handle.path, path);
         new_handle.flags = flags;

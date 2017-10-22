@@ -37,6 +37,7 @@ typedef struct {
 
 #define O_APPEND        0b001000
 #define O_CREAT         0b010000
+#define O_TRUNC         0b100000
 
 #define OS_open(path, flags, mode) ({  \
     int return_val;                            \
@@ -63,6 +64,18 @@ typedef struct {
 #define OS_read(handle, buf, len) ({  \
     int return_val;                            \
     asm volatile (  "mov eax, 0x2c;"    \
+                    "int 0x80;"         \
+                     : "=a" (return_val)         \
+                     : "c" (handle),  \
+                       "d" (buf), \
+                       "D" (len) \
+                     :  );         \
+    return_val;                                \
+})
+
+#define OS_write(handle, buf, len) ({  \
+    int return_val;                            \
+    asm volatile (  "mov eax, 0x2d;"    \
                     "int 0x80;"         \
                      : "=a" (return_val)         \
                      : "c" (handle),  \

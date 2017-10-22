@@ -9,6 +9,7 @@ global syscall
 
 global ts_enable
 global read_stat
+global write_stat
 
 extern keyboard_handler
 extern task_switch
@@ -21,6 +22,7 @@ extern get_PIC0_mask
 extern open
 extern close
 extern read
+extern write
 extern getpid
 extern signal
 extern task_fork
@@ -62,6 +64,7 @@ section .data
 
 ts_enable dd 1
 read_stat dd 0
+write_stat dd 0
 
 routine_list:
         dd      task_quit               ; 0x00
@@ -109,7 +112,7 @@ routine_list:
         dd      open                    ; 0x2a
         dd      close                   ; 0x2b
         dd      0 ;read                 ; 0x2c - dummy entry
-        dd      0                       ; 0x2d
+        dd      0 ;write                ; 0x2d - dummy entry
         dd      0                       ; 0x2e
         dd      vfs_cd                  ; 0x2f
         dd      0 ;vfs_read             ; 0x30 - dummy entry
@@ -241,6 +244,8 @@ syscall:
         je vfs_write_isr
         cmp eax, 0x2c
         je read_isr
+        cmp eax, 0x2d
+        je write_isr
         cmp eax, 0x02
         je gen_exec_block_isr
         ; end special routines check
@@ -471,6 +476,72 @@ read_isr:
         mov gs, bx
         push eax
         push 2      ; read type
+        push edi
+        push edx
+        push ecx
+        call enter_iowait_status1
+        add esp, 20
+        call task_switch
+
+write_isr:
+        ; check if I/O is ready
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        push ds
+        push es
+        push fs
+        push gs
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
+        mov fs, bx
+        mov gs, bx
+        push esi
+        push edi
+        push edx
+        push ecx
+        call write
+        add esp, 16
+        ; disable all interrupts, reenable task switch
+        cli
+        mov dword [ts_enable], 1
+        cmp dword [write_stat], 1     ; if I/O is not ready
+        ; done
+        pop gs
+        pop fs
+        pop es
+        pop ds
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        je .enter_iowait
+        iretd           ; else, just return
+    .enter_iowait:
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
+        mov fs, bx
+        mov gs, bx
+        push eax
+        push 3      ; write type
         push edi
         push edx
         push ecx

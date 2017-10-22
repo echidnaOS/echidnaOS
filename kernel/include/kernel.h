@@ -37,6 +37,7 @@
 
 #define O_APPEND        0b001000
 #define O_CREAT         0b010000
+#define O_TRUNC         0b100000
 
 // memory statuses
 
@@ -251,6 +252,7 @@ typedef struct {
 
 int create_file_handle(int pid, file_handle_t handle);
 int read(int handle, char* ptr, int len);
+int write(int handle, char* ptr, int len);
 
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
 int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type);

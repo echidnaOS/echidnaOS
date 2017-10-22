@@ -416,6 +416,7 @@ read_isr:
         ; check if I/O is ready
         push ebx
         push ecx
+        push edx
         push esi
         push edi
         push ebp
@@ -446,6 +447,7 @@ read_isr:
         pop ebp
         pop edi
         pop esi
+        pop edx
         pop ecx
         pop ebx
         je .enter_iowait

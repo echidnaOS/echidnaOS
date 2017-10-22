@@ -49,8 +49,8 @@ int open(char* path, int flags, int mode) {
     
     path += task_table[current_task]->base;
 
-    if ( vfs_kget_metadata(path, &metadata, FILE_TYPE) != -2
-      && vfs_kget_metadata(path, &metadata, DEVICE_TYPE) != -2 ) {
+    if ( vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2
+      && vfs_kget_metadata(path, &metadata, DEVICE_TYPE) == -2 ) {
         if (flags & O_CREAT) {
             if (vfs_kcreate(path, 0) == -2)
                 return -1;

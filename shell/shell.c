@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+// this shell sucks lmao
 #include <sys_api.h>
 
 void getstring(char* string, uint32_t limit);

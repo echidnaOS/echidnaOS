@@ -195,10 +195,13 @@ int general_execute(task_info_t* task_info) {
     handle.isblock = 1;
     
     kstrcpy(handle.path, ptr_stdin);
+    handle.flags = O_RDONLY;
     create_file_handle(new_pid, handle);
     kstrcpy(handle.path, ptr_stdout);
+    handle.flags = O_WRONLY;
     create_file_handle(new_pid, handle);
     kstrcpy(handle.path, ptr_stderr);
+    handle.flags = O_WRONLY;
     create_file_handle(new_pid, handle);
     
     *((int*)(task_table[new_pid]->base + 0x1000)) = task_info->argc;

@@ -1,10 +1,8 @@
-/binutils-2.28.tar.bz2
-/binutils-2.28/
-/build-binutils/
-/build-gcc/
-/gcc-7.1.0.tar.bz2
-/gcc-7.1.0/
+/*.tar.bz2
+/*.tar.gz
+/build-*
 /tools/
+/toolchain/
 
 /echidna.img
 /echidnafs/echfs-utils
@@ -17,6 +15,4 @@
 /shell/sh
 /kernel/blobs/*.bin
 /kernel/echidna.bin
-/coreinutils/build/
-/coreinutils/coreinutils
 /bochsout.txt

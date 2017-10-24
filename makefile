@@ -65,4 +65,4 @@ binutils-2.28: binutils-2.28.tar.bz2
 	touch binutils-2.28
 
 packages: sha256packages gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2
-	sha256sum -c sha256packages
+	sha256sum -c sha256packages --ignore-missing

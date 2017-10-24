@@ -1,17 +1,27 @@
+#include <fcntl.h>
 
 asm (
-    "jmp 1f\n\t"
-    ".ascii \"ECH_EXEC\"\n\t"
+    ".global _start\n\t"
+    "_start:\n\t"
+    "jmp _start_c\n\t"
+    ".ascii \"ECH_EXEC\\0\"\n\t"
     ".align 16\n\t"
-    "1:\n\t"
-    "pushl $0x1010\n\t"
-    "movl $0x1000, %eax\n\t"
-    "pushl (%eax)\n\t"
-    "call main\n\t"
-    "addl $8, %esp\n\t"
-    "movl %eax, %ecx\n\t"
-    "movl $0x00, %eax\n\t"
-    "int $0x80\n\t"
 );
 
-void _start(void) {}
+#include "sys_api.h"
+
+int main(int, char**);
+void _init_signal(void);
+
+void _start_c(void) {
+
+    int argc = *((int*)0x1000);
+    char** argv = (char**)0x1010;
+    
+    _init_signal();
+
+    int exit_code = main(argc, argv);
+
+    OS_exit(exit_code);
+
+}

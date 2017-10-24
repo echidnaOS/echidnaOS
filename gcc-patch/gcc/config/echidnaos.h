@@ -25,8 +25,5 @@
 #define TARGET_OS_CPP_BUILTINS()      \
   do {                                \
     builtin_define ("__echidnaos__");      \
-    builtin_define ("__unix__");      \
     builtin_assert ("system=echidnaos");   \
-    builtin_assert ("system=unix");   \
-    builtin_assert ("system=posix");   \
   } while(0);

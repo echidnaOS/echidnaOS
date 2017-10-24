@@ -19,6 +19,10 @@
 #define ECH_O_CREAT         0b010000
 #define ECH_O_TRUNC         0b100000
 
+#define ECH_SEEK_SET 0
+#define ECH_SEEK_END 1
+#define ECH_SEEK_CUR 2
+
 #define OS_open(path, flags, mode) ({  \
     int return_val;                            \
     asm volatile (  "movl $0x2a, %%eax\n\t"    \

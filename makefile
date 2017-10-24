@@ -39,6 +39,7 @@ echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm ker
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
 	echidnafs/echfs-utils echidna.img import ./misc/life /bin/life
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
+	rm tools/bin/gcc tools/bin/cc tools/bin/kcc
 
 clean-tools:
 	rm -rf gcc-7.1.0 binutils-2.28 build-gcc build-binutils
@@ -48,7 +49,6 @@ tools: packages gcc-7.1.0 binutils-2.28
 	rm -rf build-gcc/
 	rm -rf build-binutils/
 	export MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" && export PREFIX="`pwd`/tools" && export TARGET=i386-elf && export PATH="$$PREFIX/bin:$$PATH" && mkdir build-binutils && cd build-binutils && ../binutils-2.28/configure --target=$$TARGET --prefix="$$PREFIX" --with-sysroot --disable-nls --disable-werror && make && make install && cd ../gcc-7.1.0 && contrib/download_prerequisites && cd .. && mkdir build-gcc && cd build-gcc && ../gcc-7.1.0/configure --target=$$TARGET --prefix="$$PREFIX" --disable-nls --enable-languages=c --without-headers && make all-gcc && make all-target-libgcc && make install-gcc && make install-target-libgcc
-	cp gccwrappers/* tools/bin/
 
 gcc-7.1.0.tar.bz2:
 	wget ftp://ftp.gnu.org/gnu/gcc/gcc-7.1.0/gcc-7.1.0.tar.bz2

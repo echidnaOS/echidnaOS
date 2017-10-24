@@ -69,13 +69,39 @@ int link(char *old, char *new) {
 
 int lseek(int file, int ptr, int dir) {
 
-    return OS_lseek(file, ptr, dir);
+    switch (dir) {
+        case SEEK_SET:
+            return OS_lseek(file, ptr, ECH_SEEK_SET);
+        case SEEK_END:
+            return OS_lseek(file, ptr, ECH_SEEK_END);
+        case SEEK_CUR:
+            return OS_lseek(file, ptr, ECH_SEEK_CUR);
+        default:
+            return -1;
+    }
 
 }
 
 int open(const char *name, int flags, ...) {
 
-    return OS_open(name, flags, 0);
+    int os_flags = 0;
+    
+    if (flags & O_RDONLY)
+        os_flags |= ECH_O_RDONLY;
+    if (flags & O_WRONLY)
+        os_flags |= ECH_O_WRONLY;
+    if (flags & O_RDWR)
+        os_flags |= ECH_O_RDWR;
+    
+    if (flags & O_APPEND)
+        os_flags |= ECH_O_APPEND;
+    if (flags & O_CREAT)
+        os_flags |= ECH_O_CREAT;
+    if (flags & O_TRUNC)
+        os_flags |= ECH_O_TRUNC;
+
+
+    return OS_open(name, os_flags, 0);
 
 }
 

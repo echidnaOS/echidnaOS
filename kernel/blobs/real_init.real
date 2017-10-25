@@ -14,12 +14,12 @@ lidt [real_idt]
 jmp 0x28:pmode16
 pmode16:
 bits 16
-mov ax, 0x30
-mov ds, ax
-mov es, ax
-mov fs, ax
-mov gs, ax
-mov ss, ax
+;mov ax, 0x30
+;mov ds, ax
+;mov es, ax
+;mov fs, ax
+;mov gs, ax
+;mov ss, ax
 
 ; Leave protected mode
 mov eax, cr0
@@ -32,8 +32,8 @@ real_mode:
 xor ax, ax
 mov ds, ax
 mov es, ax
-mov fs, ax
-mov gs, ax
+;mov fs, ax
+;mov gs, ax
 mov ax, 0x1000
 mov ss, ax
 mov esp, 0xFFF0
@@ -56,8 +56,8 @@ bits 32
 mov ax, 0x10
 mov ds, ax
 mov es, ax
-mov fs, ax
-mov gs, ax
+;mov fs, ax
+;mov gs, ax
 mov ss, ax
 
 ; Restore stack

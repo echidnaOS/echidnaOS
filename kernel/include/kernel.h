@@ -81,13 +81,14 @@
     asm volatile (              \
                     "sti;"      \
                     "1:"        \
-                    "mov esp, 0xefffff;"    \
+                    "mov esp, 0xeffff0;"    \
                     "hlt;"      \
                     "jmp 1b;"   \
                  )
 
 // driver inits
 
+void init_bios_harddisks(void);
 void init_ata(void);
 void init_pcspk(void);
 void init_tty_drv(void);

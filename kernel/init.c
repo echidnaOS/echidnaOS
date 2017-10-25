@@ -2,6 +2,7 @@
 #include <kernel.h>
 
 uint32_t memory_size;
+extern int ts_enable;
 
 void kernel_init(void) {
 
@@ -32,7 +33,7 @@ void kernel_init(void) {
     vga_disable_cursor();
     
     init_tty();
-    switch_tty(1);
+    switch_tty(0);
 
     // detect memory
     memory_size = detect_mem();
@@ -52,6 +53,7 @@ void kernel_init(void) {
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
     init_streams();
     init_tty_drv();
+    init_bios_harddisks();
     init_ata();
     init_com();
     init_stty();
@@ -67,6 +69,16 @@ void kernel_init(void) {
     
     
     // ******* END OF FILE SYSTEM INSTALLATION CALLS *******
+    
+    
+    // END OF EARLY BOOTSTRAP
+    
+    // setup the PIC's mask
+    set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
+    set_PIC1_mask(0b11111111);
+    
+    ts_enable = 0;
+    ENABLE_INTERRUPTS;
     
     char shell_path[] = "/bin/sh";
     char tty_path[256];
@@ -90,19 +102,16 @@ void kernel_init(void) {
     vfs_mount("/dev", "devfs", "devfs");
 
     // launch the shell
-    kputs("\nKERNEL INIT DONE! LAUNCHING: "); kputs(shell_exec.path);
+    kputs("\nKERNEL INIT DONE!\n");
+    kstrcpy(tty_path, "/dev/tty0");
+    general_execute(&shell_exec);
     kstrcpy(tty_path, "/dev/tty1");
     general_execute(&shell_exec);
     kstrcpy(tty_path, "/dev/tty2");
     general_execute(&shell_exec);
-    kstrcpy(tty_path, "/dev/tty3");
-    general_execute(&shell_exec);
-    
-    // setup the PIC's mask
-    set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
-    set_PIC1_mask(0b11111111);
     
     // wait for task scheduler
+    ts_enable = 1;
     ENTER_IDLE;
 
 }

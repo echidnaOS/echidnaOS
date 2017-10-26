@@ -141,10 +141,17 @@ cd ..
 
 tar -xvf gcc-7.1.0.tar.bz2
 cp -rv gcc-patch/* gcc-7.1.0/
+export OLDPATH="$PATH"
+export PATH="`pwd`/autotools/bin:$PATH"
+pushd gcc-7.1.0/libstdc++-v3
+autoconf
+popd
+export PATH="$OLDPATH"
+unset OLDPATH
 cd gcc-7.1.0 && contrib/download_prerequisites && cd ..
 mkdir build-gcc
 cd build-gcc
-../gcc-7.1.0/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot="$PREFIX" --enable-languages=c --with-newlib
+../gcc-7.1.0/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot="$PREFIX" --enable-languages=c,c++ --with-newlib
 make all-gcc all-target-libgcc
 make install-gcc install-target-libgcc
 cd ..
@@ -188,6 +195,19 @@ make DESTDIR="$DESTDIR" install
 cd ..
 cp -rv $DESTDIR/usr/i386-echidnaos/* "$DESTDIR/usr/"
 unset DESTDIR
+export PATH="$CLEANPATH"
+
+# now build libstdc++
+
+export PREFIX="`pwd`/toolchain"
+export TARGET=i386-echidnaos
+export PATH="$PREFIX/bin:$CLEANPATH"
+cd build-gcc
+make all-target-libstdc++-v3
+make install-target-libstdc++-v3
+cd ..
+unset PREFIX
+unset TARGET
 export PATH="$CLEANPATH"
 
 # cleanup

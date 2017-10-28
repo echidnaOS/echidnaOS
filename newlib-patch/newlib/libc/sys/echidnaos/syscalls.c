@@ -8,6 +8,67 @@
 #include <stdio.h>
 
 #include "sys_api.h"
+
+int rmdir(const char *path) {
+
+    return -1;
+
+}
+
+int chown(const char *path, uid_t owner, gid_t group) {
+
+    return 0;
+
+}
+
+int utime(const char *path, const struct utimbuf *times) {
+
+    return 0;
+    
+}
+
+int access(const char *path, int amode) {
+
+    return 0;
+
+}
+
+char *getwd(char *path_name) {
+
+    OS_pwd(path_name);
+    return path_name;
+
+}
+
+int lstat(const char *restrict path, struct stat *restrict buf) {
+
+    return stat(path, buf);
+
+}
+
+long sysconf(int name) {
+
+    return -1;
+    
+}
+
+int fcntl(int fildes, int cmd, ...) {
+
+    return -1;
+
+}
+
+mode_t umask(mode_t cmask) {
+
+    return 0;
+
+}
+
+int chmod(const char *path, mode_t mode) {
+
+    return 0;
+
+}
  
 void _exit(void) {
 
@@ -21,8 +82,8 @@ int close(int file) {
 
 }
 
-char *__env[1] = { 0 };
-char **environ = __env;
+//char *__env[1] = { 0 };
+//char **environ = __env;
 
 int execve(char *name, char **argv, char **env) {
 

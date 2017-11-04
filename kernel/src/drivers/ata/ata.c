@@ -5,6 +5,8 @@
 #define DEVICE_COUNT 4
 #define BYTES_PER_SECT 512
 
+#define MAX_CACHED_SECTORS 2048
+
 #define SUCCESS 0
 #define EOF -1
 #define FAILURE -2
@@ -12,6 +14,12 @@
 #define CACHE_NOT_READY 0
 #define CACHE_READY 1
 #define CACHE_DIRTY 2
+
+typedef struct {
+    uint8_t* cache;
+    uint64_t sector;
+    int status;
+} cached_sector_t;
 
 typedef struct {
     uint8_t master; // this is a boolean
@@ -33,9 +41,7 @@ typedef struct {
     uint64_t sector_count;
     uint16_t bytes_per_sector;
     
-    uint8_t cache[BYTES_PER_SECT];
-    uint64_t cached_sector;
-    int cache_status;
+    cached_sector_t* cache;
 } ata_device;
 
 char* ata_names[] = {
@@ -72,73 +78,94 @@ int ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload) {
         return ata_write_byte(disk, loc, payload);
 }
 
-int ata_read_byte(uint32_t drive, uint64_t loc) {
-    uint64_t sect = loc / BYTES_PER_SECT;
-    uint16_t offset = loc % BYTES_PER_SECT;
+int find_sect(uint32_t drive, int sect) {
+
+    for (int i = 0; i < MAX_CACHED_SECTORS; i++)
+        if ((devices[drive].cache[i].sector == sect)
+            && (devices[drive].cache[i].status))
+            return i;
+
+    return FAILURE;
+
+}
+
+int overwritten_slot = 0;
+
+int cache_sect(uint32_t drive, int sect) {
+    int targ;
     int ret;
 
-    if ((sect == devices[drive].cached_sector) && (devices[drive].cache_status))
-        return devices[drive].cache[offset];
+    // find empty sect
+    for (targ = 0; targ < MAX_CACHED_SECTORS; targ++)
+        if (!devices[drive].cache[targ].status) goto fnd;
 
-    if (sect >= devices[drive].sector_count) return EOF;
+    // slot not found, overwrite another
+    if (overwritten_slot == MAX_CACHED_SECTORS)
+        overwritten_slot = 0;
+    
+    targ = overwritten_slot++;
     
     // flush cache
-    if (devices[drive].cache_status == CACHE_DIRTY) {
+    if (devices[drive].cache[targ].status == CACHE_DIRTY) {
         if (sect <= 0x0fffffff)
-            ret = ata_write28(drive, (uint32_t)devices[drive].cached_sector, devices[drive].cache);
+            ret = ata_write28(drive, (uint32_t)devices[drive].cache[targ].sector, devices[drive].cache[targ].cache);
         else
-            ret = ata_write48(drive, devices[drive].cached_sector, devices[drive].cache);
+            ret = ata_write48(drive, devices[drive].cache[targ].sector, devices[drive].cache[targ].cache);
         
         if (ret == FAILURE) return FAILURE;
     }
     
+    goto notfnd;
+    
+fnd:
+    // kalloc cache
+    devices[drive].cache[targ].cache = kalloc(BYTES_PER_SECT);
+
+notfnd:
+
+    // load into cache
     if (sect <= 0x0fffffff)
-        ret = ata_read28(drive, (uint32_t)sect, devices[drive].cache);
+        ret = ata_read28(drive, (uint32_t)sect, devices[drive].cache[targ].cache);
     else
-        ret = ata_read48(drive, sect, devices[drive].cache);
+        ret = ata_read48(drive, sect, devices[drive].cache[targ].cache);
     
     if (ret == FAILURE) return FAILURE;
     
-    devices[drive].cached_sector = sect;
-    devices[drive].cache_status = CACHE_READY;
+    devices[drive].cache[targ].sector = sect;
+    devices[drive].cache[targ].status = CACHE_READY;
+
+    return targ;
+}
+
+int ata_read_byte(uint32_t drive, uint64_t loc) {
+    uint64_t sect = loc / BYTES_PER_SECT;
+    uint16_t offset = loc % BYTES_PER_SECT;
+    int slot = find_sect(drive, sect);
+    int ret;
     
-    return devices[drive].cache[offset];
+    if (slot == FAILURE)
+        slot = cache_sect(drive, sect);
+    
+    if (slot == FAILURE)
+        return FAILURE;
+    
+    return devices[drive].cache[slot].cache[offset];
 }
 
 int ata_write_byte(uint32_t drive, uint64_t loc, uint8_t payload) {
     uint64_t sect = loc / BYTES_PER_SECT;
     uint16_t offset = loc % BYTES_PER_SECT;
+    int slot = find_sect(drive, sect);
     int ret;
+    
+    if (slot == FAILURE)
+        slot = cache_sect(drive, sect);
+    
+    if (slot == FAILURE)
+        return FAILURE;
 
-    if ((sect == devices[drive].cached_sector) && (devices[drive].cache_status)) {
-        devices[drive].cache[offset] = payload;
-        devices[drive].cache_status = CACHE_DIRTY;
-        return SUCCESS;
-    }
-
-    if (sect >= devices[drive].sector_count) return EOF;
-    
-    // flush cache
-    if (devices[drive].cache_status == CACHE_DIRTY) {
-        if (sect <= 0x0fffffff)
-            ret = ata_write28(drive, (uint32_t)devices[drive].cached_sector, devices[drive].cache);
-        else
-            ret = ata_write48(drive, devices[drive].cached_sector, devices[drive].cache);
-        
-        if (ret == FAILURE) return FAILURE;
-    }
-    
-    if (sect <= 0x0fffffff)
-        ret = ata_read28(drive, (uint32_t)sect, devices[drive].cache);
-    else
-        ret = ata_read48(drive, sect, devices[drive].cache);
-    
-    if (ret == FAILURE) return FAILURE;
-    
-    devices[drive].cached_sector = sect;
-    devices[drive].cache[offset] = payload;
-    devices[drive].cache_status = CACHE_DIRTY;
-    
+    devices[drive].cache[slot].cache[offset] = payload;
+    devices[drive].cache[slot].status = CACHE_DIRTY;
     return SUCCESS;
 }
 
@@ -183,7 +210,7 @@ ata_device init_ata_device(uint16_t port_base, uint8_t master) {
     
     dev.bytes_per_sector = 512;
     
-    dev.cache_status = CACHE_NOT_READY;
+    dev.cache = kalloc(MAX_CACHED_SECTORS * sizeof(cached_sector_t));
     
     ata_identify(&dev);
     

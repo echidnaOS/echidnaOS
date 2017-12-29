@@ -248,6 +248,35 @@ int vfs_kwrite(char* path, uint64_t loc, uint8_t val) {
     return (*filesystems[filesystem].write)(local_path, val, loc, mountpoints[mountpoint].device);
 }
 
+int vfs_open(char* path, int flags, int mode) {
+    path += task_table[current_task]->base;
+    return vfs_kopen(path, flags, mode);
+}
+
+int vfs_kopen(char* path, int flags, int mode) {
+    char* local_path;
+    char absolute_path[2048];
+
+    file_handle_v2_t handle = {0};
+
+    vfs_get_absolute_path(absolute_path, path);
+
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
+    if (mountpoint == FAILURE) return -1;
+
+    int filesystem = vfs_translate_fs(mountpoint);
+    if (filesystem == FAILURE) return -1;
+
+    int internal_handle = (*filesystems[filesystem].open)(local_path, flags, mode, mountpoints[mountpoint].device);
+    if (internal_handle == -1) return -1;
+
+    handle.free = 0;
+    handle.mountpoint = mountpoint;
+    handle.internal_handle = internal_handle;
+
+    return create_file_handle_v2(current_task, handle);
+}
+
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;
     char absolute_path[2048];
@@ -315,7 +344,8 @@ void vfs_install_fs(char* name,
                     int (*create)(char* path, uint16_t perms, char* dev),
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
-                    int (*mount)(char* device) ) {
+                    int (*mount)(char* device),
+                    int (*open)(char* path, int flags, int mode, char* dev) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));
     
@@ -328,6 +358,7 @@ void vfs_install_fs(char* name,
     filesystems[filesystems_ptr].get_metadata = get_metadata;
     filesystems[filesystems_ptr].list = list;
     filesystems[filesystems_ptr].mount = mount;
+    filesystems[filesystems_ptr].open = open;
     
     filesystems_ptr++;
     return;

@@ -22,6 +22,27 @@ load_handle:
 
 }
 
+int create_file_handle_v2(int pid, file_handle_v2_t handle) {
+    int handle_n;
+
+    // check for a free handle first
+    for (int i = 0; i < task_table[pid]->file_handles_v2_ptr; i++) {
+        if (task_table[pid]->file_handles_v2[i].free) {
+            handle_n = i;
+            goto load_handle;
+        }
+    }
+
+    task_table[pid]->file_handles_v2 = krealloc(task_table[pid]->file_handles_v2, (task_table[pid]->file_handles_v2_ptr + 1) * sizeof(file_handle_v2_t));
+    handle_n = task_table[pid]->file_handles_v2_ptr++;
+    
+load_handle:
+    task_table[pid]->file_handles_v2[handle_n] = handle;
+    
+    return handle_n;
+
+}
+
 void kmemcpy(char* dest, char* source, uint32_t count) {
     uint32_t i;
 

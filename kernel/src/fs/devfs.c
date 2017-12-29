@@ -4,6 +4,43 @@
 #define FAILURE -2
 #define SUCCESS 0
 
+typedef struct {
+    int free;
+    int processes;
+    char path[1024];
+    int flags;
+    int mode;
+    long ptr;
+    long begin;
+    long end;
+    int isblock;
+    int device;
+} devfs_handle_t;
+
+devfs_handle_t* devfs_handles = (devfs_handle_t*)0;
+int devfs_handles_ptr = 0;
+
+int devfs_create_handle(devfs_handle_t handle) {
+    int handle_n;
+
+    // check for a free handle first
+    for (int i = 0; i < devfs_handles_ptr; i++) {
+        if (devfs_handles[i].free) {
+            handle_n = i;
+            goto load_handle;
+        }
+    }
+
+    devfs_handles = krealloc(devfs_handles, (devfs_handles_ptr + 1) * sizeof(devfs_handle_t));
+    handle_n = devfs_handles_ptr++;
+    
+load_handle:
+    devfs_handles[handle_n] = handle;
+    
+    return handle_n;
+
+}
+
 int devfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev) {
     if (entry >= device_ptr) return FAILURE;
     kstrcpy(metadata->filename, device_list[entry].name);
@@ -64,7 +101,40 @@ int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
 
 int devfs_mount(char* device) { return 0; }
 
+int devfs_open(char* path, int flags, int mode, char* dev) {
+    vfs_metadata_t metadata;
+
+    if (devfs_get_metadata(path, &metadata, DEVICE_TYPE, dev) != -2) {
+        if (flags & O_TRUNC)
+            return -1;
+        if (flags & O_APPEND)
+            return -1;
+        if (flags & O_CREAT)
+            return -1;
+        devfs_handle_t new_handle = {0};
+        new_handle.free = 0;
+        new_handle.processes = 1;
+        kstrcpy(new_handle.path, path);
+        new_handle.flags = flags;
+        new_handle.mode = mode;
+        new_handle.end = metadata.size;
+        if (!metadata.size)
+            new_handle.isblock = 1;
+        new_handle.ptr = 0;
+        new_handle.begin = 0;
+        if (*path == '/') path++;
+        int device;
+        for (device = 0; device < device_ptr; device++)
+            if (!kstrcmp(path, device_list[device].name)) break;
+        new_handle.device = device;
+        return devfs_create_handle(new_handle);
+    } else
+        return -1;
+
+}
+
 void install_devfs(void) {
     vfs_install_fs("devfs", &devfs_read, &devfs_write, &devfs_remove, &devfs_mkdir,
-                            &devfs_create, &devfs_get_metadata, &devfs_list, &devfs_mount);
+                            &devfs_create, &devfs_get_metadata, &devfs_list, &devfs_mount,
+                            &devfs_open );
 }

@@ -152,6 +152,12 @@ typedef struct {
 } file_handle_t;
 
 typedef struct {
+    int free;
+    int mountpoint;
+    int internal_handle;
+} file_handle_v2_t;
+
+typedef struct {
 
     int status;
     int parent;
@@ -210,6 +216,9 @@ typedef struct {
     file_handle_t* file_handles;
     int file_handles_ptr;
 
+    file_handle_v2_t* file_handles_v2;
+    int file_handles_v2_ptr;
+
 } task_t;
 
 typedef struct {
@@ -240,6 +249,7 @@ typedef struct {
     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev);
     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev);
     int (*mount)(char* device);
+    int (*open)(char* path, int flags, int mode, char* dev);
 } filesystem_t;
 
 typedef struct {
@@ -256,6 +266,7 @@ typedef struct {
 } device_t;
 
 int create_file_handle(int pid, file_handle_t handle);
+int create_file_handle_v2(int pid, file_handle_v2_t handle);
 int read(int handle, char* ptr, int len);
 int write(int handle, char* ptr, int len);
 
@@ -274,6 +285,9 @@ int vfs_create(char* path, uint16_t perms);
 int vfs_kcreate(char* path, uint16_t perms);
 int vfs_cd(char* path);
 
+int vfs_open(char* path, int flags, int mode);
+int vfs_kopen(char* path, int flags, int mode);
+
 int vfs_mount(char* mountpoint, char* device, char* filesystem);
 void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
@@ -283,7 +297,8 @@ void vfs_install_fs(char* name,
                     int (*create)(char* path, uint16_t perms, char* dev),
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
-                    int (*mount)(char* device) );
+                    int (*mount)(char* device),
+                    int (*open)(char* path, int flags, int mode, char* dev) );
 
 int task_create(task_t new_task);
 void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r);

@@ -459,6 +459,8 @@ int echfs_mount(char* dev) {
     return SUCCESS;
 }
 
+int echfs_open(char* path, int flags, int mode, char* dev) { return -1; }
+
 int echfs_read(char* path, uint64_t loc, char* dev) {
     uint64_t i;
     
@@ -744,5 +746,6 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
 
 void install_echfs(void) {
     vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_remove, &echfs_mkdir,
-                            &echfs_create, &echfs_get_metadata, &echfs_list, &echfs_mount);
+                            &echfs_create, &echfs_get_metadata, &echfs_list, &echfs_mount,
+                            &echfs_open );
 }

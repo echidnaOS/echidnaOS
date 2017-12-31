@@ -133,8 +133,15 @@ int devfs_open(char* path, int flags, int mode, char* dev) {
 
 }
 
+int devfs_fork(int handle) {
+
+    devfs_handles[handle].processes++;
+    return SUCCESS;
+
+}
+
 void install_devfs(void) {
     vfs_install_fs("devfs", &devfs_read, &devfs_write, &devfs_remove, &devfs_mkdir,
                             &devfs_create, &devfs_get_metadata, &devfs_list, &devfs_mount,
-                            &devfs_open );
+                            &devfs_open, &devfs_fork );
 }

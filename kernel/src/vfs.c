@@ -277,6 +277,18 @@ int vfs_kopen(char* path, int flags, int mode) {
     return create_file_handle_v2(current_task, handle);
 }
 
+int vfs_fork(int mountpoint, int handle) {
+
+    int filesystem = vfs_translate_fs(mountpoint);
+    if (filesystem == FAILURE) return FAILURE;
+
+    int ret = (*filesystems[filesystem].fork)(handle);
+    if (ret == FAILURE) return FAILURE;
+
+    return SUCCESS;
+
+}
+
 int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     char* local_path;
     char absolute_path[2048];
@@ -345,7 +357,8 @@ void vfs_install_fs(char* name,
                     int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device),
-                    int (*open)(char* path, int flags, int mode, char* dev) ) {
+                    int (*open)(char* path, int flags, int mode, char* dev),
+                    int (*fork)(int handle) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));
     
@@ -359,6 +372,7 @@ void vfs_install_fs(char* name,
     filesystems[filesystems_ptr].list = list;
     filesystems[filesystems_ptr].mount = mount;
     filesystems[filesystems_ptr].open = open;
+    filesystems[filesystems_ptr].fork = fork;
     
     filesystems_ptr++;
     return;

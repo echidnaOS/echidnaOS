@@ -81,6 +81,43 @@ typedef struct {
 cached_file_t* cached_files;
 int cached_files_ptr = 0;
 
+typedef struct {
+    int free;
+    int processes;
+    char path[1024];
+    int flags;
+    int mode;
+    long ptr;
+    long begin;
+    long end;
+    int device;
+    cached_file_t cached_file;
+} echfs_handle_t;
+
+echfs_handle_t* echfs_handles = (echfs_handle_t*)0;
+int echfs_handles_ptr = 0;
+
+int echfs_create_handle(echfs_handle_t handle) {
+    int handle_n;
+
+    // check for a free handle first
+    for (int i = 0; i < echfs_handles_ptr; i++) {
+        if (echfs_handles[i].free) {
+            handle_n = i;
+            goto load_handle;
+        }
+    }
+
+    echfs_handles = krealloc(echfs_handles, (echfs_handles_ptr + 1) * sizeof(echfs_handle_t));
+    handle_n = echfs_handles_ptr++;
+    
+load_handle:
+    echfs_handles[handle_n] = handle;
+    
+    return handle_n;
+
+}
+
 int find_device(char* dev) {
     int i;
 
@@ -459,9 +496,12 @@ int echfs_mount(char* dev) {
     return SUCCESS;
 }
 
-int echfs_open(char* path, int flags, int mode, char* dev) { return -1; }
+int echfs_fork(int handle) {
 
-int echfs_fork(int handle) { return FAILURE; }
+    echfs_handles[handle].processes++;
+    return SUCCESS;
+
+}
 
 int echfs_uread(int handle, char* ptr, int len) { return -1; }
 int echfs_uwrite(int handle, char* ptr, int len) { return -1; }
@@ -747,6 +787,64 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
     kstrcpy(metadata->filename, path_result.target.name);
     
     return SUCCESS;
+}
+
+int echfs_open(char* path, int flags, int mode, char* dev) {
+    vfs_metadata_t metadata;
+
+    if (echfs_get_metadata(path, &metadata, FILE_TYPE, dev) == -2) {
+        if (flags & O_CREAT) {
+            if (echfs_create(path, 0, dev) == -2)
+                return -1;
+        } else
+            return -1;
+    }
+    if (flags & O_TRUNC) {
+        echfs_remove(path, dev);
+        echfs_create(path, 0, dev);
+        echfs_get_metadata(path, &metadata, FILE_TYPE, dev);
+    }
+    echfs_handle_t new_handle = {0};
+    new_handle.processes = 1;
+    kstrcpy(new_handle.path, path);
+    new_handle.flags = flags;
+    new_handle.mode = mode;
+    new_handle.end = metadata.size;
+    if (flags & O_APPEND) {
+        new_handle.ptr = metadata.size;
+        new_handle.begin = metadata.size;
+    } else {
+        new_handle.ptr = 0;
+        new_handle.begin = 0;
+    }
+
+    uint64_t i;
+    
+    int dev_n = find_device(dev);
+    new_handle.device = dev_n;
+
+    device = dev;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+
+    kstrcpy(new_handle.cached_file.path, path);
+    new_handle.cached_file.path_result = path_resolver(path, FILE_TYPE);
+    
+    // cache the allocation map
+    new_handle.cached_file.alloc_map = kalloc(sizeof(uint64_t));
+    new_handle.cached_file.alloc_map[0] = new_handle.cached_file.path_result.target.payload;
+    for (i = 1; new_handle.cached_file.alloc_map[i-1] != END_OF_CHAIN; i++) {
+        new_handle.cached_file.alloc_map = krealloc(new_handle.cached_file.alloc_map, sizeof(uint64_t) * (i+1));
+        new_handle.cached_file.alloc_map[i] = rd_qword((fatstart * BYTES_PER_BLOCK) + (new_handle.cached_file.alloc_map[i-1] * sizeof(uint64_t)));
+    }
+
+    new_handle.cached_file.cache_status = CACHE_NOTREADY;
+
+    return echfs_create_handle(new_handle);
 }
 
 void install_echfs(void) {

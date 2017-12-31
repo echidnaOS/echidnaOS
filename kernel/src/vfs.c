@@ -277,6 +277,26 @@ int vfs_kopen(char* path, int flags, int mode) {
     return create_file_handle_v2(current_task, handle);
 }
 
+int vfs_uread(int handle, char* ptr, int len) {
+    ptr += task_table[current_task]->base;
+    return vfs_kuread(handle, ptr, len);
+}
+
+int vfs_kuread(int handle, char* ptr, int len) {
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
+    return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2->internal_handle, ptr, len);
+}
+
+int vfs_uwrite(int handle, char* ptr, int len) {
+    ptr += task_table[current_task]->base;
+    return vfs_kuwrite(handle, ptr, len);
+}
+
+int vfs_kuwrite(int handle, char* ptr, int len) {
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
+    return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2->internal_handle, ptr, len);
+}
+
 int vfs_fork(int mountpoint, int handle) {
 
     int filesystem = vfs_translate_fs(mountpoint);
@@ -358,7 +378,9 @@ void vfs_install_fs(char* name,
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device),
                     int (*open)(char* path, int flags, int mode, char* dev),
-                    int (*fork)(int handle) ) {
+                    int (*fork)(int handle),
+                    int (*uread)(int handle, char* ptr, int len),
+                    int (*uwrite)(int handle, char* ptr, int len) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));
     
@@ -373,6 +395,8 @@ void vfs_install_fs(char* name,
     filesystems[filesystems_ptr].mount = mount;
     filesystems[filesystems_ptr].open = open;
     filesystems[filesystems_ptr].fork = fork;
+    filesystems[filesystems_ptr].uread = uread;
+    filesystems[filesystems_ptr].uwrite = uwrite;
     
     filesystems_ptr++;
     return;

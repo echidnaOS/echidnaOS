@@ -71,6 +71,9 @@ int devfs_remove(char* path, char* dev) { return FAILURE; }
 int devfs_mkdir(char* path, uint16_t perms, char* dev) { return FAILURE; }
 int devfs_create(char* path, uint16_t perms, char* dev) { return FAILURE; }
 
+int devfs_uread(int handle, char* ptr, int len) { return -1; }
+int devfs_uwrite(int handle, char* ptr, int len) { return -1; }
+
 int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) {
     if (type == DIRECTORY_TYPE) {
         if (!kstrcmp(path, "/") || !*path) {
@@ -143,5 +146,5 @@ int devfs_fork(int handle) {
 void install_devfs(void) {
     vfs_install_fs("devfs", &devfs_read, &devfs_write, &devfs_remove, &devfs_mkdir,
                             &devfs_create, &devfs_get_metadata, &devfs_list, &devfs_mount,
-                            &devfs_open, &devfs_fork );
+                            &devfs_open, &devfs_fork, &devfs_uread, &devfs_uwrite );
 }

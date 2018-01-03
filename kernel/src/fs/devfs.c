@@ -6,7 +6,6 @@
 
 typedef struct {
     int free;
-    int processes;
     char path[1024];
     int flags;
     int mode;
@@ -58,6 +57,17 @@ int devfs_write(char* path, uint8_t val, uint64_t loc, char* dev) {
     return FAILURE;
 }
 
+int devfs_uwrite(int handle, char* ptr, int len) {
+    int device = devfs_handles[handle].device;
+    for (int i = 0; i < len; i++) {
+        int c = (*device_list[device].io_wrapper)(device_list[device].gp_value, devfs_handles[handle].ptr, 1, ptr[i]);
+        if (c == FAILURE)
+            return -1;
+        devfs_handles[handle].ptr++;
+    }
+    return SUCCESS;
+}
+
 int devfs_read(char* path, uint64_t loc, char* dev) {
     if (*path == '/') path++;
     for (int i = 0; i < device_ptr; i++) {
@@ -67,12 +77,21 @@ int devfs_read(char* path, uint64_t loc, char* dev) {
     return FAILURE;
 }
 
+int devfs_uread(int handle, char* ptr, int len) {
+    int device = devfs_handles[handle].device;
+    for (int i = 0; i < len; i++) {
+        int c = (*device_list[device].io_wrapper)(device_list[device].gp_value, devfs_handles[handle].ptr, 0, 0);
+        if (c == FAILURE)
+            return -1;
+        devfs_handles[handle].ptr++;
+        ptr[i] = (char)c;
+    }
+    return SUCCESS;
+}
+
 int devfs_remove(char* path, char* dev) { return FAILURE; }
 int devfs_mkdir(char* path, uint16_t perms, char* dev) { return FAILURE; }
 int devfs_create(char* path, uint16_t perms, char* dev) { return FAILURE; }
-
-int devfs_uread(int handle, char* ptr, int len) { return -1; }
-int devfs_uwrite(int handle, char* ptr, int len) { return -1; }
 
 int devfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev) {
     if (type == DIRECTORY_TYPE) {
@@ -116,7 +135,6 @@ int devfs_open(char* path, int flags, int mode, char* dev) {
             return -1;
         devfs_handle_t new_handle = {0};
         new_handle.free = 0;
-        new_handle.processes = 1;
         kstrcpy(new_handle.path, path);
         new_handle.flags = flags;
         new_handle.mode = mode;
@@ -137,10 +155,7 @@ int devfs_open(char* path, int flags, int mode, char* dev) {
 }
 
 int devfs_fork(int handle) {
-
-    devfs_handles[handle].processes++;
-    return SUCCESS;
-
+    return devfs_create_handle(devfs_handles[handle]);
 }
 
 void install_devfs(void) {

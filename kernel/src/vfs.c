@@ -368,6 +368,29 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
     return SUCCESS;
 }
 
+int vfs_seek(int handle, int offset, int type) {
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
+    return (*filesystems[filesystem].seek)(task_table[current_task]->file_handles_v2->internal_handle, offset, type);
+}
+
+int vfs_close(int handle) {
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
+    return (*filesystems[filesystem].close)(task_table[current_task]->file_handles_v2->internal_handle);
+
+    if (handle < 0)
+        return -1;
+        
+    if (handle >= task_table[current_task]->file_handles_v2_ptr)
+        return -1;
+    
+    if (task_table[current_task]->file_handles_v2[handle].free)
+        return -1;
+    
+    task_table[current_task]->file_handles_v2[handle].free = 1;
+    
+    return 0;
+}
+
 void vfs_install_fs(char* name,
                     int (*read)(char* path, uint64_t loc, char* dev),
                     int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
@@ -378,9 +401,11 @@ void vfs_install_fs(char* name,
                     int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
                     int (*mount)(char* device),
                     int (*open)(char* path, int flags, int mode, char* dev),
+                    int (*close)(int handle),
                     int (*fork)(int handle),
                     int (*uread)(int handle, char* ptr, int len),
-                    int (*uwrite)(int handle, char* ptr, int len) ) {
+                    int (*uwrite)(int handle, char* ptr, int len),
+                    int (*seek)(int handle, int offset, int type) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));
     
@@ -394,9 +419,11 @@ void vfs_install_fs(char* name,
     filesystems[filesystems_ptr].list = list;
     filesystems[filesystems_ptr].mount = mount;
     filesystems[filesystems_ptr].open = open;
+    filesystems[filesystems_ptr].close = close;
     filesystems[filesystems_ptr].fork = fork;
     filesystems[filesystems_ptr].uread = uread;
     filesystems[filesystems_ptr].uwrite = uwrite;
+    filesystems[filesystems_ptr].seek = seek;
     
     filesystems_ptr++;
     return;

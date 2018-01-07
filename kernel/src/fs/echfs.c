@@ -847,8 +847,58 @@ int echfs_open(char* path, int flags, int mode, char* dev) {
     return echfs_create_handle(new_handle);
 }
 
+int echfs_close(int handle) {
+
+    if (handle < 0)
+        return -1;
+        
+    if (handle >= echfs_handles_ptr)
+        return -1;
+    
+    if (echfs_handles[handle].free)
+        return -1;
+    
+    echfs_handles[handle].free = 1;
+    
+    return 0;
+    
+}
+
+int echfs_seek(int handle, int offset, int type) {
+    
+    if (handle < 0)
+        return -1;
+
+    if (handle >= echfs_handles_ptr)
+        return -1;
+    
+    if (echfs_handles[handle].free)
+        return -1;
+        
+    switch (type) {
+        case SEEK_SET:
+            if ((echfs_handles[handle].begin + offset) > echfs_handles[handle].end ||
+                (echfs_handles[handle].begin + offset) < echfs_handles[handle].begin) return -1;
+            echfs_handles[handle].ptr = echfs_handles[handle].begin + offset;
+            return echfs_handles[handle].ptr;
+        case SEEK_END:
+            if ((echfs_handles[handle].end + offset) > echfs_handles[handle].end ||
+                (echfs_handles[handle].end + offset) < echfs_handles[handle].begin) return -1;
+            echfs_handles[handle].ptr = echfs_handles[handle].end + offset;
+            return echfs_handles[handle].ptr;
+        case SEEK_CUR:
+            if ((echfs_handles[handle].ptr + offset) > echfs_handles[handle].end ||
+                (echfs_handles[handle].ptr + offset) < echfs_handles[handle].begin) return -1;
+            echfs_handles[handle].ptr += offset;
+            return echfs_handles[handle].ptr;
+        default:
+            return -1;
+    }
+}
+
 void install_echfs(void) {
     vfs_install_fs("echfs", &echfs_read, &echfs_write, &echfs_remove, &echfs_mkdir,
                             &echfs_create, &echfs_get_metadata, &echfs_list, &echfs_mount,
-                            &echfs_open, &echfs_fork, &echfs_uread, &echfs_uwrite );
+                            &echfs_open, &echfs_close, &echfs_fork, &echfs_uread,
+                            &echfs_uwrite, &echfs_seek );
 }

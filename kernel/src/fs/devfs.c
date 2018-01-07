@@ -154,6 +154,58 @@ int devfs_open(char* path, int flags, int mode, char* dev) {
 
 }
 
+int devfs_close(int handle) {
+
+    if (handle < 0)
+        return -1;
+        
+    if (handle >= devfs_handles_ptr)
+        return -1;
+    
+    if (devfs_handles[handle].free)
+        return -1;
+    
+    devfs_handles[handle].free = 1;
+    
+    return 0;
+    
+}
+
+int devfs_seek(int handle, int offset, int type) {
+    
+    if (handle < 0)
+        return -1;
+
+    if (handle >= devfs_handles_ptr)
+        return -1;
+    
+    if (devfs_handles[handle].free)
+        return -1;
+    
+    if (devfs_handles[handle].isblock)
+        return -1;
+        
+    switch (type) {
+        case SEEK_SET:
+            if ((devfs_handles[handle].begin + offset) > devfs_handles[handle].end ||
+                (devfs_handles[handle].begin + offset) < devfs_handles[handle].begin) return -1;
+            devfs_handles[handle].ptr = devfs_handles[handle].begin + offset;
+            return devfs_handles[handle].ptr;
+        case SEEK_END:
+            if ((devfs_handles[handle].end + offset) > devfs_handles[handle].end ||
+                (devfs_handles[handle].end + offset) < devfs_handles[handle].begin) return -1;
+            devfs_handles[handle].ptr = devfs_handles[handle].end + offset;
+            return devfs_handles[handle].ptr;
+        case SEEK_CUR:
+            if ((devfs_handles[handle].ptr + offset) > devfs_handles[handle].end ||
+                (devfs_handles[handle].ptr + offset) < devfs_handles[handle].begin) return -1;
+            devfs_handles[handle].ptr += offset;
+            return devfs_handles[handle].ptr;
+        default:
+            return -1;
+    }
+}
+
 int devfs_fork(int handle) {
     return devfs_create_handle(devfs_handles[handle]);
 }
@@ -161,5 +213,6 @@ int devfs_fork(int handle) {
 void install_devfs(void) {
     vfs_install_fs("devfs", &devfs_read, &devfs_write, &devfs_remove, &devfs_mkdir,
                             &devfs_create, &devfs_get_metadata, &devfs_list, &devfs_mount,
-                            &devfs_open, &devfs_fork, &devfs_uread, &devfs_uwrite );
+                            &devfs_open, &devfs_close, &devfs_fork, &devfs_uread,
+                            &devfs_uwrite, &devfs_seek );
 }

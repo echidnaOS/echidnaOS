@@ -91,6 +91,7 @@ typedef struct {
     long begin;
     long end;
     int device;
+    int dev_handle;
     cached_file_t cached_file;
 } echfs_handle_t;
 
@@ -831,6 +832,8 @@ int echfs_open(char* path, int flags, int mode, char* dev) {
     dirstart = mounts[dev_n].dirstart;
     datastart = mounts[dev_n].datastart;
 
+    new_handle.dev_handle = vfs_kopen(dev, O_RDWR, 0);
+
     kstrcpy(new_handle.cached_file.path, path);
     new_handle.cached_file.path_result = path_resolver(path, FILE_TYPE);
     
@@ -857,7 +860,9 @@ int echfs_close(int handle) {
     
     if (echfs_handles[handle].free)
         return -1;
-    
+
+    vfs_kclose(echfs_handles[handle].dev_handle);
+
     echfs_handles[handle].free = 1;
     
     return 0;

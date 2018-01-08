@@ -250,16 +250,20 @@ int vfs_kwrite(char* path, uint64_t loc, uint8_t val) {
 
 int vfs_open(char* path, int flags, int mode) {
     path += task_table[current_task]->base;
-    return vfs_kopen(path, flags, mode);
-}
 
-int vfs_kopen(char* path, int flags, int mode) {
     char* local_path;
     char absolute_path[2048];
 
     file_handle_v2_t handle = {0};
 
-    vfs_get_absolute_path(absolute_path, path);
+    // read from /dev hack FIXME
+    if (!kstrncmp(path, ":://", 4)) {
+        local_path = path + 4;
+        kstrcpy(absolute_path, "/dev/");
+        kstrcpy(absolute_path + 5, local_path);
+    } else {
+        vfs_get_absolute_path(absolute_path, path);
+    }
 
     int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
     if (mountpoint == FAILURE) return -1;
@@ -277,14 +281,45 @@ int vfs_kopen(char* path, int flags, int mode) {
     return create_file_handle_v2(current_task, handle);
 }
 
+int vfs_kopen(char* path, int flags, int mode) {
+    char* local_path;
+    char absolute_path[2048];
+
+    file_handle_v2_t handle = {0};
+
+    // read from /dev hack FIXME
+    if (!kstrncmp(path, ":://", 4)) {
+        local_path = path + 4;
+        kstrcpy(absolute_path, "/dev/");
+        kstrcpy(absolute_path + 5, local_path);
+    } else {
+        vfs_get_absolute_path(absolute_path, path);
+    }
+
+    int mountpoint = vfs_translate_mnt(absolute_path, &local_path);
+    if (mountpoint == FAILURE) return -1;
+
+    int filesystem = vfs_translate_fs(mountpoint);
+    if (filesystem == FAILURE) return -1;
+
+    int internal_handle = (*filesystems[filesystem].open)(local_path, flags, mode, mountpoints[mountpoint].device);
+    if (internal_handle == -1) return -1;
+
+    handle.free = 0;
+    handle.mountpoint = mountpoint;
+    handle.internal_handle = internal_handle;
+
+    return create_file_handle_v2(0, handle);
+}
+
 int vfs_uread(int handle, char* ptr, int len) {
     ptr += task_table[current_task]->base;
     return vfs_kuread(handle, ptr, len);
 }
 
 int vfs_kuread(int handle, char* ptr, int len) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
-    return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2->internal_handle, ptr, len);
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
 int vfs_uwrite(int handle, char* ptr, int len) {
@@ -293,8 +328,8 @@ int vfs_uwrite(int handle, char* ptr, int len) {
 }
 
 int vfs_kuwrite(int handle, char* ptr, int len) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
-    return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2->internal_handle, ptr, len);
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
 int vfs_fork(int mountpoint, int handle) {
@@ -369,13 +404,15 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
 }
 
 int vfs_seek(int handle, int offset, int type) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
-    return (*filesystems[filesystem].seek)(task_table[current_task]->file_handles_v2->internal_handle, offset, type);
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].seek)(task_table[current_task]->file_handles_v2[handle].internal_handle, offset, type);
 }
 
 int vfs_close(int handle) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2->mountpoint);
-    return (*filesystems[filesystem].close)(task_table[current_task]->file_handles_v2->internal_handle);
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
+    int ret = (*filesystems[filesystem].close)(task_table[current_task]->file_handles_v2[handle].internal_handle);
+    if (ret == -1)
+        return -1;
 
     if (handle < 0)
         return -1;
@@ -387,6 +424,26 @@ int vfs_close(int handle) {
         return -1;
     
     task_table[current_task]->file_handles_v2[handle].free = 1;
+    
+    return 0;
+}
+
+int vfs_kclose(int handle) {
+    int filesystem = vfs_translate_fs(task_table[0]->file_handles_v2[handle].mountpoint);
+    int ret = (*filesystems[filesystem].close)(task_table[0]->file_handles_v2[handle].internal_handle);
+    if (ret == -1)
+        return -1;
+
+    if (handle < 0)
+        return -1;
+        
+    if (handle >= task_table[0]->file_handles_v2_ptr)
+        return -1;
+    
+    if (task_table[0]->file_handles_v2[handle].free)
+        return -1;
+    
+    task_table[0]->file_handles_v2[handle].free = 1;
     
     return 0;
 }

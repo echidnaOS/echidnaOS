@@ -292,6 +292,8 @@ int vfs_cd(char* path);
 
 int vfs_open(char* path, int flags, int mode);
 int vfs_kopen(char* path, int flags, int mode);
+int vfs_close(int handle);
+int vfs_kclose(int handle);
 
 int vfs_uread(int handle, char* ptr, int len);
 int vfs_kuread(int handle, char* ptr, int len);

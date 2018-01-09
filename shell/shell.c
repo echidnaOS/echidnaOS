@@ -6,7 +6,6 @@
 
 #include <sys_api.h>
 
-void getstring(char* string, uint32_t limit);
 int get_argc(const char* string);
 void get_argv(char** argv, char* string);
 
@@ -55,10 +54,11 @@ int main(int argc, char** argv) {
     vfs_metadata_t metadata = {0};
 
     for (;;) {
-        OS_pwd(pwd);
-        printf("\e[32mechidnaOS\e[37m:\e[36m%s\e[37m# ", pwd);
+        printf("\e[32mechidnaOS\e[37m:\e[36m%s\e[37m# ", getwd(pwd));
+        fflush(stdout);
 
-        getstring(input, 256);
+        fgets(input, 256, stdin);
+        input[strlen(input) - 1] = 0;
         s_argc = get_argc(input);
         get_argv(s_argv, input);
 
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
         else if (!strcmp("read", s_argv[0])) {
             char buf[6] = {0};
             if (s_argc == 1) continue;
-            int handle = OS_open(s_argv[1], O_RDONLY, 0);
+            int handle = OS_open(s_argv[1], ECH_O_RDONLY, 0);
             if (handle == -1) fputs("couldn't open file\n", stderr);
             printf("received handle %d\n", handle);
             if (OS_read(handle, buf, 5) == -1)
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
         else if (!strcmp("write", s_argv[0])) {
             char buf[6] = "12345";
             if (s_argc == 1) continue;
-            int handle = OS_open(s_argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0);
+            int handle = OS_open(s_argv[1], ECH_O_WRONLY | ECH_O_CREAT | ECH_O_TRUNC, 0);
             if (handle == -1) fputs("couldn't open file\n", stderr);
             printf("received handle %d\n", handle);
             if (OS_write(handle, buf, 5) == -1)
@@ -448,20 +448,5 @@ void get_argv(char** argv, char* string) {
             string[index++] = 0;
         else break;
     }
-    return;
-}
-
-void getstring(char* string, uint32_t limit) {
-    uint32_t x=0;
-    int c;
-    for (;;) {
-        c = getchar();
-        if (c=='\n') break;
-        else if (x<(limit-1)) {
-            string[x] = c;
-            x++;
-        }
-    }
-    string[x] = 0x00;
     return;
 }

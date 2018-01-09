@@ -1,15 +1,11 @@
-LIBC_FILES = $(shell find libc -type f -name '*.c') $(shell find libc -type f -name '*.h')
 KERNEL_FILES = $(shell find kernel -type f -name '*.c') $(shell find kernel -type f -name '*.asm') $(shell find kernel -type f -name '*.real') $(shell find kernel -type f -name '*.h')
 
 notarget: echidna.img
 
-libc/libc: $(LIBC_FILES)
-	$(MAKE) -C libc
-
-misc/life: libc/libc misc/life.c
+misc/life: misc/life.c
 	$(MAKE) -C misc
 
-shell/sh: libc/libc shell/shell.c
+shell/sh: shell/shell.c
 	$(MAKE) -C shell
 
 kernel/echidna.bin: $(KERNEL_FILES)
@@ -24,7 +20,6 @@ update_wrappers:
 clean:
 	cd echidnafs && rm -f echfs-utils
 	$(MAKE) clean -C shell
-	$(MAKE) clean -C libc
 	$(MAKE) clean -C misc
 	$(MAKE) clean -C kernel
 
@@ -39,7 +34,7 @@ echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm ker
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
 	echidnafs/echfs-utils echidna.img import ./misc/life /bin/life
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
-	rm tools/bin/gcc tools/bin/cc tools/bin/kcc
+	rm tools/bin/kcc
 
 clean-tools:
 	rm -rf gcc-7.1.0 binutils-2.28 build-gcc build-binutils
@@ -49,6 +44,13 @@ tools: packages gcc-7.1.0 binutils-2.28
 	rm -rf build-gcc/
 	rm -rf build-binutils/
 	export MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" && export PREFIX="`pwd`/tools" && export TARGET=i386-elf && export PATH="$$PREFIX/bin:$$PATH" && mkdir build-binutils && cd build-binutils && ../binutils-2.28/configure --target=$$TARGET --prefix="$$PREFIX" --with-sysroot --disable-nls --disable-werror && make && make install && cd ../gcc-7.1.0 && contrib/download_prerequisites && cd .. && mkdir build-gcc && cd build-gcc && ../gcc-7.1.0/configure --target=$$TARGET --prefix="$$PREFIX" --disable-nls --enable-languages=c --without-headers && make all-gcc && make all-target-libgcc && make install-gcc && make install-target-libgcc
+	git clone https://github.com/echidnaOS/echidnaOS-toolchain.git
+	mkdir echidnaOS-toolchain/tools
+	cp -rv tools/* echidnaOS-toolchain/tools/
+	cp -rv gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2 echidnaOS-toolchain/
+	cd echidnaOS-toolchain && ./maketools.sh
+	cp echidnaOS-toolchain/newlib-patch/newlib/libc/sys/echidnaos/sys_api.h echidnaOS-toolchain/toolchain/usr/include/
+	cp echidnaOS-toolchain/newlib-patch/newlib/libc/sys/echidnaos/sys_api.h echidnaOS-toolchain/toolchain/usr/i386-echidnaos/include/
 
 gcc-7.1.0.tar.bz2:
 	wget ftp://ftp.gnu.org/gnu/gcc/gcc-7.1.0/gcc-7.1.0.tar.bz2

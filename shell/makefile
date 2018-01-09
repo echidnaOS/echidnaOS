@@ -1,18 +1,17 @@
-export PATH := ../tools/bin:$(PATH)
-CC = cc
+export PATH := ../echidnaOS-toolchain/toolchain/bin:$(PATH)
+CC = i386-echidnaos-gcc
 PREFIX = 
 
 C_FILES = shell.c
 OBJ_FILES = $(C_FILES:.c=.o)
 
-CHARDFLAGS = -std=gnu99 -masm=intel
-CFLAGS = 
+CFLAGS = -O2
 
 sh: $(OBJ_FILES)
 	$(CC) -o sh $(OBJ_FILES)
 
 %.o: %.c
-	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ_FILES) sh

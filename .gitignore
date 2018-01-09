@@ -3,6 +3,7 @@
 /build-*
 /tools/
 /toolchain/
+/echidnaOS-toolchain/
 
 /echidna.img
 /echidnafs/echfs-utils

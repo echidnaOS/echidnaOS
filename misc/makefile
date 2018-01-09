@@ -1,12 +1,11 @@
-export PATH := ../tools/bin:$(PATH)
-CC = cc
+export PATH := ../echidnaOS-toolchain/toolchain/bin:$(PATH)
+CC = i386-echidnaos-gcc
 PREFIX = 
 
-CHARDFLAGS = -std=gnu99 -masm=intel
-CFLAGS = 
+CFLAGS = -O2
 
 life: life.c
-	$(CC) $(CHARDFLAGS) $(CFLAGS) life.c -o life
+	$(CC) $(CFLAGS) life.c -o life
 
 clean:
 	rm -f life

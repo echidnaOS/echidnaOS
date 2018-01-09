@@ -165,15 +165,23 @@ void keyboard_handler(uint8_t input_byte) {
     return;
 }
 
+int is_eof = 0;
+
 int keyboard_fetch_char(uint8_t which_tty) {
     uint16_t i;
     char c;
+
+    if (is_eof) {
+        is_eof = 0;
+        return -1;
+    }
 
     if (tty[which_tty].kb_l2_buffer_index) {
         tty[which_tty].kb_l2_buffer_index--;
         c = tty[which_tty].kb_l2_buffer[0];
         for (i = 0; i < (KB_L2_SIZE - 1); i++)
             tty[which_tty].kb_l2_buffer[i] = tty[which_tty].kb_l2_buffer[i + 1];
+        if (c == '\n') is_eof = 1;
         return (int)c;
     } else
         if (tty[which_tty].noblock)

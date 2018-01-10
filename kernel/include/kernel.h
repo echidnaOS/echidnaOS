@@ -296,6 +296,7 @@ int vfs_close(int handle);
 int vfs_kclose(int handle);
 
 int vfs_kfork(int handle);
+int vfs_kseek(int handle, int offset, int type);
 
 int vfs_uread(int handle, char* ptr, int len);
 int vfs_kuread(int handle, char* ptr, int len);

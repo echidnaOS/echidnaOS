@@ -28,6 +28,7 @@ uint64_t fatstart;
 uint64_t dirsize;
 uint64_t dirstart;
 uint64_t datastart;
+int cur_handle;
 
 typedef struct {
     char name[128];
@@ -125,6 +126,136 @@ int find_device(char* dev) {
     
     return i;
 }
+
+
+
+uint8_t rd_byte_u(uint64_t loc) {
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    char buf[1];
+    vfs_kuread(cur_handle, buf, 1);
+    return (uint8_t)buf[0];
+}
+
+void wr_byte_u(uint64_t loc, uint8_t x) {
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    char buf[1];
+    buf[0] = (char)x;
+    vfs_kuwrite(cur_handle, buf, 1);
+    return;
+}
+
+uint16_t rd_word_u(uint64_t loc) {
+    uint16_t x = 0;
+    for (uint64_t i = 0; i < 2; i++)
+        x += (uint16_t)rd_byte_u(loc++) * (uint16_t)(power(0x100, i));
+    return x;
+}
+
+void wr_word_u(uint64_t loc, uint16_t x) {
+    for (uint64_t i = 0; i < 2; i++)
+       wr_byte_u((int)(x / (power(0x100, i)) & 0xff), loc++);
+    return;
+}
+
+uint32_t rd_dword_u(uint64_t loc) {
+    uint32_t x = 0;
+    for (uint64_t i = 0; i < 4; i++)
+        x += (uint32_t)rd_byte_u(loc++) * (uint32_t)(power(0x100, i));
+    return x;
+}
+
+void wr_dword_u(uint64_t loc, uint32_t x) {
+    for (uint64_t i = 0; i < 4; i++)
+       wr_byte_u((int)(x / (power(0x100, i)) & 0xff), loc++);
+    return;
+}
+
+uint64_t rd_qword_u(uint64_t loc) {
+    uint64_t x = 0;
+    for (uint64_t i = 0; i < 8; i++)
+        x += (uint64_t)rd_byte_u(loc++) * (uint64_t)(power(0x100, i));
+    return x;
+}
+
+void wr_qword_u(uint64_t loc, uint64_t x) {
+    for (uint64_t i = 0; i < 8; i++)
+       wr_byte_u((int)(x / (power(0x100, i)) & 0xff), loc++);
+    return;
+}
+
+void fstrcpy_in_u(char* str, uint64_t loc) {
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuread(cur_handle, str, kstrlen(str) + 1);
+    return;
+}
+
+void fstrcpy_out_u(uint64_t loc, char* str) {
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuwrite(cur_handle, str, kstrlen(str) + 1);
+    return;
+}
+
+entry_t rd_entry_u(uint64_t entry) {
+    entry_t res;
+    uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
+
+    res.parent_id = rd_qword_u(loc);
+    loc += sizeof(uint64_t);
+    res.type = rd_byte_u(loc++);
+    fstrcpy_in_u(res.name, loc);
+    loc += FILENAME_LEN;
+    res.perms = rd_byte_u(loc++);
+    res.owner = rd_word_u(loc);
+    loc += sizeof(uint16_t);
+    res.group = rd_word_u(loc);
+    loc += sizeof(uint16_t);
+    res.hundreths = rd_byte_u(loc++);
+    res.seconds = rd_byte_u(loc++);
+    res.minutes = rd_byte_u(loc++);
+    res.hours = rd_byte_u(loc++);
+    res.day = rd_byte_u(loc++);
+    res.month = rd_byte_u(loc++);
+    res.year = rd_word_u(loc);
+    loc += sizeof(uint16_t);
+    res.payload = rd_qword_u(loc);
+    loc += sizeof(uint64_t);
+    res.size = rd_qword_u(loc);
+    
+    return res;
+}
+
+void wr_entry_u(uint64_t entry, entry_t entry_src) {
+    uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
+
+    wr_qword_u(loc, entry_src.parent_id);
+    loc += sizeof(uint64_t);
+    wr_byte_u(loc++, entry_src.type);
+    fstrcpy_out_u(loc, entry_src.name);
+    loc += FILENAME_LEN;
+    wr_byte_u(loc++, entry_src.perms);
+    wr_word_u(loc, entry_src.owner);
+    loc += sizeof(uint16_t);
+    wr_word_u(loc, entry_src.group);
+    loc += sizeof(uint16_t);
+    wr_byte_u(loc++, entry_src.hundreths);
+    wr_byte_u(loc++, entry_src.seconds);
+    wr_byte_u(loc++, entry_src.minutes);
+    wr_byte_u(loc++, entry_src.hours);
+    wr_byte_u(loc++, entry_src.day);
+    wr_byte_u(loc++, entry_src.month);
+    wr_word_u(loc, entry_src.year);
+    loc += sizeof(uint16_t);
+    wr_qword_u(loc, entry_src.payload);
+    loc += sizeof(uint64_t);
+    wr_qword_u(loc, entry_src.size);
+    
+    return;
+}
+
+
+
+
+
 
 uint8_t rd_byte(uint64_t loc) {
     return (uint8_t)vfs_kread(device, loc);
@@ -887,7 +1018,7 @@ int echfs_fork(int handle) {
     // open new internal handle for the device
     new_handle.dev_handle = vfs_kfork(new_handle.dev_handle);
 
-    return echfs_create_handle(echfs_handles[handle]);
+    return echfs_create_handle(new_handle);
 }
 
 int echfs_seek(int handle, int offset, int type) {

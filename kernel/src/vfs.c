@@ -314,22 +314,34 @@ int vfs_kopen(char* path, int flags, int mode) {
 
 int vfs_uread(int handle, char* ptr, int len) {
     ptr += task_table[current_task]->base;
-    return vfs_kuread(handle, ptr, len);
-}
-
-int vfs_kuread(int handle, char* ptr, int len) {
     int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
     return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
+int vfs_kuread(int handle, char* ptr, int len) {
+    int filesystem = vfs_translate_fs(task_table[0]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].uread)(task_table[0]->file_handles_v2[handle].internal_handle, ptr, len);
+}
+
 int vfs_uwrite(int handle, char* ptr, int len) {
     ptr += task_table[current_task]->base;
-    return vfs_kuwrite(handle, ptr, len);
+    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
 int vfs_kuwrite(int handle, char* ptr, int len) {
+    int filesystem = vfs_translate_fs(task_table[0]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].uwrite)(task_table[0]->file_handles_v2[handle].internal_handle, ptr, len);
+}
+
+int vfs_seek(int handle, int offset, int type) {
     int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
-    return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
+    return (*filesystems[filesystem].seek)(task_table[current_task]->file_handles_v2[handle].internal_handle, offset, type);
+}
+
+int vfs_kseek(int handle, int offset, int type) {
+    int filesystem = vfs_translate_fs(task_table[0]->file_handles_v2[handle].mountpoint);
+    return (*filesystems[filesystem].seek)(task_table[0]->file_handles_v2[handle].internal_handle, offset, type);
 }
 
 int vfs_kfork(int handle) {
@@ -409,11 +421,6 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
     kputs("' using filesystem: "); kputs(mountpoints[mountpoints_ptr].filesystem);
     mountpoints_ptr++;
     return SUCCESS;
-}
-
-int vfs_seek(int handle, int offset, int type) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
-    return (*filesystems[filesystem].seek)(task_table[current_task]->file_handles_v2[handle].internal_handle, offset, type);
 }
 
 int vfs_close(int handle) {

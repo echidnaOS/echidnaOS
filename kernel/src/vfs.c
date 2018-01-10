@@ -332,15 +332,23 @@ int vfs_kuwrite(int handle, char* ptr, int len) {
     return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
-int vfs_fork(int mountpoint, int handle) {
+int vfs_kfork(int handle) {
+
+    int mountpoint = task_table[0]->file_handles_v2[handle].mountpoint;
 
     int filesystem = vfs_translate_fs(mountpoint);
     if (filesystem == FAILURE) return FAILURE;
 
-    int ret = (*filesystems[filesystem].fork)(handle);
-    if (ret == FAILURE) return FAILURE;
+    int internal_handle = (*filesystems[filesystem].fork)(task_table[0]->file_handles_v2[handle].internal_handle);
+    if (internal_handle == FAILURE) return FAILURE;
 
-    return SUCCESS;
+    file_handle_v2_t new_handle = {0};
+
+    new_handle.free = 0;
+    new_handle.mountpoint = mountpoint;
+    new_handle.internal_handle = internal_handle;
+
+    return create_file_handle_v2(0, new_handle);
 
 }
 

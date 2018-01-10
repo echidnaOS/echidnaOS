@@ -54,6 +54,9 @@ int task_create(task_t new_task) {
     return new_pid;
 }
 
+extern filesystem_t* filesystems;
+int vfs_translate_fs(int mountpoint);
+
 void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
     
     // forks the current task in a Unix-like way
@@ -103,6 +106,28 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
     // clone the parent's file descriptors
     kmemcpy((char*)new_process.file_handles, (char*)task_table[current_task]->file_handles, task_table[current_task]->file_handles_ptr * sizeof(file_handle_t));
     
+    // allocate memory for the new VFS's file descriptors
+    if (!(new_process.file_handles_v2 = kalloc(task_table[current_task]->file_handles_v2_ptr * sizeof(file_handle_v2_t)))) {
+        // fail
+        kfree((void*)new_process.base);
+        kfree(new_process.file_handles);
+        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_scheduler();
+    }
+
+    // clone new VFS descriptors
+    for (int i = 0; i < task_table[current_task]->file_handles_v2_ptr; i++) {
+        file_handle_v2_t new_handle = {0};
+        if (task_table[current_task]->file_handles_v2[i].free) {
+            new_process.file_handles_v2[i].free = 1;
+            continue;
+        }
+        new_handle.mountpoint = task_table[current_task]->file_handles_v2[i].mountpoint;
+        int filesystem = vfs_translate_fs(new_handle.mountpoint);
+        new_handle.internal_handle = (*filesystems[filesystem].fork)(task_table[current_task]->file_handles_v2[i].internal_handle);
+        new_process.file_handles_v2[i] = new_handle;
+    }
+    
     // clone the process's memory
     kmemcpy((char*)new_process.base, (char*)task_table[current_task]->base, task_size);
     
@@ -113,6 +138,7 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
         // fail
         kfree((void*)new_process.base);
         kfree(new_process.file_handles);
+        kfree(new_process.file_handles_v2);
         task_table[current_task]->eax_p = (uint32_t)(FAILURE);
         task_scheduler();
     }
@@ -464,6 +490,7 @@ void task_quit(uint64_t return_value) {
 
 void task_terminate(int pid) {
     kfree((void*)task_table[pid]->file_handles);
+    kfree((void*)task_table[pid]->file_handles_v2);
     kfree((void*)task_table[pid]->base);
     kfree((void*)task_table[pid]);
     task_table[pid] = EMPTY_PID;

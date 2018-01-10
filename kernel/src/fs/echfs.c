@@ -29,6 +29,8 @@ uint64_t dirsize;
 uint64_t dirstart;
 uint64_t datastart;
 int cur_handle;
+long cur_loc;
+long cur_end;
 
 typedef struct {
     char name[128];
@@ -78,6 +80,8 @@ typedef struct {
     int cache_status;
     uint64_t* alloc_map;
 } cached_file_t;
+
+cached_file_t* cur_cached_file;
 
 cached_file_t* cached_files;
 int cached_files_ptr = 0;
@@ -627,7 +631,62 @@ int echfs_mount(char* dev) {
     return SUCCESS;
 }
 
-int echfs_uread(int handle, char* ptr, int len) { return -1; }
+int echfs_ureadbyte(int handle) {
+    if (cur_loc >= cur_end) return -1;
+    
+    uint64_t block = cur_loc / BYTES_PER_BLOCK;
+    uint64_t offset = cur_loc % BYTES_PER_BLOCK;
+    
+    if (cur_cached_file->cache_status &&
+       (cur_cached_file->cached_block == block)) {
+        cur_loc++;
+        return cur_cached_file->cache[offset];
+    }
+    
+    // write possible dirty cache
+    if (cur_cached_file->cache_status == CACHE_DIRTY) {
+        uint64_t cached_block = cur_cached_file->cached_block;
+        vfs_kseek(cur_handle, (int)(cur_cached_file->alloc_map[cached_block] * BYTES_PER_BLOCK), SEEK_SET);
+        vfs_kuwrite(cur_handle, cur_cached_file->cache, BYTES_PER_BLOCK);
+    }
+    
+    // copy block in cache
+    cur_cached_file->cache_status = CACHE_READY;
+    cur_cached_file->cached_block = block;
+    vfs_kseek(cur_handle, (int)(cur_cached_file->alloc_map[block] * BYTES_PER_BLOCK), SEEK_SET);
+    vfs_kuread(cur_handle, cur_cached_file->cache, BYTES_PER_BLOCK);
+    
+    cur_loc++;
+
+    return cur_cached_file->cache[offset];
+}
+
+int echfs_uread(int handle, char* ptr, int len) {
+    int dev_n = echfs_handles[handle].device;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    cur_handle = echfs_handles[handle].dev_handle;
+    cur_cached_file = echfs_handles[handle].cached_file;
+    cur_loc = echfs_handles[handle].ptr;
+    cur_end = echfs_handles[handle].end;
+
+    int i;
+
+    for (i = 0; i < len; i++) {
+        int c = echfs_ureadbyte(handle);
+        if (c == -1) break;
+        ptr[i] = (char)c;
+    }
+
+    echfs_handles[handle].ptr = cur_loc;
+
+    return i;
+}
+
 int echfs_uwrite(int handle, char* ptr, int len) { return -1; }
 
 int echfs_read(char* path, uint64_t loc, char* dev) {

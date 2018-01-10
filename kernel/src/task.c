@@ -191,13 +191,15 @@ int general_execute(task_info_t* task_info) {
     
     // load program into memory
 
-    // use the new VFS stack (incomplete FIXME)
+    // use the new VFS stack
     int tmp_handle = vfs_kopen(path, O_RDWR, 0);
+    vfs_kuread(tmp_handle, (char*)(new_task.base + TASK_RESERVED_SPACE), metadata.size);
     vfs_kclose(tmp_handle);
-    // ... continues
 
+    /*
     for (uint64_t i = 0; i < metadata.size; i++)
         ((char*)new_task.base)[TASK_RESERVED_SPACE + i] = (char)vfs_kread(path, i);
+    */
     
     // attempt to create task
     int new_pid = task_create(new_task);

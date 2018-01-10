@@ -79,14 +79,25 @@ int devfs_read(char* path, uint64_t loc, char* dev) {
 
 int devfs_uread(int handle, char* ptr, int len) {
     int device = devfs_handles[handle].device;
-    for (int i = 0; i < len; i++) {
-        int c = (*device_list[device].io_wrapper)(device_list[device].gp_value, devfs_handles[handle].ptr, 0, 0);
-        if (c == FAILURE)
-            return -1;
-        devfs_handles[handle].ptr++;
+    int gp_value = device_list[device].gp_value;
+    int i_ptr = devfs_handles[handle].ptr;
+    int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t) = device_list[device].io_wrapper;
+    int i;
+    for (i = 0; i < len; i++) {
+        int c = (*io_wrapper)(gp_value, i_ptr, 0, 0);
+        switch (c) {
+            case FAILURE:
+            case -1:
+                goto out;
+            default:
+                break;
+        }
+        i_ptr++;
         ptr[i] = (char)c;
     }
-    return SUCCESS;
+out:
+    devfs_handles[handle].ptr = i_ptr;
+    return i;
 }
 
 int devfs_remove(char* path, char* dev) { return FAILURE; }

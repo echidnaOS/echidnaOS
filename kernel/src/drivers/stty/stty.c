@@ -14,14 +14,22 @@ char* com_devices[] = { ":://com1", ":://com2", ":://com3", ":://com4" };
 
 char* devices[MAX_STTY];
 
+static int is_eof = 0;
+
 int stty_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload) {
     if (type == 0) {
+        if (is_eof) {
+            is_eof = 0;
+            return -1;
+        }
+
         int val = vfs_kread(devices[dev], 0);
         if (val == IO_NOT_READY) return IO_NOT_READY;
         switch (val) {
             case 0x0d:
                 vfs_kwrite(devices[dev], 0, 0x0d);
                 vfs_kwrite(devices[dev], 0, 0x0a);
+                is_eof = 1;
                 return 0x0a;
             case 0x08:
                 vfs_kwrite(devices[dev], 0, 0x08);

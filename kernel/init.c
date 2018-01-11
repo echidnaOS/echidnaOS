@@ -98,7 +98,7 @@ void kernel_init(void) {
         0
     };
     
-    vfs_mount("/", ":://hda", "echfs");
+    vfs_mount("/", ":://bda", "echfs");
     vfs_mount("/dev", "devfs", "devfs");
 
     // launch the shell

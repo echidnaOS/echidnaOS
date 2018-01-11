@@ -1,3 +1,5 @@
+BYTES_PER_BLOCK equ 32768
+
 load_file:
 
 ; **********************************************************************
@@ -71,10 +73,12 @@ jmp .entry_test
 .load_chain:
 ; load block
 mov eax, dword [.cur_block]
+mov ebx, BYTES_PER_BLOCK / 512
+mul ebx
 mov ebx, dword [.target_buffer]
 add ebx, dword [.buffer_pushing]
 mov dl, byte [.current_drive]
-mov ecx, 1
+mov ecx, BYTES_PER_BLOCK / 512
 call read_sectors
 ; fetch next block
 mov eax, dword [.cur_block]
@@ -86,7 +90,7 @@ call disk_read_dword
 cmp eax, 0xffffffff
 je .success
 mov dword [.cur_block], eax
-add dword [.buffer_pushing], 512
+add dword [.buffer_pushing], BYTES_PER_BLOCK
 jmp .load_chain
 
 .not_found:
@@ -108,7 +112,7 @@ ret
 
 .buffer_pushing         dd 0
 .target_buffer          dd 0
-.fat_start              dd (16 * 512)
+.fat_start              dd (16 * BYTES_PER_BLOCK)
 .directory_start        dd 0
 .cur_block              dd 0
 .current_drive          db 0

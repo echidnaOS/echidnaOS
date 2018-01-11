@@ -25,7 +25,8 @@ clean:
 
 echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh misc/life
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
-	dd bs=512 count=131032 if=/dev/zero >> ./echidna.img
+	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
+	truncate --size=-4096 echidna.img
 	echidnafs/echfs-utils echidna.img format
 	echidnafs/echfs-utils echidna.img mkdir dev
 	echidnafs/echfs-utils echidna.img mkdir bin

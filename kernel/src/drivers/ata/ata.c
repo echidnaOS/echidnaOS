@@ -5,7 +5,7 @@
 #define DEVICE_COUNT 4
 #define BYTES_PER_SECT 512
 
-#define MAX_CACHED_SECTORS 2048
+#define MAX_CACHED_SECTORS 8192
 
 #define SUCCESS 0
 #define EOF -1

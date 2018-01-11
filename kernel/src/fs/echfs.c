@@ -6,7 +6,7 @@
 #define ENTRIES_PER_BLOCK       2
 #define FILENAME_LEN            218
 #define RESERVED_BLOCKS         16
-#define BYTES_PER_BLOCK         512
+#define BYTES_PER_BLOCK         32768
 #define FILE_TYPE               0
 #define DIRECTORY_TYPE          1
 #define DELETED_ENTRY           0xfffffffffffffffe

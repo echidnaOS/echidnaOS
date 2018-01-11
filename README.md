@@ -16,7 +16,8 @@ You can then write the resulting image to a Hard Drive.
 * gnu make
 * gcc
 * g++
-* bison
+* automake
+* autoconf
 * qemu (for testing the image, non essential)
 
 ## Step by step:
@@ -25,7 +26,7 @@ You can install all the above packages on Ubuntu/Debian with the following
 commands:
 ```
 sudo apt-get update
-sudo apt-get install nasm build-essential qemu-system-x86
+sudo apt-get install nasm build-essential automake autoconf qemu-system-x86
 ```
 Make sure you are in the root of the source tree.
 

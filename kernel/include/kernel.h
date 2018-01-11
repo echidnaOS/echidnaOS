@@ -86,6 +86,19 @@
                     "jmp 1b;"   \
                  )
 
+typedef struct {
+    uint8_t version_min;
+    uint8_t version_maj;
+    char* oem;
+    uint32_t capabilities;
+    uint16_t* vid_modes;
+    uint16_t vid_mem_blocks;
+    uint16_t software_rev;
+    char* vendor;
+    char* prod_name;
+    char* prod_rev;
+} __attribute__((packed)) vbe_info_struct_t;
+
 // driver inits
 
 void init_bios_harddisks(void);
@@ -95,6 +108,9 @@ void init_tty_drv(void);
 void init_streams(void);
 void init_com(void);
 void init_stty(void);
+void init_graphics(void);
+
+void graphics_init(vbe_info_struct_t* vbe_info_struct);
 
 // end driver inits
 // fs inits

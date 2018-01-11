@@ -58,6 +58,7 @@ void kernel_init(void) {
     init_com();
     init_stty();
     init_pcspk();
+    init_graphics();
 
 
     // ******* END OF DRIVER INITIALISATION CALLS *******

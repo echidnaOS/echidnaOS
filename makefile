@@ -2,9 +2,6 @@ KERNEL_FILES = $(shell find kernel -type f -name '*.c') $(shell find kernel -typ
 
 notarget: echidna.img
 
-misc/life: misc/life.c
-	$(MAKE) -C misc
-
 shell/sh: shell/shell.c
 	$(MAKE) -C shell
 
@@ -20,10 +17,9 @@ update_wrappers:
 clean:
 	cd echidnafs && rm -f echfs-utils
 	$(MAKE) clean -C shell
-	$(MAKE) clean -C misc
 	$(MAKE) clean -C kernel
 
-echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh misc/life
+echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
@@ -33,7 +29,6 @@ echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm ker
 	echidnafs/echfs-utils echidna.img mkdir docs
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
-	echidnafs/echfs-utils echidna.img import ./misc/life /bin/life
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
 	rm tools/bin/kcc
 

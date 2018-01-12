@@ -5,6 +5,9 @@ notarget: echidna.img
 shell/sh: shell/shell.c
 	$(MAKE) -C shell
 
+coreutils/echo: echo/echo.c
+	$(MAKE) -C echo
+
 kernel/echidna.bin: $(KERNEL_FILES)
 	$(MAKE) -C kernel
 
@@ -17,6 +20,7 @@ update_wrappers:
 clean:
 	cd echidnafs && rm -f echfs-utils
 	$(MAKE) clean -C shell
+	$(MAKE) clean -C coreutils
 	$(MAKE) clean -C kernel
 
 echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh
@@ -29,6 +33,7 @@ echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm ker
 	echidnafs/echfs-utils echidna.img mkdir docs
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
 	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
+	echidnafs/echfs-utils echidna.img import ./coreutils/echo /bin/echo
 	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
 	rm tools/bin/kcc
 

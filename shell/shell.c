@@ -262,6 +262,16 @@ int main(int argc, char** argv) {
                 fprintf(stderr, "shell: invalid directory: `%s`.\n", s_argv[1]);
         }
 
+        else if (!strcmp("echo", s_argv[0])) {
+            if (s_argc > 1) {
+                for (int i = 1; i < s_argc; i++) {
+                    printf("%s", s_argv[i]);
+                    if (i != s_argc) putchar(' ');
+                }
+            }
+            putchar('\n');
+        }
+
         // return to prompt if no input
         else if (!input[0]) continue;
 

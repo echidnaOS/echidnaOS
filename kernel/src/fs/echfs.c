@@ -661,7 +661,11 @@ int echfs_ureadbyte(int handle) {
     return cur_cached_file->cache[offset];
 }
 
+extern int read_stat;
+
 int echfs_uread(int handle, char* ptr, int len) {
+    read_stat = 0;
+
     int dev_n = echfs_handles[handle].device;
     blocks = mounts[dev_n].blocks;
     fatsize = mounts[dev_n].fatsize;
@@ -686,6 +690,10 @@ int echfs_uread(int handle, char* ptr, int len) {
 
     return i;
 }
+
+int echfs_uwritebyte(int handle) { return -1; }
+
+extern int write_stat;
 
 int echfs_uwrite(int handle, char* ptr, int len) { return -1; }
 

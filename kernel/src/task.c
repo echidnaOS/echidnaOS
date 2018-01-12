@@ -237,7 +237,20 @@ int general_execute(task_info_t* task_info) {
     kstrcpy(handle.path, ptr_stderr);
     handle.flags = O_WRONLY;
     create_file_handle(new_pid, handle);
-    
+
+    // create file handles for std streams
+    // this is a huge hack FIXME
+    int khandle;
+    khandle = vfs_kopen(ptr_stdin, O_RDONLY, 0);
+    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
+    task_table[0]->file_handles_v2[khandle].free = 1;
+    khandle = vfs_kopen(ptr_stdout, O_WRONLY, 0);
+    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
+    task_table[0]->file_handles_v2[khandle].free = 1;
+    khandle = vfs_kopen(ptr_stderr, O_WRONLY, 0);
+    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
+    task_table[0]->file_handles_v2[khandle].free = 1;
+
     *((int*)(task_table[new_pid]->base + 0x1000)) = task_info->argc;
     int argv_limit = 0x4000;
     char** argv = (char**)(task_table[new_pid]->base + 0x1010);

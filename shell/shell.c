@@ -178,6 +178,10 @@ int main(int argc, char** argv) {
                 fprintf(stderr, "couldn't remove file `%s`.\n", s_argv[1]);
         }
         
+        else if (!strcmp("clear", s_argv[0])) {
+            fputs("\e[2J\e[H", stdout);
+        }
+        
         else if (!strcmp("fork", s_argv[0])) {
             
             pid_t pid = fork();

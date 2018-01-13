@@ -971,6 +971,7 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
     
     path_result_t path_result = path_resolver(path, type);
 
+    if (path_result.failure) return FAILURE;
     if (path_result.not_found) return FAILURE;
     
     metadata->filetype = type;

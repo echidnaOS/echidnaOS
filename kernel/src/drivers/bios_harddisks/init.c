@@ -19,7 +19,7 @@ static uint8_t cached_drive;
 static uint64_t cached_block;
 static uint8_t disk_cache[CACHE_SIZE];
 
-char* bios_harddrive_names[] = {
+static char* bios_harddrive_names[] = {
     "bda", "bdb", "bdc", "bdd",
     "bde", "bdf", "bdg", "bdh",
     "bdi", "bdj", "bdk", "bdl",

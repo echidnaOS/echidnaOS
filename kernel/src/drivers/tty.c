@@ -120,7 +120,7 @@ dont_move:
     return;
 }
 
-uint8_t ansi_colours[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+static uint8_t ansi_colours[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
 void sgr(uint8_t which_tty) {
 

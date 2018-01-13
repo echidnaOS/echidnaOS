@@ -20,7 +20,7 @@ void task_init(void) {
 
 int current_task = 0;
 
-int idle_cpu = 1;
+static int idle_cpu = 1;
 
 void task_spinup(void*);
 

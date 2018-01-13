@@ -44,7 +44,7 @@ typedef struct {
     cached_sector_t* cache;
 } ata_device;
 
-char* ata_names[] = {
+static char* ata_names[] = {
     "hda", "hdb", "hdc", "hdd",
     "hde", "hdf", "hdg", "hdh",
     "hdi", "hdj", "hdk", "hdl",
@@ -54,8 +54,8 @@ char* ata_names[] = {
     "hdy", "hdz"
 };
 
-uint16_t ata_ports[] = { 0x1f0, 0x1f0, 0x170, 0x170 };
-int max_ports = 4;
+static uint16_t ata_ports[] = { 0x1f0, 0x1f0, 0x170, 0x170 };
+static int max_ports = 4;
 
 int ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload);
 int ata_read_byte(uint32_t drive, uint64_t loc);
@@ -69,7 +69,7 @@ int ata_write48(uint32_t disk, uint64_t sector, uint8_t* buffer);
 int ata_flush(uint32_t disk);
 int ata_flush_ext(uint32_t disk);
 
-ata_device devices[DEVICE_COUNT];
+static ata_device devices[DEVICE_COUNT];
 
 int ata_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t payload) {
     if (type == 0)
@@ -89,7 +89,7 @@ int find_sect(uint32_t drive, int sect) {
 
 }
 
-int overwritten_slot = 0;
+static int overwritten_slot = 0;
 
 int cache_sect(uint32_t drive, int sect) {
     int targ;

@@ -16,8 +16,8 @@ typedef struct {
     int device;
 } devfs_handle_t;
 
-devfs_handle_t* devfs_handles = (devfs_handle_t*)0;
-int devfs_handles_ptr = 0;
+static devfs_handle_t* devfs_handles = (devfs_handle_t*)0;
+static int devfs_handles_ptr = 0;
 
 int devfs_create_handle(devfs_handle_t handle) {
     int handle_n;

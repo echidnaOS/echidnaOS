@@ -16,7 +16,7 @@ typedef struct {
     uint32_t payload_out_flag;
 } vdev_t;
 
-char* vdev_names[] = {
+static char* vdev_names[] = {
     "vdev0", "vdev1", "vdev2", "vdev3",
     "vdev4", "vdev5", "vdev6", "vdev7",
     "vdev8", "vdev9", "vdev10", "vdev11"

@@ -165,7 +165,7 @@ void keyboard_handler(uint8_t input_byte) {
     return;
 }
 
-int is_eof = 0;
+static int is_eof = 0;
 
 int keyboard_fetch_char(uint8_t which_tty) {
     uint16_t i;

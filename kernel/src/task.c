@@ -490,23 +490,23 @@ void task_scheduler(void) {
 
 extern int ts_enable;
 
-void task_quit(uint64_t return_value) {
-    int parent = task_table[current_task]->parent;
+void task_quit_self(int64_t return_value) {
+    task_quit(current_task, return_value);
+}
+
+void task_quit(int pid, int64_t return_value) {
+    int parent = task_table[pid]->parent;
     if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
         task_table[parent]->eax_p = (uint32_t)(return_value & 0xffffffff);
         task_table[parent]->edx_p = (uint32_t)((return_value >> 32) & 0xffffffff);
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
     }
-    task_terminate(current_task);
-    DISABLE_INTERRUPTS;
-    ts_enable = 1;
-    task_scheduler();
-}
-
-void task_terminate(int pid) {
     kfree((void*)task_table[pid]->file_handles);
     kfree((void*)task_table[pid]->file_handles_v2);
     kfree((void*)task_table[pid]->base);
     kfree((void*)task_table[pid]);
     task_table[pid] = EMPTY_PID;
+    DISABLE_INTERRUPTS;
+    ts_enable = 1;
+    task_scheduler();
 }

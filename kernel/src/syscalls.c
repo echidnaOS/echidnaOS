@@ -260,15 +260,13 @@ void ipc_send_packet(uint32_t pid, char* payload, uint32_t len) {
     if (((uint32_t)payload + len) >= (task_table[current_task]->pages * PAGE_SIZE)) {
         tty_kputs("\nIPC packet had a bogus length.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
     // check if the pid exists
     if ((!task_table[pid]) || (task_table[pid] == EMPTY_PID)) {
         tty_kputs("\nIPC packet targeted a non-existent PID.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
     
     payload += task_table[current_task]->base;
@@ -305,8 +303,7 @@ uint32_t ipc_resolve_name(char* server_name) {
     if (((uint32_t)server_name + kstrlen(server_name + task_table[current_task]->base)) >= (task_table[current_task]->pages * PAGE_SIZE)) {
         tty_kputs("\nIPC server name resolve request had a bogus length.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
     server_name += task_table[current_task]->base;
     // find the server name's PID
@@ -324,8 +321,7 @@ uint32_t ipc_read_packet(char* payload) {
     if (((uint32_t)payload + task_table[current_task]->ipc_queue[0].length) >= (task_table[current_task]->pages * PAGE_SIZE)) {
         tty_kputs("\nIPC payload length exceeds task limit.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
 
     payload += task_table[current_task]->base;

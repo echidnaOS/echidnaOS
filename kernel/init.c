@@ -75,10 +75,10 @@ void kernel_init(void) {
     // END OF EARLY BOOTSTRAP
     
     // setup the PIC's mask
+    ts_enable = 0;
     set_PIC0_mask(0b11111100); // disable all IRQs but timer and keyboard
     set_PIC1_mask(0b11111111);
     
-    ts_enable = 0;
     ENABLE_INTERRUPTS;
     
     char shell_path[] = "/bin/sh";
@@ -99,7 +99,8 @@ void kernel_init(void) {
         0
     };
     
-    vfs_mount("/", ":://bda", "echfs");
+    if (vfs_mount("/", ":://bda", "echfs") == -2)
+        for(;;);
     vfs_mount("/dev", "devfs", "devfs");
 
     // launch the shell

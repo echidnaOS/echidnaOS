@@ -2,6 +2,7 @@ extern real_routine
 
 global disk_load_sector
 global disk_write_sector
+global read_drive_parameters
 
 section .data
 
@@ -12,6 +13,10 @@ disk_load_sector_end:
 %define disk_write_sector_size          disk_write_sector_end - disk_write_sector_bin
 disk_write_sector_bin:                  incbin "blobs/disk_write_sector.bin"
 disk_write_sector_end:
+
+%define read_drive_parameters_size      read_drive_parameters_end - read_drive_parameters_bin
+read_drive_parameters_bin:              incbin "blobs/read_drive_parameters.bin"
+read_drive_parameters_end:
 
 function_struct:
     .source_sector_low      dd  0
@@ -72,6 +77,24 @@ disk_write_sector:
     mov ebx, function_struct
     mov esi, disk_write_sector_bin
     mov ecx, disk_write_sector_size
+    call real_routine
+    pop ebp
+    pop edi
+    pop esi
+    pop ebx
+    ret
+
+read_drive_parameters:
+; void read_drive_parameters(drive_parameters_t* struct);
+    push ebx
+    push esi
+    push edi
+    push ebp
+
+; Call real mode routine
+    mov ebx, dword [esp+20]
+    mov esi, read_drive_parameters_bin
+    mov ecx, read_drive_parameters_size
     call real_routine
     pop ebp
     pop edi

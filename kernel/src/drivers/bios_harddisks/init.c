@@ -1,11 +1,21 @@
 #include <stdint.h>
 #include <kernel.h>
 
+typedef struct {
+    uint8_t drive;
+    uint32_t cyl_count;
+    uint32_t head_count;
+    uint32_t sect_per_track;
+    uint64_t sect_count;
+} drive_parameters_t;
+
 void disk_load_sector(uint8_t, uint8_t*, uint64_t);
 void disk_write_sector(uint8_t, uint8_t*, uint64_t);
+void read_drive_parameters(drive_parameters_t* drive_parameters);
 
 #define BIOS_DRIVES_START 0x80
-#define BIOS_DRIVES_MAX 4
+#define BIOS_DRIVES_MAX 26
+#define BIOS_DRIVES_LIMIT 0xfe
 #define BYTES_PER_SECT 512
 #define CACHE_SECTS 64
 #define CACHE_SIZE (BYTES_PER_SECT * CACHE_SECTS)
@@ -40,10 +50,33 @@ int bios_harddisks_io_wrapper(uint32_t disk, uint64_t loc, int type, uint8_t pay
 
 void init_bios_harddisks(void) {    
     kputs("\nInitialising BIOS hard disks...");
-    
-    for (int i = BIOS_DRIVES_START; i < (BIOS_DRIVES_START + BIOS_DRIVES_MAX); i++) {
-        kernel_add_device(bios_harddrive_names[i - BIOS_DRIVES_START], i, 0x000000000fffffff, &bios_harddisks_io_wrapper);
-        kputs("\nLoaded "); kputs(bios_harddrive_names[i - BIOS_DRIVES_START]);
+
+    drive_parameters_t drive_parameters;
+
+    int j = BIOS_DRIVES_START;
+    for (int i = 0; i < BIOS_DRIVES_MAX; i++) {
+        for ( ; j < BIOS_DRIVES_LIMIT; j++) {
+            if (j == 0xe0)      // ignore BIOS CD
+                continue;
+            drive_parameters.drive = j;
+            read_drive_parameters(&drive_parameters);
+            if (!drive_parameters.sect_count)
+                continue;
+            else
+                goto found;
+        }
+        // limit exceeded, return
+        return;
+found:
+        kputs("\nBIOS drive:         "); kxtoa(drive_parameters.drive);
+        kputs("\nCylinder count:     "); kuitoa(drive_parameters.cyl_count);
+        kputs("\nHead count:         "); kuitoa(drive_parameters.head_count);
+        kputs("\nSect per track:     "); kuitoa(drive_parameters.sect_per_track);
+        kputs("\nSector count:       "); kuitoa(drive_parameters.sect_count);
+        kernel_add_device(bios_harddrive_names[i], j, drive_parameters.sect_count * BYTES_PER_SECT, &bios_harddisks_io_wrapper);
+        kputs("\nLoaded "); kputs(bios_harddrive_names[i]);
+
+        j++;
     }
 
     return;

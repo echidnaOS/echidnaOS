@@ -257,6 +257,7 @@ int main(int argc, char** argv) {
             }
             while ((c = fgetc(src)) != EOF)
                 fputc(c, dest);
+            fclose(dest);
             continue;
         }
         

@@ -136,55 +136,53 @@ int find_device(char* dev) {
 
 uint8_t rd_byte_u(uint64_t loc) {
     vfs_kseek(cur_handle, (int)loc, SEEK_SET);
-    char buf[1];
+    uint8_t buf[1];
     vfs_kuread(cur_handle, buf, 1);
-    return (uint8_t)buf[0];
+    return *((uint8_t*)(buf));
 }
 
 void wr_byte_u(uint64_t loc, uint8_t x) {
     vfs_kseek(cur_handle, (int)loc, SEEK_SET);
-    char buf[1];
-    buf[0] = (char)x;
-    vfs_kuwrite(cur_handle, buf, 1);
+    vfs_kuwrite(cur_handle, (char*)&x, 1);
     return;
 }
 
 uint16_t rd_word_u(uint64_t loc) {
-    uint16_t x = 0;
-    for (uint64_t i = 0; i < 2; i++)
-        x += (uint16_t)rd_byte_u(loc++) * (uint16_t)(power(0x100, i));
-    return x;
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    uint8_t buf[2];
+    vfs_kuread(cur_handle, buf, 2);
+    return *((uint16_t*)(buf));
 }
 
 void wr_word_u(uint64_t loc, uint16_t x) {
-    for (uint64_t i = 0; i < 2; i++)
-       wr_byte_u((int)(x / (power(0x100, i)) & 0xff), loc++);
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuwrite(cur_handle, (char*)&x, 2);
     return;
 }
 
 uint32_t rd_dword_u(uint64_t loc) {
-    uint32_t x = 0;
-    for (uint64_t i = 0; i < 4; i++)
-        x += (uint32_t)rd_byte_u(loc++) * (uint32_t)(power(0x100, i));
-    return x;
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    uint8_t buf[4];
+    vfs_kuread(cur_handle, buf, 4);
+    return *((uint32_t*)(buf));
 }
 
 void wr_dword_u(uint64_t loc, uint32_t x) {
-    for (uint64_t i = 0; i < 4; i++)
-       wr_byte_u((int)(x / (power(0x100, i)) & 0xff), loc++);
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuwrite(cur_handle, (char*)&x, 4);
     return;
 }
 
 uint64_t rd_qword_u(uint64_t loc) {
-    uint64_t x = 0;
-    for (uint64_t i = 0; i < 8; i++)
-        x += (uint64_t)rd_byte_u(loc++) * (uint64_t)(power(0x100, i));
-    return x;
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    uint8_t buf[8];
+    vfs_kuread(cur_handle, buf, 8);
+    return *((uint64_t*)(buf));
 }
 
 void wr_qword_u(uint64_t loc, uint64_t x) {
-    for (uint64_t i = 0; i < 8; i++)
-       wr_byte_u((int)(x / (power(0x100, i)) & 0xff), loc++);
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuwrite(cur_handle, (char*)&x, 8);
     return;
 }
 
@@ -203,56 +201,16 @@ void fstrcpy_out_u(uint64_t loc, char* str) {
 entry_t rd_entry_u(uint64_t entry) {
     entry_t res;
     uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
-
-    res.parent_id = rd_qword_u(loc);
-    loc += sizeof(uint64_t);
-    res.type = rd_byte_u(loc++);
-    fstrcpy_in_u(res.name, loc);
-    loc += FILENAME_LEN;
-    res.perms = rd_byte_u(loc++);
-    res.owner = rd_word_u(loc);
-    loc += sizeof(uint16_t);
-    res.group = rd_word_u(loc);
-    loc += sizeof(uint16_t);
-    res.hundreths = rd_byte_u(loc++);
-    res.seconds = rd_byte_u(loc++);
-    res.minutes = rd_byte_u(loc++);
-    res.hours = rd_byte_u(loc++);
-    res.day = rd_byte_u(loc++);
-    res.month = rd_byte_u(loc++);
-    res.year = rd_word_u(loc);
-    loc += sizeof(uint16_t);
-    res.payload = rd_qword_u(loc);
-    loc += sizeof(uint64_t);
-    res.size = rd_qword_u(loc);
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuread(cur_handle, (char*)&res, sizeof(entry_t));
     
     return res;
 }
 
 void wr_entry_u(uint64_t entry, entry_t entry_src) {
     uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
-
-    wr_qword_u(loc, entry_src.parent_id);
-    loc += sizeof(uint64_t);
-    wr_byte_u(loc++, entry_src.type);
-    fstrcpy_out_u(loc, entry_src.name);
-    loc += FILENAME_LEN;
-    wr_byte_u(loc++, entry_src.perms);
-    wr_word_u(loc, entry_src.owner);
-    loc += sizeof(uint16_t);
-    wr_word_u(loc, entry_src.group);
-    loc += sizeof(uint16_t);
-    wr_byte_u(loc++, entry_src.hundreths);
-    wr_byte_u(loc++, entry_src.seconds);
-    wr_byte_u(loc++, entry_src.minutes);
-    wr_byte_u(loc++, entry_src.hours);
-    wr_byte_u(loc++, entry_src.day);
-    wr_byte_u(loc++, entry_src.month);
-    wr_word_u(loc, entry_src.year);
-    loc += sizeof(uint16_t);
-    wr_qword_u(loc, entry_src.payload);
-    loc += sizeof(uint64_t);
-    wr_qword_u(loc, entry_src.size);
+    vfs_kseek(cur_handle, (int)loc, SEEK_SET);
+    vfs_kuwrite(cur_handle, (char*)&entry_src, sizeof(entry_t));
     
     return;
 }
@@ -632,7 +590,7 @@ int echfs_mount(char* dev) {
     return SUCCESS;
 }
 
-int echfs_ureadbyte(int handle) {
+int echfs_ureadbyte(void) {
     if (cur_loc >= cur_end) return -1;
     
     uint64_t block = cur_loc / BYTES_PER_BLOCK;
@@ -682,7 +640,7 @@ int echfs_uread(int handle, char* ptr, int len) {
     int i;
 
     for (i = 0; i < len; i++) {
-        int c = echfs_ureadbyte(handle);
+        int c = echfs_ureadbyte();
         if (c == -1) break;
         ptr[i] = (char)c;
     }
@@ -692,11 +650,114 @@ int echfs_uread(int handle, char* ptr, int len) {
     return i;
 }
 
-int echfs_uwritebyte(int handle) { return -1; }
+int echfs_uwritebyte(char val) {
+    uint64_t size = cur_cached_file->path_result.target.size;
+
+    uint64_t block_count = size / BYTES_PER_BLOCK;
+    if (size % BYTES_PER_BLOCK) block_count++;
+    uint64_t new_block_count = (cur_loc + 1) / BYTES_PER_BLOCK;
+    if ((cur_loc + 1) % BYTES_PER_BLOCK) new_block_count++;
+
+    if (cur_loc >= size)
+        cur_cached_file->path_result.target.size = cur_loc + 1;
+
+    if (new_block_count > block_count) {
+        uint64_t i;
+
+        /* do the big work of padding and altering the directory and cache */
+        uint64_t t_block;
+        uint64_t t_loc;
+        
+        for (i = block_count; i < new_block_count; i++) {
+            // find empty block
+            t_loc = (fatstart * BYTES_PER_BLOCK);
+            for (t_block = 0; rd_qword_u(t_loc); t_block++) t_loc += sizeof(uint64_t);
+            // write it in the allocation map
+            cur_cached_file->alloc_map = krealloc(cur_cached_file->alloc_map, sizeof(uint64_t) * (i + 1));
+            cur_cached_file->alloc_map[i] = t_block;
+            
+            // write it in the allocation table
+            t_loc = (fatstart * BYTES_PER_BLOCK);
+            
+            if (!i) {
+                cur_cached_file->path_result.target.payload = t_block;
+                cur_cached_file->path_result.target = cur_cached_file->path_result.target;
+            } else
+                wr_qword_u(t_loc + (cur_cached_file->alloc_map[i - 1] * sizeof(uint64_t)), t_block);
+        }
+        // write end of chain
+        t_loc = (fatstart * BYTES_PER_BLOCK);
+        wr_qword_u(t_loc + (cur_cached_file->alloc_map[i - 1] * sizeof(uint64_t)), END_OF_CHAIN);
+        cur_cached_file->alloc_map = krealloc(cur_cached_file->alloc_map, sizeof(uint64_t) * (i + 1));
+        cur_cached_file->alloc_map[i] = END_OF_CHAIN;
+        
+        for (i = block_count; cur_cached_file->alloc_map[i] != END_OF_CHAIN; i++) {
+            /* zero out the block */
+            for (uint64_t ii = 0; ii < BYTES_PER_BLOCK; ii++)
+                wr_byte_u((cur_cached_file->alloc_map[i] * BYTES_PER_BLOCK) + ii, 0);
+        }
+    }
+    
+    uint64_t block = cur_loc / BYTES_PER_BLOCK;
+    uint64_t offset = cur_loc % BYTES_PER_BLOCK;
+    
+    if (cur_cached_file->cache_status &&
+       (cur_cached_file->cached_block == block)) {
+        cur_cached_file->cache[offset] = val;
+        cur_cached_file->cache_status = CACHE_DIRTY;
+        cur_loc++;
+        return 0;
+    }
+    
+    // write possible dirty cache
+    if (cur_cached_file->cache_status == CACHE_DIRTY) {
+        uint64_t cached_block = cur_cached_file->cached_block;
+        vfs_kseek(cur_handle, (int)(cur_cached_file->alloc_map[cached_block] * BYTES_PER_BLOCK), SEEK_SET);
+        vfs_kuwrite(cur_handle, cur_cached_file->cache, BYTES_PER_BLOCK);
+    }
+    
+    // copy block in cache
+    cur_cached_file->cache_status = CACHE_DIRTY;
+    cur_cached_file->cached_block = block;
+    vfs_kseek(cur_handle, (int)(cur_cached_file->alloc_map[block] * BYTES_PER_BLOCK), SEEK_SET);
+    vfs_kuread(cur_handle, cur_cached_file->cache, BYTES_PER_BLOCK);
+    
+    cur_cached_file->cache[offset] = val;
+    cur_loc++;
+    
+    return 0;
+}
 
 extern int write_stat;
 
-int echfs_uwrite(int handle, char* ptr, int len) { return -1; }
+int echfs_uwrite(int handle, char* ptr, int len) {
+    write_stat = 0;
+
+    int dev_n = echfs_handles[handle].device;
+    blocks = mounts[dev_n].blocks;
+    fatsize = mounts[dev_n].fatsize;
+    fatstart = mounts[dev_n].fatstart;
+    dirsize = mounts[dev_n].dirsize;
+    dirstart = mounts[dev_n].dirstart;
+    datastart = mounts[dev_n].datastart;
+    cur_handle = echfs_handles[handle].dev_handle;
+    cur_cached_file = echfs_handles[handle].cached_file;
+    cur_loc = echfs_handles[handle].ptr;
+    cur_end = echfs_handles[handle].end;
+
+    int i;
+
+    for (i = 0; i < len; i++) {
+        int c = echfs_uwritebyte(ptr[i]);
+        if (c == -1) break;
+    }
+    wr_entry_u(cur_cached_file->path_result.target_entry, cur_cached_file->path_result.target);
+
+    echfs_handles[handle].ptr = cur_loc;
+
+    return i;
+}
+
 
 int echfs_read(char* path, uint64_t loc, char* dev) {
     uint64_t i;
@@ -989,6 +1050,7 @@ int echfs_open(char* path, int flags, int mode, char* dev) {
         if (flags & O_CREAT) {
             if (echfs_create(path, 0, dev) == -2)
                 return -1;
+            echfs_get_metadata(path, &metadata, FILE_TYPE, dev);
         } else
             return -1;
     }

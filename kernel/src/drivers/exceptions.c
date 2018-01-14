@@ -8,7 +8,6 @@ void except_div0(uint32_t fault_eip, uint32_t fault_cs) {
     text_putchar(':', 0);
     tty_kxtoa(fault_eip, 0);
     tty_kputs("\nTask terminated.\n", 0);
-    task_terminate(current_task);
-    task_scheduler();
+    task_quit(current_task, -1);
 
 }

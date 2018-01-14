@@ -5,10 +5,10 @@
 #define SUCCESS 0
 #define EOF -1
 
-mountpoint_t* mountpoints;
 filesystem_t* filesystems;
-int mountpoints_ptr = 0;
-int filesystems_ptr = 0;
+static mountpoint_t* mountpoints;
+static int mountpoints_ptr = 0;
+static int filesystems_ptr = 0;
 
 int vfs_translate_mnt(char* path, char** local_path) {
     int guess = FAILURE;

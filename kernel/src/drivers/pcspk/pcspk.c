@@ -2,9 +2,9 @@
 #include <kernel.h>
 #include <cio.h>
 
-uint16_t div = 0;
-uint32_t freq = 0;
-int get_freq = 4;
+static uint16_t div = 0;
+static uint32_t freq = 0;
+static int get_freq = 4;
 
 int pcspk_io_wrapper(uint32_t unused0, uint64_t unused1, int type, uint8_t payload) {
 

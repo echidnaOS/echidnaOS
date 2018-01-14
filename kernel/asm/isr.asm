@@ -27,7 +27,7 @@ extern lseek
 extern getpid
 extern signal
 extern task_fork
-extern task_quit
+extern task_quit_self
 extern alloc
 extern free
 extern realloc
@@ -68,7 +68,7 @@ read_stat dd 0
 write_stat dd 0
 
 routine_list:
-        dd      task_quit               ; 0x00
+        dd      task_quit_self          ; 0x00
         dd      general_execute         ; 0x01
         dd      0 ;general_execute_block; 0x02 - dummy entry
         dd      0                       ; 0x03

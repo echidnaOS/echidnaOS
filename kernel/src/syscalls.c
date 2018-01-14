@@ -2,7 +2,11 @@
 #include <kernel.h>
 
 int lseek(int handle, int offset, int type) {
-    
+
+    // redirect to new VFS stack
+    return vfs_seek(handle, offset, type);
+
+    /*
     if (handle < 0)
         return -1;
 
@@ -34,12 +38,17 @@ int lseek(int handle, int offset, int type) {
         default:
             return -1;
     }
+    */
 }
 
 extern int read_stat;
 
 int read(int handle, char* ptr, int len) {
 
+    // redirect to new VFS stack
+    return vfs_uread(handle, ptr, len);
+
+    /*
     ptr += task_table[current_task]->base;
     
     read_stat = 0;
@@ -76,6 +85,7 @@ int read(int handle, char* ptr, int len) {
     }
     
     return i;
+    */
 
 }
 
@@ -83,6 +93,10 @@ extern int write_stat;
 
 int write(int handle, char* ptr, int len) {
 
+    // redirect to new VFS stack
+    return vfs_uwrite(handle, ptr, len);
+
+    /*
     ptr += task_table[current_task]->base;
     
     write_stat = 0;
@@ -116,10 +130,16 @@ int write(int handle, char* ptr, int len) {
     }
     
     return i;
+    */
 
 }
 
 int open(char* path, int flags, int mode) {
+
+    // redirect to new VFS stack
+    return vfs_open(path, flags, mode);
+
+    /*
     vfs_metadata_t metadata;
     
     path += task_table[current_task]->base;
@@ -169,11 +189,16 @@ int open(char* path, int flags, int mode) {
         }
         return create_file_handle(current_task, new_handle);
     }
+    */
 
 }
 
 int close(int handle) {
 
+    // redirect to new VFS stack
+    return vfs_close(handle);
+
+    /*
     if (handle < 0)
         return -1;
         
@@ -186,6 +211,7 @@ int close(int handle) {
     task_table[current_task]->file_handles[handle].free = 1;
     
     return 0;
+    */
     
 }
 
@@ -234,15 +260,13 @@ void ipc_send_packet(uint32_t pid, char* payload, uint32_t len) {
     if (((uint32_t)payload + len) >= (task_table[current_task]->pages * PAGE_SIZE)) {
         tty_kputs("\nIPC packet had a bogus length.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
     // check if the pid exists
     if ((!task_table[pid]) || (task_table[pid] == EMPTY_PID)) {
         tty_kputs("\nIPC packet targeted a non-existent PID.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
     
     payload += task_table[current_task]->base;
@@ -279,8 +303,7 @@ uint32_t ipc_resolve_name(char* server_name) {
     if (((uint32_t)server_name + kstrlen(server_name + task_table[current_task]->base)) >= (task_table[current_task]->pages * PAGE_SIZE)) {
         tty_kputs("\nIPC server name resolve request had a bogus length.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
     server_name += task_table[current_task]->base;
     // find the server name's PID
@@ -298,8 +321,7 @@ uint32_t ipc_read_packet(char* payload) {
     if (((uint32_t)payload + task_table[current_task]->ipc_queue[0].length) >= (task_table[current_task]->pages * PAGE_SIZE)) {
         tty_kputs("\nIPC payload length exceeds task limit.", 0);
         tty_kputs("\nTask terminated.\n", 0);
-        task_terminate(current_task);
-        task_scheduler();
+        task_quit(current_task, -1);
     }
 
     payload += task_table[current_task]->base;

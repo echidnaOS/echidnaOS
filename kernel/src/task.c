@@ -20,20 +20,11 @@ void task_init(void) {
 
 int current_task = 0;
 
-int idle_cpu = 1;
+static int idle_cpu = 1;
 
 void task_spinup(void*);
 
-const task_t prototype_task = {KRN_STAT_ACTIVE_TASK,0,0,0,
-                               0,0,0,0,0,0,0,0,0,
-                               0x1b,0x23,0x23,0x23,0x23,0x23,0x202,
-                               "","","",
-                               "","","",
-                               "",0,0,0,0,0,0,0,
-                               0,0,
-                               0,0,
-                               0,0,0,0,0,0,
-                               0,0};
+static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0x1b,0x23,0x23,0x23,0x23,0x23,0x202 };
 
 int task_create(task_t new_task) {
     // find an empty entry in the task table
@@ -57,26 +48,26 @@ int task_create(task_t new_task) {
 extern filesystem_t* filesystems;
 int vfs_translate_fs(int mountpoint);
 
-void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
+void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
     
     // forks the current task in a Unix-like way
 
-    task_table[current_task]->eax_p = eax_r;
-    task_table[current_task]->ebx_p = ebx_r;
-    task_table[current_task]->ecx_p = ecx_r;
-    task_table[current_task]->edx_p = edx_r;
-    task_table[current_task]->esi_p = esi_r;
-    task_table[current_task]->edi_p = edi_r;
-    task_table[current_task]->ebp_p = ebp_r;
-    task_table[current_task]->esp_p = esp_r;
-    task_table[current_task]->eip_p = eip_r;
-    task_table[current_task]->cs_p = cs_r;
-    task_table[current_task]->ds_p = ds_r;
-    task_table[current_task]->es_p = es_r;
-    task_table[current_task]->fs_p = fs_r;
-    task_table[current_task]->gs_p = gs_r;
-    task_table[current_task]->ss_p = ss_r;
-    task_table[current_task]->eflags_p = eflags_r;
+    task_table[current_task]->cpu.eax = eax;
+    task_table[current_task]->cpu.ebx = ebx;
+    task_table[current_task]->cpu.ecx = ecx;
+    task_table[current_task]->cpu.edx = edx;
+    task_table[current_task]->cpu.esi = esi;
+    task_table[current_task]->cpu.edi = edi;
+    task_table[current_task]->cpu.ebp = ebp;
+    task_table[current_task]->cpu.esp = esp;
+    task_table[current_task]->cpu.eip = eip;
+    task_table[current_task]->cpu.cs = cs;
+    task_table[current_task]->cpu.ds = ds;
+    task_table[current_task]->cpu.es = es;
+    task_table[current_task]->cpu.fs = fs;
+    task_table[current_task]->cpu.gs = gs;
+    task_table[current_task]->cpu.ss = ss;
+    task_table[current_task]->cpu.eflags = eflags;
     
     task_t new_process = *task_table[current_task];
 
@@ -91,7 +82,7 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
     // allocate memory for the forked process
     if ((new_process.base = (uint32_t)kalloc(task_size)) == 0) {
         // fail
-        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
         task_scheduler();
     }
     
@@ -99,7 +90,7 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
     if (!(new_process.file_handles = kalloc(task_table[current_task]->file_handles_ptr * sizeof(file_handle_t)))) {
         // fail
         kfree((void*)new_process.base);
-        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
         task_scheduler();
     }
     
@@ -111,7 +102,7 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
         // fail
         kfree((void*)new_process.base);
         kfree(new_process.file_handles);
-        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
         task_scheduler();
     }
 
@@ -139,15 +130,15 @@ void task_fork(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, u
         kfree((void*)new_process.base);
         kfree(new_process.file_handles);
         kfree(new_process.file_handles_v2);
-        task_table[current_task]->eax_p = (uint32_t)(FAILURE);
+        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
         task_scheduler();
     }
     
     // return the PID to the forking process
-    task_table[current_task]->eax_p = (uint32_t)new_pid;
+    task_table[current_task]->cpu.eax = (uint32_t)new_pid;
     
     // return 0 in the child process
-    task_table[new_pid]->eax_p = 0;
+    task_table[new_pid]->cpu.eax = 0;
     
     task_scheduler();
 }
@@ -179,7 +170,9 @@ int general_execute(task_info_t* task_info) {
     
     if (vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2) return FAILURE;
 
-    task_t new_task = prototype_task;
+    task_t new_task = {0};
+    new_task.status = KRN_STAT_ACTIVE_TASK;
+    new_task.cpu = default_cpu_status;
     new_task.parent = current_task;    // set parent
     
     new_task.pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
@@ -210,8 +203,8 @@ int general_execute(task_info_t* task_info) {
         return FAILURE;
     }
     
-    task_table[new_pid]->esp_p = ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0;
-    task_table[new_pid]->eip_p = TASK_RESERVED_SPACE;
+    task_table[new_pid]->cpu.esp = ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0;
+    task_table[new_pid]->cpu.eip = TASK_RESERVED_SPACE;
     
     task_table[new_pid]->heap_base = new_task.pages * PAGE_SIZE;
     task_table[new_pid]->heap_size = 0;
@@ -237,7 +230,20 @@ int general_execute(task_info_t* task_info) {
     kstrcpy(handle.path, ptr_stderr);
     handle.flags = O_WRONLY;
     create_file_handle(new_pid, handle);
-    
+
+    // create file handles for std streams
+    // this is a huge hack FIXME
+    int khandle;
+    khandle = vfs_kopen(ptr_stdin, O_RDONLY, 0);
+    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
+    task_table[0]->file_handles_v2[khandle].free = 1;
+    khandle = vfs_kopen(ptr_stdout, O_WRONLY, 0);
+    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
+    task_table[0]->file_handles_v2[khandle].free = 1;
+    khandle = vfs_kopen(ptr_stderr, O_WRONLY, 0);
+    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
+    task_table[0]->file_handles_v2[khandle].free = 1;
+
     *((int*)(task_table[new_pid]->base + 0x1000)) = task_info->argc;
     int argv_limit = 0x4000;
     char** argv = (char**)(task_table[new_pid]->base + 0x1010);
@@ -356,24 +362,24 @@ uint32_t task_start(task_info_t* task_info) {
     return new_task;
 }
 */
-void task_switch(uint32_t eax_r, uint32_t ebx_r, uint32_t ecx_r, uint32_t edx_r, uint32_t esi_r, uint32_t edi_r, uint32_t ebp_r, uint32_t ds_r, uint32_t es_r, uint32_t fs_r, uint32_t gs_r, uint32_t eip_r, uint32_t cs_r, uint32_t eflags_r, uint32_t esp_r, uint32_t ss_r) {
+void task_switch(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
 
-    task_table[current_task]->eax_p = eax_r;
-    task_table[current_task]->ebx_p = ebx_r;
-    task_table[current_task]->ecx_p = ecx_r;
-    task_table[current_task]->edx_p = edx_r;
-    task_table[current_task]->esi_p = esi_r;
-    task_table[current_task]->edi_p = edi_r;
-    task_table[current_task]->ebp_p = ebp_r;
-    task_table[current_task]->esp_p = esp_r;
-    task_table[current_task]->eip_p = eip_r;
-    task_table[current_task]->cs_p = cs_r;
-    task_table[current_task]->ds_p = ds_r;
-    task_table[current_task]->es_p = es_r;
-    task_table[current_task]->fs_p = fs_r;
-    task_table[current_task]->gs_p = gs_r;
-    task_table[current_task]->ss_p = ss_r;
-    task_table[current_task]->eflags_p = eflags_r;
+    task_table[current_task]->cpu.eax = eax;
+    task_table[current_task]->cpu.ebx = ebx;
+    task_table[current_task]->cpu.ecx = ecx;
+    task_table[current_task]->cpu.edx = edx;
+    task_table[current_task]->cpu.esi = esi;
+    task_table[current_task]->cpu.edi = edi;
+    task_table[current_task]->cpu.ebp = ebp;
+    task_table[current_task]->cpu.esp = esp;
+    task_table[current_task]->cpu.eip = eip;
+    task_table[current_task]->cpu.cs = cs;
+    task_table[current_task]->cpu.ds = ds;
+    task_table[current_task]->cpu.es = es;
+    task_table[current_task]->cpu.fs = fs;
+    task_table[current_task]->cpu.gs = gs;
+    task_table[current_task]->cpu.ss = ss;
+    task_table[current_task]->cpu.eflags = eflags;
 
     current_task++;
     task_scheduler();
@@ -409,7 +415,7 @@ void task_scheduler(void) {
                 case 0:
                     if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->eax_p = (uint32_t)c;
+                        task_table[current_task]->cpu.eax = (uint32_t)c;
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
                         current_task++;
@@ -420,7 +426,7 @@ void task_scheduler(void) {
                     if ((c = vfs_kwrite(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc,
                                         task_table[current_task]->iowait_payload)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->eax_p = (uint32_t)c;
+                        task_table[current_task]->cpu.eax = (uint32_t)c;
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
                         current_task++;
@@ -436,7 +442,7 @@ void task_scheduler(void) {
                         current_task++;
                         continue;
                     } else {
-                        task_table[current_task]->eax_p = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->cpu.eax = (uint32_t)(task_table[current_task]->iowait_done + done);
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
@@ -449,7 +455,7 @@ void task_scheduler(void) {
                         current_task++;
                         continue;
                     } else {
-                        task_table[current_task]->eax_p = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->cpu.eax = (uint32_t)(task_table[current_task]->iowait_done + done);
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
@@ -477,23 +483,23 @@ void task_scheduler(void) {
 
 extern int ts_enable;
 
-void task_quit(uint64_t return_value) {
-    int parent = task_table[current_task]->parent;
-    if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
-        task_table[parent]->eax_p = (uint32_t)(return_value & 0xffffffff);
-        task_table[parent]->edx_p = (uint32_t)((return_value >> 32) & 0xffffffff);
-        task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
-    }
-    task_terminate(current_task);
-    DISABLE_INTERRUPTS;
-    ts_enable = 1;
-    task_scheduler();
+void task_quit_self(int64_t return_value) {
+    task_quit(current_task, return_value);
 }
 
-void task_terminate(int pid) {
+void task_quit(int pid, int64_t return_value) {
+    int parent = task_table[pid]->parent;
+    if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
+        task_table[parent]->cpu.eax = (uint32_t)(return_value & 0xffffffff);
+        task_table[parent]->cpu.edx = (uint32_t)((return_value >> 32) & 0xffffffff);
+        task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
+    }
     kfree((void*)task_table[pid]->file_handles);
     kfree((void*)task_table[pid]->file_handles_v2);
     kfree((void*)task_table[pid]->base);
     kfree((void*)task_table[pid]);
     task_table[pid] = EMPTY_PID;
+    DISABLE_INTERRUPTS;
+    ts_enable = 1;
+    task_scheduler();
 }

@@ -16,8 +16,8 @@ typedef struct {
     int device;
 } devfs_handle_t;
 
-devfs_handle_t* devfs_handles = (devfs_handle_t*)0;
-int devfs_handles_ptr = 0;
+static devfs_handle_t* devfs_handles = (devfs_handle_t*)0;
+static int devfs_handles_ptr = 0;
 
 int devfs_create_handle(devfs_handle_t handle) {
     int handle_n;
@@ -57,15 +57,33 @@ int devfs_write(char* path, uint8_t val, uint64_t loc, char* dev) {
     return FAILURE;
 }
 
+extern int write_stat;
+
 int devfs_uwrite(int handle, char* ptr, int len) {
+    write_stat = 0;
+
     int device = devfs_handles[handle].device;
-    for (int i = 0; i < len; i++) {
-        int c = (*device_list[device].io_wrapper)(device_list[device].gp_value, devfs_handles[handle].ptr, 1, ptr[i]);
-        if (c == FAILURE)
-            return -1;
-        devfs_handles[handle].ptr++;
+    int gp_value = device_list[device].gp_value;
+    int i_ptr = devfs_handles[handle].ptr;
+    int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t) = device_list[device].io_wrapper;
+    int i;
+    for (i = 0; i < len; i++) {
+        int c = (*io_wrapper)(gp_value, i_ptr, 1, ptr[i]);
+        switch (c) {
+            case FAILURE:
+            case -1:
+                goto out;
+            case IO_NOT_READY:
+                write_stat = 1;
+                goto out;
+            default:
+                break;
+        }
+        i_ptr++;
     }
-    return SUCCESS;
+out:
+    devfs_handles[handle].ptr = i_ptr;
+    return i;
 }
 
 int devfs_read(char* path, uint64_t loc, char* dev) {
@@ -77,7 +95,11 @@ int devfs_read(char* path, uint64_t loc, char* dev) {
     return FAILURE;
 }
 
+extern int read_stat;
+
 int devfs_uread(int handle, char* ptr, int len) {
+    read_stat = 0;
+
     int device = devfs_handles[handle].device;
     int gp_value = device_list[device].gp_value;
     int i_ptr = devfs_handles[handle].ptr;
@@ -88,6 +110,9 @@ int devfs_uread(int handle, char* ptr, int len) {
         switch (c) {
             case FAILURE:
             case -1:
+                goto out;
+            case IO_NOT_READY:
+                read_stat = 1;
                 goto out;
             default:
                 break;

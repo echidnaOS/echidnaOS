@@ -50,6 +50,18 @@ void text_clear(uint8_t which_tty) {
     return;
 }
 
+void text_clear_no_move(uint8_t which_tty) {
+    uint32_t i;
+    clear_cursor(which_tty);
+    for (i=0; i<VIDEO_BOTTOM; i += 2) {
+        tty[which_tty].field[i] = ' ';
+        tty[which_tty].field[i+1] = tty[which_tty].text_palette;
+    }
+    draw_cursor(which_tty);
+    tty_refresh(which_tty);
+    return;
+}
+
 void text_enable_cursor(uint8_t which_tty) {
     tty[which_tty].cursor_status=1;
     draw_cursor(which_tty);
@@ -108,7 +120,7 @@ dont_move:
     return;
 }
 
-uint8_t ansi_colours[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+static uint8_t ansi_colours[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
 void sgr(uint8_t which_tty) {
 
@@ -198,6 +210,15 @@ void escape_parse(char c, uint8_t which_tty) {
             break;
         case 'm':
             sgr(which_tty);
+            break;
+        case 'J':
+            switch (tty[which_tty].esc_value0) {
+                case 2:
+                    text_clear_no_move(which_tty);
+                    break;
+                default:
+                    break;
+            }
             break;
         /* non-standard sequences */
         case 'r': /* enter/exit raw mode */

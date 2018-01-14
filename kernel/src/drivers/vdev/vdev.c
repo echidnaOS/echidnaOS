@@ -16,7 +16,7 @@ typedef struct {
     uint32_t payload_out_flag;
 } vdev_t;
 
-char* vdev_names[] = {
+static char* vdev_names[] = {
     "vdev0", "vdev1", "vdev2", "vdev3",
     "vdev4", "vdev5", "vdev6", "vdev7",
     "vdev8", "vdev9", "vdev10", "vdev11"
@@ -45,7 +45,7 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
         if (task_table[vdevs[vdev].pid]->status == KRN_STAT_VDEVWAIT_TASK) {
             task_table[vdevs[vdev].pid]->status = KRN_STAT_ACTIVE_TASK;
             /* return vdev id to the vdev manager task */
-            task_table[vdevs[vdev].pid]->eax_p = vdev;
+            task_table[vdevs[vdev].pid]->cpu.eax = vdev;
         }
         vdevs[vdev].status_out = NOT_READY;
         *( (int*)(vdevs[vdev].payload_out_flag + task_table[vdevs[vdev].pid]->base) ) = 1;
@@ -56,7 +56,7 @@ int vdev_io_wrapper(uint32_t vdev, uint64_t unused, int type, uint8_t payload) {
         if (task_table[vdevs[vdev].pid]->status == KRN_STAT_VDEVWAIT_TASK) {
             task_table[vdevs[vdev].pid]->status = KRN_STAT_ACTIVE_TASK;
             /* return vdev id to the vdev manager task */
-            task_table[vdevs[vdev].pid]->eax_p = vdev;
+            task_table[vdevs[vdev].pid]->cpu.eax = vdev;
         }
         vdevs[vdev].status_in = NOT_READY;
         *( (int*)(vdevs[vdev].payload_in_flag + task_table[vdevs[vdev].pid]->base) ) = 1;

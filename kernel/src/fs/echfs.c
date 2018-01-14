@@ -21,16 +21,17 @@
 #define CACHE_READY 1
 #define CACHE_DIRTY 2
 
-char* device;
-uint64_t blocks;
-uint64_t fatsize;
-uint64_t fatstart;
-uint64_t dirsize;
-uint64_t dirstart;
-uint64_t datastart;
-int cur_handle;
-long cur_loc;
-long cur_end;
+static char* device;
+static uint64_t blocks;
+static uint64_t fatsize;
+static uint64_t fatstart;
+static uint64_t dirsize;
+static uint64_t dirstart;
+static uint64_t datastart;
+static int cur_handle;
+static long cur_loc;
+static long cur_end;
+
 
 typedef struct {
     char name[128];
@@ -42,8 +43,8 @@ typedef struct {
     uint64_t datastart;
 } mount_t;
 
-mount_t* mounts;
-int mounts_ptr = 0;
+static mount_t* mounts;
+static int mounts_ptr = 0;
 
 typedef struct {
     uint64_t parent_id;
@@ -81,10 +82,10 @@ typedef struct {
     uint64_t* alloc_map;
 } cached_file_t;
 
-cached_file_t* cur_cached_file;
+static cached_file_t* cur_cached_file;
 
-cached_file_t* cached_files;
-int cached_files_ptr = 0;
+static cached_file_t* cached_files;
+static int cached_files_ptr = 0;
 
 typedef struct {
     int free;
@@ -99,8 +100,8 @@ typedef struct {
     cached_file_t* cached_file;
 } echfs_handle_t;
 
-echfs_handle_t* echfs_handles = (echfs_handle_t*)0;
-int echfs_handles_ptr = 0;
+static echfs_handle_t* echfs_handles = (echfs_handle_t*)0;
+static int echfs_handles_ptr = 0;
 
 int echfs_create_handle(echfs_handle_t handle) {
     int handle_n;
@@ -661,7 +662,11 @@ int echfs_ureadbyte(int handle) {
     return cur_cached_file->cache[offset];
 }
 
+extern int read_stat;
+
 int echfs_uread(int handle, char* ptr, int len) {
+    read_stat = 0;
+
     int dev_n = echfs_handles[handle].device;
     blocks = mounts[dev_n].blocks;
     fatsize = mounts[dev_n].fatsize;
@@ -686,6 +691,10 @@ int echfs_uread(int handle, char* ptr, int len) {
 
     return i;
 }
+
+int echfs_uwritebyte(int handle) { return -1; }
+
+extern int write_stat;
 
 int echfs_uwrite(int handle, char* ptr, int len) { return -1; }
 
@@ -963,6 +972,7 @@ int echfs_get_metadata(char* path, vfs_metadata_t* metadata, int type, char* dev
     
     path_result_t path_result = path_resolver(path, type);
 
+    if (path_result.failure) return FAILURE;
     if (path_result.not_found) return FAILURE;
     
     metadata->filetype = type;

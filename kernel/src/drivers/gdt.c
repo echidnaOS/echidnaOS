@@ -4,14 +4,14 @@
 extern uint32_t TSS;
 extern uint32_t TSS_size;
 
-GDT_entry_t GDT[8];
+static GDT_entry_t GDT[8];
 
 typedef struct {
     uint16_t size;
     uint32_t base;
 } __attribute__((packed)) GDT_ptr_t;
 
-GDT_ptr_t GDT_ptr = {
+static GDT_ptr_t GDT_ptr = {
     (uint16_t)(sizeof(GDT) - 1),
     (uint32_t)GDT
 };

@@ -312,10 +312,18 @@ int vfs_kopen(char* path, int flags, int mode) {
     return create_file_handle_v2(0, handle);
 }
 
+extern int read_stat;
+
 int vfs_uread(int handle, char* ptr, int len) {
     ptr += task_table[current_task]->base;
     int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
-    return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
+    if (len <= MAX_SIMULTANOUS_VFS_ACCESS)
+        return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
+    else {
+        int ret = (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, MAX_SIMULTANOUS_VFS_ACCESS);
+        read_stat = 1;
+        return ret;
+    }
 }
 
 int vfs_kuread(int handle, char* ptr, int len) {
@@ -323,10 +331,18 @@ int vfs_kuread(int handle, char* ptr, int len) {
     return (*filesystems[filesystem].uread)(task_table[0]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
+extern int write_stat;
+
 int vfs_uwrite(int handle, char* ptr, int len) {
     ptr += task_table[current_task]->base;
     int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
-    return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
+    if (len <= MAX_SIMULTANOUS_VFS_ACCESS)
+        return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
+    else {
+        int ret = (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, MAX_SIMULTANOUS_VFS_ACCESS);
+        write_stat = 1;
+        return ret;
+    }
 }
 
 int vfs_kuwrite(int handle, char* ptr, int len) {

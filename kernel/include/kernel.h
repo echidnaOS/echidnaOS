@@ -43,6 +43,8 @@
 #define SEEK_END 1
 #define SEEK_CUR 2
 
+#define MAX_SIMULTANOUS_VFS_ACCESS  4096
+
 // memory statuses
 
 #define KRN_STAT_ACTIVE_TASK    1

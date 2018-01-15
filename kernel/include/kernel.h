@@ -4,6 +4,7 @@
 #define __KERNEL_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 // kernel tunables
 
@@ -94,6 +95,9 @@
 #define KERNEL_PAGE             0x800000
 
 void full_identity_map(void);
+
+void* kmalloc(size_t);
+void kmfree(void*, size_t);
 
 typedef struct {
     uint8_t version_min;
@@ -359,12 +363,6 @@ void task_quit(int pid, int64_t return_value);
 int general_execute(task_info_t* task_info);
 
 typedef struct {
-    int free;
-    uint32_t size;
-    uint32_t prev_chunk;
-} heap_chunk_t;
-
-typedef struct {
     uint16_t limit_low;
     uint16_t base_low;
     uint8_t base_mid;
@@ -409,9 +407,8 @@ void panic(const char *msg);
 
 void task_init(void);
 
-void init_kalloc(void);
-void* kalloc(uint32_t size);
-void* krealloc(void* addr, uint32_t new_size);
+void* kalloc(size_t size);
+void* krealloc(void* addr, size_t new_size);
 void kfree(void* addr);
 
 void ipc_send_packet(uint32_t pid, char* payload, uint32_t len);

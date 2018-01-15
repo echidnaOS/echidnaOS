@@ -39,7 +39,6 @@ void kernel_init(void) {
 
     // detect memory
     memory_size = detect_mem();
-    init_kalloc();
     
     // increase speed of the PIT
     set_pit_freq(KRNL_PIT_FREQ);

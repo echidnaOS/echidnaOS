@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 #include <kernel.h>
 
 int create_file_handle(int pid, file_handle_t handle) {
@@ -89,124 +90,57 @@ uint32_t kstrlen(char* str) {
     return len;
 }
 
-void init_kalloc(void) {
-    // creates the first memory chunk
-    heap_chunk_t* root_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
-    
-    root_chunk->free = 1;
-    root_chunk->size = memory_size - KRNL_MEMORY_BASE - sizeof(heap_chunk_t);
-    root_chunk->prev_chunk = 0;
+typedef struct {
+    size_t pages;
+    size_t size;
+} kalloc_metadata_t;
+
+void* kalloc(size_t size) {
+    size_t pages = size / PAGE_SIZE;
+    if (size % PAGE_SIZE) pages++;
+
+    // allocate the size in page + allocate an additional page for metadata
+    char* ptr = kmalloc(pages + 1);
+    if (!ptr)
+        return (void*)0;
+    kalloc_metadata_t* metadata = (kalloc_metadata_t*)ptr;
+    ptr += PAGE_SIZE;
+
+    metadata->pages = pages;
+    metadata->size = size;
+
+    return (void*)ptr;
+}
+
+void kfree(void* addr) {
+    kalloc_metadata_t* metadata = (kalloc_metadata_t*)((size_t)addr - PAGE_SIZE);
+
+    kmfree((void*)metadata, metadata->pages + 1);
 
     return;
 }
 
-void* kalloc(uint32_t size) {
-    // search for a big enough, free heap chunk
-    heap_chunk_t* heap_chunk = (heap_chunk_t*)KRNL_MEMORY_BASE;
-    uint32_t heap_chunk_ptr;
-    char* area;
-    
-    // avoid odd memory allocations, align at 4
-    while (size % 4) size++;
-
-    for (;;) {
-        if ((heap_chunk->free) && (heap_chunk->size > (size + sizeof(heap_chunk_t)))) {
-            // split off a new heap_chunk
-            heap_chunk_t* new_chunk;
-            new_chunk = (heap_chunk_t*)((uint32_t)heap_chunk + size + sizeof(heap_chunk_t));
-            new_chunk->free = 1;
-            new_chunk->size = heap_chunk->size - (size + sizeof(heap_chunk_t));
-            new_chunk->prev_chunk = (uint32_t)heap_chunk;
-            // resize the old chunk
-            heap_chunk->free = !heap_chunk->free;
-            heap_chunk->size = size;
-            // tell the next chunk where the old chunk is now
-            heap_chunk_t* next_chunk;
-            next_chunk = (heap_chunk_t*)((uint32_t)new_chunk + new_chunk->size + sizeof(heap_chunk_t));
-            next_chunk->prev_chunk = (uint32_t)new_chunk;
-            area = (char*)((uint32_t)heap_chunk + sizeof(heap_chunk_t));
-            break;
-        } else {
-            heap_chunk_ptr = (uint32_t)heap_chunk;
-            heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
-            if (heap_chunk_ptr >= memory_size)
-                return (void*)0;
-            heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
-            continue;
-        }
-    }
-    
-    // zero the memory
-    for (uint32_t i = 0; i < size; i++)
-        area[i] = 0;
-    return (void*)area;
-}
-
-void* krealloc(void* addr, uint32_t new_size) {
+void* krealloc(void* addr, size_t new_size) {
     if (!addr) return kalloc(new_size);
     if (!new_size) {
         kfree(addr);
         return (void*)0;
     }
 
-    uint32_t heap_chunk_ptr = (uint32_t)addr;
-    
-    heap_chunk_ptr -= sizeof(heap_chunk_t);
-    heap_chunk_t* heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
+    kalloc_metadata_t* metadata = (kalloc_metadata_t*)((size_t)addr - PAGE_SIZE);
     
     char* new_ptr;
     if ((new_ptr = kalloc(new_size)) == 0)
         return (void*)0;
-        
-    while (new_size % 4) new_size++;
     
-    if (heap_chunk->size > new_size)
+    if (metadata->size > new_size)
         kmemcpy(new_ptr, (char*)addr, new_size);
     else
-        kmemcpy(new_ptr, (char*)addr, heap_chunk->size);
+        kmemcpy(new_ptr, (char*)addr, metadata->size);
     
     kfree(addr);
     
     return new_ptr;
-}
-
-void kfree(void* addr) {
-    uint32_t heap_chunk_ptr = (uint32_t)addr;
-    
-    heap_chunk_ptr -= sizeof(heap_chunk_t);
-    heap_chunk_t* heap_chunk = (heap_chunk_t*)heap_chunk_ptr;
-    
-    heap_chunk_ptr += heap_chunk->size + sizeof(heap_chunk_t);
-    heap_chunk_t* next_chunk = (heap_chunk_t*)heap_chunk_ptr;
-    
-    heap_chunk_t* prev_chunk = (heap_chunk_t*)heap_chunk->prev_chunk;
-    
-    // flag chunk as free
-    heap_chunk->free = 1;
-    
-    if ((uint32_t)next_chunk >= memory_size) goto skip_next_chunk;
-    
-    // if the next chunk is free as well, fuse the chunks into a single one
-    if (next_chunk->free) {
-        heap_chunk->size += next_chunk->size + sizeof(heap_chunk_t);
-        // update next chunk ptr
-        next_chunk = (heap_chunk_t*)((uint32_t)next_chunk + next_chunk->size + sizeof(heap_chunk_t));
-        // update new next chunk's prev to ourselves
-        next_chunk->prev_chunk = (uint32_t)heap_chunk;
-    }
-
-skip_next_chunk:
-    // if the previous chunk is free as well, fuse the chunks into a single one
-    if (prev_chunk) {       // if its not the first chunk
-        if (prev_chunk->free) {
-            prev_chunk->size += heap_chunk->size + sizeof(heap_chunk_t);
-            // notify the next chunk of the change
-            if ((uint32_t)next_chunk < memory_size)
-                next_chunk->prev_chunk = (uint32_t)prev_chunk;
-        }
-    }
-    
-    return;
 }
 
 uint64_t power(uint64_t x, uint64_t y) {

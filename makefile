@@ -1,3 +1,4 @@
+ECHFS = echidnafs/echfs-utils
 KERNEL_FILES = $(shell find kernel -type f -name '*.c') $(shell find kernel -type f -name '*.asm') $(shell find kernel -type f -name '*.real') $(shell find kernel -type f -name '*.h')
 
 notarget: echidna.img
@@ -21,19 +22,19 @@ clean:
 
 echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh
 	dd bs=32768 count=256 if=/dev/zero of=initramfs.img
-	echidnafs/echfs-utils initramfs.img format
-	echidnafs/echfs-utils initramfs.img mkdir dev
-	echidnafs/echfs-utils initramfs.img mkdir bin
-	echidnafs/echfs-utils initramfs.img mkdir sys
-	echidnafs/echfs-utils initramfs.img mkdir docs
-	echidnafs/echfs-utils initramfs.img import ./shell/sh /sys/init
-	echidnafs/echfs-utils initramfs.img import ./LICENSE.md /docs/license
+	$(ECHFS) initramfs.img format
+	$(ECHFS) initramfs.img mkdir dev
+	$(ECHFS) initramfs.img mkdir bin
+	$(ECHFS) initramfs.img mkdir sys
+	$(ECHFS) initramfs.img mkdir docs
+	$(ECHFS) initramfs.img import ./shell/sh /sys/init
+	$(ECHFS) initramfs.img import ./LICENSE.md /docs/license
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
-	echidnafs/echfs-utils echidna.img format
-	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
-	echidnafs/echfs-utils echidna.img import ./initramfs.img initramfs.img
+	$(ECHFS) echidna.img format
+	$(ECHFS) echidna.img import ./kernel/echidna.bin echidna.bin
+	$(ECHFS) echidna.img import ./initramfs.img initramfs.img
 	rm tools/bin/kcc
 
 clean-tools:
@@ -68,3 +69,6 @@ binutils-2.28: binutils-2.28.tar.bz2
 
 packages: sha256packages gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2
 	sha256sum -c sha256packages --ignore-missing
+
+run:
+	qemu-system-i386 -hda echidna.img

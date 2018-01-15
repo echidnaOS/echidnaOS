@@ -21,9 +21,13 @@ bits 16
 ;mov gs, ax
 ;mov ss, ax
 
+; save cr3
+mov eax, cr3
+mov dword [cr3_reg], eax
+
 ; Leave protected mode
 mov eax, cr0
-and eax, 11111110b
+and eax, 01111111111111111111111111111110b
 mov cr0, eax
 
 ; Load real mode segments
@@ -44,9 +48,13 @@ call 0x8000
 ; Load pmode IDT
 lidt [pmode_idt]
 
+; load cr3
+mov eax, dword [cr3_reg]
+mov cr3, eax
+
 ; Enter protected mode
 mov eax, cr0
-or eax, 00000001b
+or eax, 0x80000001
 mov cr0, eax
 
 ; Load pmode segments
@@ -78,4 +86,5 @@ real_idt:
     dw 0x3FF
     dd 0
 
+cr3_reg dd 0
 saved_stack dd 0

@@ -91,6 +91,10 @@
                     "jmp 1b;"   \
                  )
 
+#define KERNEL_PAGE             0x800000
+
+void full_identity_map(void);
+
 typedef struct {
     uint8_t version_min;
     uint8_t version_maj;

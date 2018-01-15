@@ -6,6 +6,8 @@ extern int ts_enable;
 
 void kernel_init(void) {
 
+    full_identity_map();
+
     #ifdef _SERIAL_KERNEL_OUTPUT_
       debug_kernel_console_init();
     #endif

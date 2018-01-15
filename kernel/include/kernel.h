@@ -26,7 +26,10 @@
 #define TTY_DEF_CUR_PAL 0x70
 #define TTY_DEF_TXT_PAL 0x07
 
-#define KRNL_MEMORY_BASE 0x1000000
+#define INITRAMFS_BASE 0x1000000
+#define INITRAMFS_SIZE 0x800000
+
+#define KRNL_MEMORY_BASE (INITRAMFS_BASE + INITRAMFS_SIZE)
 #define KRNL_MAX_TASKS 65536
 
 #define DEFAULT_STACK 0x10000
@@ -111,6 +114,7 @@ void init_streams(void);
 void init_com(void);
 void init_stty(void);
 void init_graphics(void);
+void init_initramfs(void);
 
 void graphics_init(vbe_info_struct_t* vbe_info_struct);
 

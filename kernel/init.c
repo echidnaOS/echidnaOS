@@ -52,6 +52,7 @@ void kernel_init(void) {
     kputs("\nInitialising drivers...");
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
     init_streams();
+    init_initramfs();
     init_tty_drv();
     init_bios_harddisks();
     init_ata();
@@ -81,7 +82,7 @@ void kernel_init(void) {
     
     ENABLE_INTERRUPTS;
     
-    char shell_path[] = "/bin/sh";
+    char shell_path[] = "/sys/init";
     char tty_path[256];
     char root_path[] = "/";
     char shell_name[] = "shell";
@@ -99,7 +100,7 @@ void kernel_init(void) {
         0
     };
     
-    if (vfs_mount("/", ":://bda", "echfs") == -2)
+    if (vfs_mount("/", ":://initramfs", "echfs") == -2)
         for(;;);
     vfs_mount("/dev", "devfs", "devfs");
 

@@ -243,6 +243,18 @@ int main(int argc, char** argv) {
             fclose(fp);
         }
         
+        else if (!strcmp("size", s_argv[0])) {
+            FILE* fp;
+            if (s_argc == 1) continue;
+            if (!(fp = fopen(s_argv[1], "r"))) {
+                fprintf(stderr, "can't open `%s`.\n", s_argv[1]);
+                continue;
+            }
+            fseek(fp, 0L, SEEK_END);
+            printf("\nFile length: %d\n", (int)ftell(fp));
+            fclose(fp);
+        }
+        
         else if (!strcmp("dumpr", s_argv[0])) {
             FILE* src;
             FILE* dest;

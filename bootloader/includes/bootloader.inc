@@ -42,14 +42,30 @@ jc err							; Catch any error
 mov si, DoneMsg
 call simple_print				; Display done message
 
+; Load initramfs at 0x1000000 (16 MiB)
+
+mov si, InitFSMsg				; Show loading message
+call simple_print
+
+mov esi, initfs_name
+mov ebx, 0x1000000				; Load to offset 0x1000000
+call load_file
+
+jc err							; Catch any error
+
+mov si, DoneMsg
+call simple_print				; Display done message
+
 jmp arch_specific
 
 ;Data
 
 kernel_name		db 'echidna.bin', 0x00
+initfs_name		db 'initramfs.img', 0x00
 A20Msg			db 'Enabling A20 line...', 0x00
 UnrealMsg		db 'Entering Unreal Mode...', 0x00
 KernelMsg		db 'Loading kernel...', 0x00
+InitFSMsg		db 'Loading initramfs...', 0x00
 
 ;Includes
 

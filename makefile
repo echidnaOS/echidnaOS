@@ -20,16 +20,20 @@ clean:
 	$(MAKE) clean -C kernel
 
 echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh
+	dd bs=32768 count=256 if=/dev/zero of=initramfs.img
+	echidnafs/echfs-utils initramfs.img format
+	echidnafs/echfs-utils initramfs.img mkdir dev
+	echidnafs/echfs-utils initramfs.img mkdir bin
+	echidnafs/echfs-utils initramfs.img mkdir sys
+	echidnafs/echfs-utils initramfs.img mkdir docs
+	echidnafs/echfs-utils initramfs.img import ./shell/sh /sys/init
+	echidnafs/echfs-utils initramfs.img import ./LICENSE.md /docs/license
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
 	echidnafs/echfs-utils echidna.img format
-	echidnafs/echfs-utils echidna.img mkdir dev
-	echidnafs/echfs-utils echidna.img mkdir bin
-	echidnafs/echfs-utils echidna.img mkdir docs
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
-	echidnafs/echfs-utils echidna.img import ./shell/sh /bin/sh
-	echidnafs/echfs-utils echidna.img import ./LICENSE.md /docs/license
+	echidnafs/echfs-utils echidna.img import ./initramfs.img initramfs.img
 	rm tools/bin/kcc
 
 clean-tools:

@@ -80,12 +80,12 @@ void text_putchar(char c, uint8_t which_tty) {
         return;
     }
     switch (c) {
-        case 0x00:
+        case '\0':
             break;
-        case 0x1B:
+        case '\e':
             tty[which_tty].escape = 1;
             return;
-        case 0x0A:
+        case '\n':
             if (text_get_cursor_pos_y(which_tty) == (VD_ROWS - 1)) {
                 clear_cursor(which_tty);
                 scroll(which_tty);
@@ -93,7 +93,7 @@ void text_putchar(char c, uint8_t which_tty) {
             } else
                 text_set_cursor_pos(0, (text_get_cursor_pos_y(which_tty) + 1), which_tty);
             break;
-        case 0x08:
+        case '\b':
             if (tty[which_tty].cursor_offset) {
                 clear_cursor(which_tty);
                 tty[which_tty].cursor_offset -= 2;

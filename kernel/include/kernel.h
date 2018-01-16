@@ -92,12 +92,16 @@
                     "jmp 1b;"   \
                  )
 
-#define KERNEL_PAGE             0x800000
+#define KERNEL_PAGE             0xc00000
+
+typedef uint32_t pt_entry_t;
 
 void full_identity_map(void);
-
+pt_entry_t* new_userspace(void);
+void context_switch(pt_entry_t*);
 void* kmalloc(size_t);
 void kmfree(void*, size_t);
+int map_page(pt_entry_t*, size_t, size_t, size_t);
 
 typedef struct {
     uint8_t version_min;

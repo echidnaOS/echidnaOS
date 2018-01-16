@@ -55,8 +55,8 @@ void kernel_init(void) {
     init_streams();
     init_initramfs();
     init_tty_drv();
-    init_bios_harddisks();
-    init_ata();
+    //init_bios_harddisks();
+    //init_ata();
     init_com();
     init_stty();
     init_pcspk();

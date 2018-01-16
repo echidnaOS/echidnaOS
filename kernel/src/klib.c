@@ -109,6 +109,10 @@ void* kalloc(size_t size) {
     metadata->pages = pages;
     metadata->size = size;
 
+    /* zero out the pages */
+    for (size_t i = 0; i < (pages * PAGE_SIZE); i++)
+        ptr[i] = 0;
+
     return (void*)ptr;
 }
 

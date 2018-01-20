@@ -51,8 +51,10 @@ void text_clear(uint8_t which_tty);
 void text_disable_cursor(uint8_t which_tty);
 void text_enable_cursor(uint8_t which_tty);
 
+void vga_disable_cursor(void);
+void vga_80_x_50(void);
 
-
+int keyboard_fetch_char(uint8_t which_tty);
 
 
 #endif

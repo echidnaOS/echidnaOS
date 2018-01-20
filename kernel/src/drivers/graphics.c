@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
 #include <klib.h>
+#include <graphics.h>
 
 vbe_info_struct_t vbe_info_struct;
 

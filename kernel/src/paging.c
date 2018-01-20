@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <kernel.h>
 #include <paging.h>
+#include <system.h>
 
 #define BYTEMAP_MAX (memory_size / PAGE_SIZE)
 #define BYTEMAP_FULL (0x100000000 / PAGE_SIZE)

@@ -4,6 +4,7 @@
 #include <klib.h>
 #include <task.h>
 #include <cio.h>
+#include <panic.h>
 
 #define FAILURE -1
 

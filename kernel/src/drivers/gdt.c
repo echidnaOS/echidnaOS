@@ -1,5 +1,6 @@
 #include <kernel.h>
 #include <stdint.h>
+#include <system.h>
 
 extern uint32_t TSS;
 extern uint32_t TSS_size;

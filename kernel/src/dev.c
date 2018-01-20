@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <klib.h>
 #include <dev.h>
+#include <panic.h>
 
 device_t* device_list;
 size_t device_ptr = 0;

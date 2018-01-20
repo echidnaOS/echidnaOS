@@ -7,8 +7,9 @@
 #include <inits.h>
 #include <cio.h>
 #include <tty.h>
+#include <system.h>
 
-uint32_t memory_size;
+size_t memory_size;
 extern int ts_enable;
 
 void kernel_init(void) {

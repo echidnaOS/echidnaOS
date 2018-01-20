@@ -7,6 +7,10 @@
 #define KERNEL_PAGES            0x800000
 #define KERNEL_PAGE             (KERNEL_PAGES + 0x400000)
 #define PAGE_SIZE               4096
+#define INITRAMFS_BASE          0x1000000
+#define INITRAMFS_SIZE          0x800000
+#define KRNL_MEMORY_BASE        (INITRAMFS_BASE + INITRAMFS_SIZE)
+
 
 typedef uint32_t pt_entry_t;
 

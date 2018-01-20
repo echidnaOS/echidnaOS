@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <cio.h>
 #include <klib.h>
+#include <vfs.h>
 
 #define SUCCESS 0
 #define EOF -1

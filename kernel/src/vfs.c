@@ -3,6 +3,7 @@
 #include <paging.h>
 #include <klib.h>
 #include <task.h>
+#include <vfs.h>
 
 #define FAILURE -2
 #define SUCCESS 0

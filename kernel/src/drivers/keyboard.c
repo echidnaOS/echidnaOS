@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <cio.h>
 #include <klib.h>
+#include <vfs.h>
 
 #define MAX_CODE 0x57
 #define CAPSLOCK 0x3A

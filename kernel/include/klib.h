@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 
+
 size_t kmemcpy(char*, const char*, size_t);
 size_t kstrcpy(char*, const char*);
 int kstrcmp(const char*, const char*);

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
 #include <klib.h>
+#include <vfs.h>
 
 #define SEARCH_FAILURE          0xffffffffffffffff
 #define ROOT_ID                 0xffffffffffffffff

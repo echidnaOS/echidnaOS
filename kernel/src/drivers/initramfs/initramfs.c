@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
 #include <klib.h>
+#include <paging.h>
 
 #define SUCCESS 0
 #define EOF -1

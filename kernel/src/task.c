@@ -1,5 +1,7 @@
 #include <kernel.h>
 #include <stdint.h>
+#include <paging.h>
+#include <klib.h>
 
 #define FAILURE -1
 

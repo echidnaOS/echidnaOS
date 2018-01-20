@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel.h>
+#include <paging.h>
 
 #define BYTEMAP_MAX (memory_size / PAGE_SIZE)
 #define BYTEMAP_FULL (0x100000000 / PAGE_SIZE)
@@ -123,16 +124,4 @@ pt_entry_t* new_userspace(void) {
         map_page(new_pd, i, i, 0b11);
 
     return new_pd;
-}
-
-void context_switch(pt_entry_t* pd) {
-    asm volatile (
-        "mov eax, %0;"
-        "mov cr3, eax;"
-        :
-        : "r" (pd)
-        : "eax"
-    );
-
-    return;
 }

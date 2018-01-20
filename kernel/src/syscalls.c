@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
+#include <paging.h>
+#include <klib.h>
 
 int lseek(int handle, int offset, int type) {
 

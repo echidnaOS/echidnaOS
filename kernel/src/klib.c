@@ -1,68 +1,49 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel.h>
+#include <klib.h>
+#include <paging.h>
 
-int create_file_handle_v2(int pid, file_handle_v2_t handle) {
-    int handle_n;
-
-    // check for a free handle first
-    for (int i = 0; i < task_table[pid]->file_handles_v2_ptr; i++) {
-        if (task_table[pid]->file_handles_v2[i].free) {
-            handle_n = i;
-            goto load_handle;
-        }
-    }
-
-    task_table[pid]->file_handles_v2 = krealloc(task_table[pid]->file_handles_v2, (task_table[pid]->file_handles_v2_ptr + 1) * sizeof(file_handle_v2_t));
-    handle_n = task_table[pid]->file_handles_v2_ptr++;
-    
-load_handle:
-    task_table[pid]->file_handles_v2[handle_n] = handle;
-    
-    return handle_n;
-
-}
-
-void kmemcpy(char* dest, char* source, uint32_t count) {
-    uint32_t i;
+size_t kmemcpy(char* dest, const char* source, size_t count) {
+    size_t i;
 
     for (i = 0; i < count; i++)
         dest[i] = source[i];
 
-    return;
+    return i;
 }
 
-void kstrcpy(char* dest, char* source) {
-    uint32_t i = 0;
+size_t kstrcpy(char* dest, const char* source) {
+    size_t i;
 
-    for ( ; source[i]; i++)
+    for (i = 0; source[i]; i++)
         dest[i] = source[i];
-    
+
     dest[i] = 0;
 
-    return;
+    return i;
 }
 
-int kstrcmp(char* dest, char* source) {
-    uint32_t i = 0;
+int kstrcmp(const char* dest, const char* source) {
+    size_t i;
 
-    for ( ; dest[i] == source[i]; i++)
+    for (i = 0; dest[i] == source[i]; i++)
         if ((!dest[i]) && (!source[i])) return 0;
 
     return 1;
 }
 
-int kstrncmp(char* dest, char* source, uint32_t len) {
-    uint32_t i = 0;
+int kstrncmp(const char* dest, const char* source, size_t len) {
+    size_t i;
 
-    for ( ; i < len; i++)
+    for (i = 0; i < len; i++)
         if (dest[i] != source[i]) return 1;
 
     return 0;
 }
 
-uint32_t kstrlen(char* str) {
-    uint32_t len;
+size_t kstrlen(const char* str) {
+    size_t len;
 
     for (len = 0; str[len]; len++);
 
@@ -136,7 +117,7 @@ uint64_t power(uint64_t x, uint64_t y) {
 void kputs(const char* string) {
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
-      for (int i = 0; string[i]; i++) {
+      for (size_t i = 0; string[i]; i++) {
           if (string[i] == '\n') {
               com_io_wrapper(0, 0, 1, 0x0d);
               com_io_wrapper(0, 0, 1, 0x0a);
@@ -150,34 +131,34 @@ void kputs(const char* string) {
     return;
 }
 
-void tty_kputs(const char* string, uint8_t which_tty) {
-    uint32_t i;
+void tty_kputs(const char* string, int tty) {
+    size_t i;
     for (i = 0; string[i]; i++)
-        text_putchar(string[i], which_tty);
+        text_putchar(string[i], tty);
     return;
 }
 
-void knputs(const char* string, uint32_t count) {
+void knputs(const char* string, size_t len) {
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
-      for (int i = 0; i < count; i++)
+      for (size_t i = 0; i < len; i++)
           com_io_wrapper(0, 0, 1, string[i]);
     #else
-      tty_knputs(string, count, 0);
+      tty_knputs(string, len, 0);
     #endif
 
     return;
 }
 
-void tty_knputs(const char* string, uint32_t count, uint8_t which_tty) {
-    uint32_t i;
-    for (i = 0; i < count; i++)
-        text_putchar(string[i], which_tty);
+void tty_knputs(const char* string, size_t len, int tty) {
+    size_t i;
+    for (i = 0; i < len; i++)
+        text_putchar(string[i], tty);
     return;
 }
 
-void kuitoa(uint64_t x) {
-    uint8_t i;
+void kprn_ui(uint64_t x) {
+    int i;
     char buf[21] = {0};
 
     if (!x) {
@@ -196,12 +177,12 @@ void kuitoa(uint64_t x) {
     return;
 }
 
-void tty_kuitoa(uint64_t x, uint8_t which_tty) {
-    uint8_t i;
+void tty_kprn_ui(uint64_t x, int tty) {
+    int i;
     char buf[21] = {0};
 
     if (!x) {
-        tty_kputs("0", which_tty);
+        tty_kputs("0", tty);
         return;
     }
 
@@ -211,7 +192,7 @@ void tty_kuitoa(uint64_t x, uint8_t which_tty) {
     }
 
     i++;
-    tty_kputs(buf + i, which_tty);
+    tty_kputs(buf + i, tty);
 
     return;
 }
@@ -220,8 +201,8 @@ static const char hex_to_ascii_tab[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
 
-void kxtoa(uint64_t x) {
-    uint8_t i;
+void kprn_x(uint64_t x) {
+    int i;
     char buf[17] = {0};
 
     if (!x) {
@@ -241,12 +222,12 @@ void kxtoa(uint64_t x) {
     return;
 }
 
-void tty_kxtoa(uint64_t x, uint8_t which_tty) {
-    uint8_t i;
+void tty_kprn_x(uint64_t x, int tty) {
+    int i;
     char buf[17] = {0};
 
     if (!x) {
-        tty_kputs("0x0", which_tty);
+        tty_kputs("0x0", tty);
         return;
     }
 
@@ -256,8 +237,8 @@ void tty_kxtoa(uint64_t x, uint8_t which_tty) {
     }
 
     i++;
-    tty_kputs("0x", which_tty);
-    tty_kputs(buf + i, which_tty);
+    tty_kputs("0x", tty);
+    tty_kputs(buf + i, tty);
 
     return;
 }

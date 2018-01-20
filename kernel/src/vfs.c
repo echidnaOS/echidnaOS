@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
+#include <paging.h>
+#include <klib.h>
 
 #define FAILURE -2
 #define SUCCESS 0
@@ -9,6 +11,27 @@ filesystem_t* filesystems;
 static mountpoint_t* mountpoints;
 static int mountpoints_ptr = 0;
 static int filesystems_ptr = 0;
+
+int create_file_handle_v2(int pid, file_handle_v2_t handle) {
+    int handle_n;
+
+    // check for a free handle first
+    for (int i = 0; i < task_table[pid]->file_handles_v2_ptr; i++) {
+        if (task_table[pid]->file_handles_v2[i].free) {
+            handle_n = i;
+            goto load_handle;
+        }
+    }
+
+    task_table[pid]->file_handles_v2 = krealloc(task_table[pid]->file_handles_v2, (task_table[pid]->file_handles_v2_ptr + 1) * sizeof(file_handle_v2_t));
+    handle_n = task_table[pid]->file_handles_v2_ptr++;
+    
+load_handle:
+    task_table[pid]->file_handles_v2[handle_n] = handle;
+    
+    return handle_n;
+
+}
 
 int vfs_translate_mnt(char* path, char** local_path) {
     int guess = FAILURE;

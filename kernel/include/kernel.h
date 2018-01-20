@@ -1,12 +1,29 @@
-// general kernel header
-
 #ifndef __KERNEL_H__
 #define __KERNEL_H__
 
 #include <stdint.h>
 #include <stddef.h>
 
+
+typedef uint32_t pt_entry_t;
+
 // kernel tunables
+
+#define KERNEL_PAGES            0x800000
+#define KERNEL_PAGE             (KERNEL_PAGES + 0x400000)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #define _BIG_FONTS_
 //#define _SERIAL_KERNEL_OUTPUT_
@@ -93,18 +110,7 @@
                     "jmp 1b;"   \
                  )
 
-#define KERNEL_PAGE             0xc00000
 
-typedef uint32_t pt_entry_t;
-
-void full_identity_map(void);
-pt_entry_t* new_userspace(void);
-void context_switch(pt_entry_t*);
-void* kmalloc(size_t);
-void kmfree(void*, size_t);
-int map_page(pt_entry_t*, size_t, size_t, size_t);
-size_t get_phys_addr(pt_entry_t*, size_t);
-int unmap_page(pt_entry_t*, size_t);
 
 typedef struct {
     uint8_t version_min;
@@ -146,47 +152,13 @@ void kernel_add_device(char* name, uint32_t gp_value, uint64_t size,
 
 // prototypes
 
-void kputs(const char* string);
-void tty_kputs(const char* string, uint8_t which_tty);
-void knputs(const char* string, uint32_t count);
-void tty_knputs(const char* string, uint32_t count, uint8_t which_tty);
-void kuitoa(uint64_t x);
-void tty_kuitoa(uint64_t x, uint8_t which_tty);
-void kxtoa(uint64_t x);
-void tty_kxtoa(uint64_t x, uint8_t which_tty);
-
 #ifdef _SERIAL_KERNEL_OUTPUT_
   void debug_kernel_console_init(void);
   int com_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload);
 #endif
 
-int kstrcmp(char* dest, char* source);
-int kstrncmp(char* dest, char* source, uint32_t len);
-void kmemcpy(char* dest, char* source, uint32_t count);
-void kstrcpy(char* dest, char* source);
-uint32_t kstrlen(char* str);
-
-uint64_t power(uint64_t x, uint64_t y);
-
 void switch_tty(uint8_t which_tty);
 void init_tty(void);
-
-typedef struct {
-    uint32_t sender;
-    uint32_t length;
-    char* payload;
-} ipc_packet_t;
-
-typedef struct {
-    int free;
-    char path[1024];
-    int flags;
-    int mode;
-    long ptr;
-    long begin;
-    long end;
-    int isblock;
-} file_handle_t;
 
 typedef struct {
     int free;
@@ -306,7 +278,6 @@ typedef struct {
     int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t);
 } device_t;
 
-int create_file_handle(int pid, file_handle_t handle);
 int create_file_handle_v2(int pid, file_handle_v2_t handle);
 int read(int handle, char* ptr, int len);
 int write(int handle, char* ptr, int len);
@@ -406,16 +377,6 @@ extern uint32_t device_ptr;
 void panic(const char *msg);
 
 void task_init(void);
-
-void* kalloc(size_t size);
-void* krealloc(void* addr, size_t new_size);
-void kfree(void* addr);
-
-void ipc_send_packet(uint32_t pid, char* payload, uint32_t len);
-uint32_t ipc_read_packet(char* payload);
-uint32_t ipc_resolve_name(char* server_name);
-uint32_t ipc_payload_length(void);
-uint32_t ipc_payload_sender(void);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);

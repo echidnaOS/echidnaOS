@@ -1,12 +1,14 @@
 #include <stdint.h>
 #include <kernel.h>
+#include <paging.h>
+#include <klib.h>
 
 uint32_t memory_size;
 extern int ts_enable;
 
 void kernel_init(void) {
 
-    full_identity_map();
+    full_identity_map((pt_entry_t*)KERNEL_PAGES);
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
       debug_kernel_console_init();
@@ -48,15 +50,13 @@ void kernel_init(void) {
     // print intro to tty0
     kputs("Welcome to echidnaOS!\n");
     
-    kputs("\n"); kuitoa(memory_size); kputs(" bytes ("); kuitoa(memory_size / 0x100000); kputs(" MiB) of memory detected.\n");
+    kputs("\n"); kprn_ui(memory_size); kputs(" bytes ("); kprn_ui(memory_size / 0x100000); kputs(" MiB) of memory detected.\n");
     
     kputs("\nInitialising drivers...");
     // ******* DRIVER INITIALISATION CALLS GO HERE *******
     init_streams();
     init_initramfs();
     init_tty_drv();
-    //init_bios_harddisks();
-    //init_ata();
     init_com();
     init_stty();
     init_pcspk();

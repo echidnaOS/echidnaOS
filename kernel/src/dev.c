@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <kernel.h>
+#include <klib.h>
 
 device_t* device_list;
 uint32_t device_ptr = 0;

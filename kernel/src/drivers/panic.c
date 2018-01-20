@@ -1,4 +1,5 @@
 #include <kernel.h>
+#include <klib.h>
 
 void panic(const char *msg) {
     DISABLE_INTERRUPTS;

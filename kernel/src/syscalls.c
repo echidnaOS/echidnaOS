@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <paging.h>
 #include <klib.h>
+#include <task.h>
 
 int lseek(int handle, int offset, int type) {
 
@@ -10,16 +11,12 @@ int lseek(int handle, int offset, int type) {
 
 }
 
-extern int read_stat;
-
 int read(int handle, char* ptr, int len) {
 
     // redirect to new VFS stack
     return vfs_uread(handle, ptr, len);
 
 }
-
-extern int write_stat;
 
 int write(int handle, char* ptr, int len) {
 

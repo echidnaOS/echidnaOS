@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <kernel.h>
+#include <task.h>
 
 #define EOF -1
 

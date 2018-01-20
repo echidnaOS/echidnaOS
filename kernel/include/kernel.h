@@ -5,14 +5,6 @@
 #include <stddef.h>
 
 
-typedef uint32_t pt_entry_t;
-
-// kernel tunables
-
-#define KERNEL_PAGES            0x800000
-#define KERNEL_PAGE             (KERNEL_PAGES + 0x400000)
-
-
 
 
 
@@ -68,18 +60,6 @@ typedef uint32_t pt_entry_t;
 
 // memory statuses
 
-#define KRN_STAT_ACTIVE_TASK    1
-#define KRN_STAT_RES_TASK       2
-#define KRN_STAT_IOWAIT_TASK    3
-#define KRN_STAT_IPCWAIT_TASK   4
-#define KRN_STAT_PROCWAIT_TASK  5
-#define KRN_STAT_VDEVWAIT_TASK  6
-
-#define EMPTY_PID               (task_t*)0xffffffff
-#define TASK_RESERVED_SPACE     0x10000
-#define TASK_BASE               0x1000000
-#define PAGE_SIZE               4096
-
 #define FILE_TYPE               0
 #define DIRECTORY_TYPE          1
 #define DEVICE_TYPE             2
@@ -127,8 +107,6 @@ typedef struct {
 
 // driver inits
 
-void init_bios_harddisks(void);
-void init_ata(void);
 void init_pcspk(void);
 void init_tty_drv(void);
 void init_streams(void);
@@ -165,81 +143,6 @@ typedef struct {
     int mountpoint;
     int internal_handle;
 } file_handle_v2_t;
-
-/* i386 cpu struct */
-typedef struct {
-
-    uint32_t eax;
-    uint32_t ebx;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t esi;
-    uint32_t edi;
-    uint32_t ebp;
-    uint32_t esp;
-    uint32_t eip;
-    uint32_t cs;
-    uint32_t ds;
-    uint32_t es;
-    uint32_t fs;
-    uint32_t gs;
-    uint32_t ss;
-    uint32_t eflags;
-
-} cpu_t;
-
-typedef struct {
-
-    int status;
-    int parent;
-    
-    pt_entry_t* page_directory;
-    size_t text_base;
-
-    cpu_t cpu;
-    
-    char pwd[2048];
-    
-    char stdin[2048];
-    char stdout[2048];
-    char stderr[2048];
-    
-    char iowait_dev[2048];
-    uint64_t iowait_loc;
-    int iowait_type;
-    uint8_t iowait_payload;
-    int iowait_handle;
-    uint32_t iowait_ptr;
-    int iowait_len;
-    int iowait_done;
-    
-    size_t heap_base;
-    size_t heap_size;
-    
-    // signals
-    size_t sigabrt;
-    size_t sigfpe;
-    size_t sigill;
-    size_t sigint;
-    size_t sigsegv;
-    size_t sigterm;
-
-    file_handle_v2_t* file_handles_v2;
-    int file_handles_v2_ptr;
-
-} task_t;
-
-typedef struct {
-    char* path;
-    char* stdin;
-    char* stdout;
-    char* stderr;
-    char* pwd;
-    char* unused0;
-    char* unused1;
-    int argc;
-    char** argv;
-} task_info_t;
 
 typedef struct {
     char filename[2048];
@@ -328,11 +231,6 @@ void vfs_install_fs(char* name,
                     int (*uwrite)(int handle, char* ptr, int len),
                     int (*seek)(int handle, int offset, int type) );
 
-int task_create(task_t new_task);
-void task_scheduler(void);
-void task_quit(int pid, int64_t return_value);
-int general_execute(task_info_t* task_info);
-
 typedef struct {
     uint16_t limit_low;
     uint16_t base_low;
@@ -365,8 +263,6 @@ typedef struct {
 } tty_t;
 
 extern uint32_t memory_size;
-extern int current_task;
-extern task_t** task_table;
 extern uint8_t current_tty;
 
 extern tty_t tty[KRNL_TTY_COUNT];
@@ -376,13 +272,9 @@ extern uint32_t device_ptr;
 
 void panic(const char *msg);
 
-void task_init(void);
-
 void vga_disable_cursor(void);
 void vga_80_x_50(void);
 uint32_t detect_mem(void);
-
-void* alloc(uint32_t size);
 
 void tty_refresh(uint8_t which_tty);
 
@@ -408,7 +300,6 @@ void set_pit_freq(uint32_t frequency);
 
 void load_GDT(void);
 void load_TSS(void);
-void set_segment(uint16_t entry, uint32_t base, uint32_t page_count);
 
 void load_IDT(void);
 

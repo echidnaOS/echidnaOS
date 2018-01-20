@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <paging.h>
 #include <klib.h>
+#include <task.h>
 
 #define FAILURE -2
 #define SUCCESS 0

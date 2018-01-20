@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <paging.h>
 #include <klib.h>
+#include <task.h>
 
 uint32_t memory_size;
 extern int ts_enable;

@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-
+#define KERNEL_PAGES            0x800000
+#define KERNEL_PAGE             (KERNEL_PAGES + 0x400000)
+#define PAGE_SIZE               4096
 
 typedef uint32_t pt_entry_t;
 

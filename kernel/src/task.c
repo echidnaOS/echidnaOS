@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <paging.h>
 #include <klib.h>
+#include <task.h>
 
 #define FAILURE -1
 
@@ -28,7 +29,7 @@ void task_spinup(void*, pt_entry_t*);
 
 static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0x1b,0x23,0x23,0x23,0x23,0x23,0x202 };
 
-int task_create(task_t new_task) {
+static int task_create(task_t new_task) {
     // find an empty entry in the task table
     int new_pid;
     for (new_pid = 0; new_pid < KRNL_MAX_TASKS; new_pid++)

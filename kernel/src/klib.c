@@ -3,6 +3,7 @@
 #include <kernel.h>
 #include <klib.h>
 #include <paging.h>
+#include <tty.h>
 
 size_t kmemcpy(char* dest, const char* source, size_t count) {
     size_t i;

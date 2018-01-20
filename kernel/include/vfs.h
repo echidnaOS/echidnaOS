@@ -1,9 +1,8 @@
 #ifndef __VFS_H__
 #define __VFS_H__
 
-#include <stddef.h>
 #include <stdint.h>
-
+#include <kernel.h>
 
 
 #define O_RDONLY        0b0001
@@ -23,6 +22,7 @@
 #define DEVICE_TYPE             2
 
 #define IO_NOT_READY -5
+
 
 
 
@@ -113,15 +113,6 @@ void vfs_install_fs(char* name,
                     int (*uread)(int handle, char* ptr, int len),
                     int (*uwrite)(int handle, char* ptr, int len),
                     int (*seek)(int handle, int offset, int type) );
-
-
-
-
-
-
-
-
-
 
 
 

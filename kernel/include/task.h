@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <paging.h>
 #include <vfs.h>
+#include <kernel.h>
 
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
@@ -17,9 +18,17 @@
 #define TASK_RESERVED_SPACE     0x10000
 #define TASK_BASE               0x1000000
 
-#define DEFAULT_STACK 0x10000
 
-#define KRNL_MAX_TASKS 65536
+// signals
+
+#define SIGABRT                 0
+#define SIGFPE                  1
+#define SIGILL                  2
+#define SIGINT                  3
+#define SIGSEGV                 4
+#define SIGTERM                 5
+
+#define SIG_ERR                 0xffffffff
 
 /* i386 cpu struct */
 typedef struct {

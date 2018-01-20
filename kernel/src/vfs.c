@@ -4,6 +4,7 @@
 #include <klib.h>
 #include <task.h>
 #include <vfs.h>
+#include <dev.h>
 
 #define FAILURE -2
 #define SUCCESS 0

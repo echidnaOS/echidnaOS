@@ -1,9 +1,10 @@
 #include <stdint.h>
-#include <kernel.h>
+#include <stddef.h>
 #include <klib.h>
+#include <dev.h>
 
 device_t* device_list;
-uint32_t device_ptr = 0;
+size_t device_ptr = 0;
 
 void kernel_add_device(char* name, uint32_t gp_value, uint64_t size,
                        int (*io_wrapper)(uint32_t, uint64_t, int, uint8_t)) {

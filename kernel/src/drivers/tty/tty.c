@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
+#include <dev.h>
+#include <tty.h>
 
 static char* tty_names[] = {
     "tty0", "tty1", "tty2", "tty3",

@@ -4,6 +4,9 @@
 #include <klib.h>
 #include <task.h>
 #include <vfs.h>
+#include <inits.h>
+#include <cio.h>
+#include <tty.h>
 
 uint32_t memory_size;
 extern int ts_enable;

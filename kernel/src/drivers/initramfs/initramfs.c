@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <klib.h>
 #include <paging.h>
+#include <dev.h>
 
 #define SUCCESS 0
 #define EOF -1

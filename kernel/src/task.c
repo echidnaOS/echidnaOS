@@ -3,6 +3,7 @@
 #include <paging.h>
 #include <klib.h>
 #include <task.h>
+#include <cio.h>
 
 #define FAILURE -1
 

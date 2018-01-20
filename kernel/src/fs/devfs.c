@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <klib.h>
 #include <vfs.h>
+#include <dev.h>
 
 #define FAILURE -2
 #define SUCCESS 0

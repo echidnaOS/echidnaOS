@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <klib.h>
 #include <task.h>
+#include <tty.h>
 
 void except_div0(uint32_t fault_eip, uint32_t fault_cs) {
 

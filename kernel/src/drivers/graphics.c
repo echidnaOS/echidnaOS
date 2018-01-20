@@ -4,6 +4,8 @@
 
 vbe_info_struct_t vbe_info_struct;
 
+void graphics_init(vbe_info_struct_t* vbe_info_struct);
+
 void init_graphics(void) {
     kputs("\nInitialising VBE...");
     graphics_init(&vbe_info_struct);

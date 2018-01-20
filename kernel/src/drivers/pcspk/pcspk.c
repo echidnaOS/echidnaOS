@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
 #include <cio.h>
+#include <dev.h>
 
 static uint16_t div = 0;
 static uint32_t freq = 0;

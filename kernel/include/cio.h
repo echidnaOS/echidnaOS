@@ -3,6 +3,17 @@
 
 #include <stdint.h>
 
+#define DISABLE_INTERRUPTS      asm volatile ("cli")
+#define ENABLE_INTERRUPTS       asm volatile ("sti")
+#define ENTER_IDLE              \
+    asm volatile (              \
+                    "sti;"      \
+                    "1:"        \
+                    "mov esp, 0xeffff0;"    \
+                    "hlt;"      \
+                    "jmp 1b;"   \
+                 )
+
 #define port_out_b(port, value) ({				\
 	asm volatile (	"out dx, al"				\
 					:							\

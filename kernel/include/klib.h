@@ -3,8 +3,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <kernel.h>
 
 
+#ifdef _SERIAL_KERNEL_OUTPUT_
+  int com_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload);
+#endif
 
 size_t kmemcpy(char*, const char*, size_t);
 size_t kstrcpy(char*, const char*);

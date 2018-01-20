@@ -74,6 +74,42 @@ int map_page(pt_entry_t* pd, size_t virt_addr, size_t phys_addr, size_t flags) {
     return 0;
 }
 
+int unmap_page(pt_entry_t* pd, size_t virt_addr) {
+    pt_entry_t* pt;
+
+    size_t virt_page = virt_addr / PAGE_SIZE;
+    size_t pd_entry = virt_page / 1024;
+    size_t pt_entry = virt_page % 1024;
+
+    /* check if the page table entry is present */
+    if (pd[pd_entry] & 1) {
+            pt = (pt_entry_t*)(pd[pd_entry] & 0xfffff000);
+    } else {
+            return -1;
+    }
+
+    /* unmap */
+    pt[pt_entry] = (pt_entry_t)0;
+
+    return 0;
+}
+
+size_t get_phys_addr(pt_entry_t* pd, size_t virt_addr) {
+    pt_entry_t* pt;
+    pt_entry_t* phys;
+
+    size_t virt_page = virt_addr / PAGE_SIZE;
+    size_t pd_entry = virt_page / 1024;
+    size_t pt_entry = virt_page % 1024;
+
+    pt = (pt_entry_t*)(pd[pd_entry] & 0xfffff000);
+    phys = (pt_entry_t*)(pt[pt_entry] & 0xfffff000);
+    size_t phys_addr = (size_t)phys;
+    phys_addr += (virt_addr & 0xfff);
+
+    return phys_addr;
+}
+
 pt_entry_t* new_userspace(void) {
     /* allocate the new page directory */
 

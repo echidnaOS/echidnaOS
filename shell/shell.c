@@ -14,8 +14,6 @@ char prog_stdin[128];
 char prog_stdout[128];
 char prog_stderr[128];
 char prog_pwd[128];
-char prog_name[128];
-char prog_ser_name[128];
 
 int pid;
 
@@ -25,18 +23,11 @@ task_info_t prog_info = {
     prog_stdout,
     prog_stderr,
     prog_pwd,
-    prog_name,
-    prog_ser_name,
+    0,
+    0,
     0,
     0
 };
-
-int vdev;
-int vdev_reg = 0;
-uint8_t vdev_in;
-int vdev_in_flag = 0;
-uint8_t vdev_out;
-int vdev_out_flag = 0;
 
 int no_block = 0;
 
@@ -65,51 +56,11 @@ int main(int argc, char** argv) {
         if (!strcmp("heap", s_argv[0])) {
             printf("heap base: %d\n"
                    "heap size: %d\n", OS_get_heap_base(), OS_get_heap_size());
-            OS_resize_heap(0x100);
+            OS_resize_heap(0x10000);
         }
 
         else if (!strcmp("col", s_argv[0]))
             puts("\e[40m \e[41m \e[42m \e[43m \e[44m \e[45m \e[46m \e[47m \e[40m");
-        
-        else if (!strcmp("vdev", s_argv[0])) {
-            if (vdev_reg) {
-                puts("vdev already registered");
-                continue;
-            }
-            puts("registering vdev");
-            vdev = OS_vdev_register(&vdev_in, &vdev_in_flag, &vdev_out, &vdev_out_flag);
-            if (vdev == -1) {
-                puts("vdev registration failed");
-                continue;
-            }
-            vdev_reg = 1;
-            printf("vdev%d registered successfully\n", vdev);
-            continue;
-        }
-        
-        else if (!strcmp("vdevin", s_argv[0])) {
-            if (!vdev_reg) {
-                puts("vdev not registered");
-                continue;
-            }
-            OS_vdev_in_ready(vdev);
-            int vdevw = OS_vdev_await();
-            printf("activity on vdev%d: `%c`\n", vdevw, (char)vdev_in);
-            continue;
-        }
-        
-        else if (!strcmp("vdevout", s_argv[0])) {
-            if (s_argc == 1) continue;
-            if (!vdev_reg) {
-                puts("vdev not registered");
-                continue;
-            }
-            vdev_out = (uint8_t)(*(s_argv[1]));
-            OS_vdev_out_ready(vdev);
-            int vdevw = OS_vdev_await();
-            printf("activity on vdev%d\n", vdevw);
-            continue;
-        }
         
         else if (!strcmp("pid", s_argv[0])) {
             printf("pid: %d\n", OS_getpid());
@@ -220,14 +171,6 @@ int main(int argc, char** argv) {
         else if (!strcmp("rdspk", s_argv[0]))
             printf("%d\n", OS_vfs_read("/dev/pcspk", 0));
         
-        else if (!strcmp("send", s_argv[0])) {
-            char server[] = "server";
-            uint32_t pid = OS_ipc_resolve_name(server);
-            printf("%s's PID is: %d\n", server, pid);
-            printf("payload is: %s\n", s_argv[1]);
-            OS_ipc_send_packet(pid, s_argv[1], strlen(s_argv[1]) + 1);
-        }
-        
         else if (!strcmp("exit", s_argv[0])) return 0;
         
         else if (!strcmp("dump", s_argv[0])) {
@@ -285,11 +228,9 @@ int main(int argc, char** argv) {
         // if the input did not match any command
         else {
             strcpy(prog_path, s_argv[0]);
-            strcpy(prog_name, s_argv[0]);
             OS_pwd(prog_pwd);
             prog_info.argc = s_argc;
             prog_info.argv = s_argv;
-            *prog_ser_name = 0;
             if (!no_block) {
                 if (OS_general_execute_block(&prog_info) == -1)
                     fprintf(stderr, "shell: invalid command: `%s`.\n", input);
@@ -351,6 +292,9 @@ void get_argv(char** argv, char* string) {
     OS_what_stdin(prog_stdin);
     OS_what_stdout(prog_stdout);
     OS_what_stderr(prog_stderr);
+
+    if (!string[index])
+        argv[0] = string;
     
     while (string[index]) {
         if (string[index] == ' ') {

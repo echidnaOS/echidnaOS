@@ -54,19 +54,19 @@ void load_GDT(void) {
     GDT[2].base_high = 0x00;
     
     // define user code
-    GDT[3].limit_low = 0x0000;
+    GDT[3].limit_low = 0xffff;
     GDT[3].base_low = 0x0000;
     GDT[3].base_mid = 0x00;
     GDT[3].access = 0b11111010;
-    GDT[3].granularity = 0b11000000;
+    GDT[3].granularity = 0b11001111;
     GDT[3].base_high = 0x00;
 
     // define user data
-    GDT[4].limit_low = 0x0000;
+    GDT[4].limit_low = 0xffff;
     GDT[4].base_low = 0x0000;
     GDT[4].base_mid = 0x00;
     GDT[4].access = 0b11110010;
-    GDT[4].granularity = 0b11000000;
+    GDT[4].granularity = 0b11001111;
     GDT[4].base_high = 0x00;
     
     // define 16-bit code

@@ -2,27 +2,6 @@
 #include <stddef.h>
 #include <kernel.h>
 
-int create_file_handle(int pid, file_handle_t handle) {
-    int handle_n;
-
-    // check for a free handle first
-    for (int i = 0; i < task_table[pid]->file_handles_ptr; i++) {
-        if (task_table[pid]->file_handles[i].free) {
-            handle_n = i;
-            goto load_handle;
-        }
-    }
-
-    task_table[pid]->file_handles = krealloc(task_table[pid]->file_handles, (task_table[pid]->file_handles_ptr + 1) * sizeof(file_handle_t));
-    handle_n = task_table[pid]->file_handles_ptr++;
-    
-load_handle:
-    task_table[pid]->file_handles[handle_n] = handle;
-    
-    return handle_n;
-
-}
-
 int create_file_handle_v2(int pid, file_handle_v2_t handle) {
     int handle_n;
 

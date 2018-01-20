@@ -60,6 +60,7 @@
 
 #define EMPTY_PID               (task_t*)0xffffffff
 #define TASK_RESERVED_SPACE     0x10000
+#define TASK_BASE               0x1000000
 #define PAGE_SIZE               4096
 
 #define FILE_TYPE               0
@@ -102,6 +103,8 @@ void context_switch(pt_entry_t*);
 void* kmalloc(size_t);
 void kmfree(void*, size_t);
 int map_page(pt_entry_t*, size_t, size_t, size_t);
+size_t get_phys_addr(pt_entry_t*, size_t);
+int unmap_page(pt_entry_t*, size_t);
 
 typedef struct {
     uint8_t version_min;
@@ -191,6 +194,7 @@ typedef struct {
     int internal_handle;
 } file_handle_v2_t;
 
+/* i386 cpu struct */
 typedef struct {
 
     uint32_t eax;
@@ -217,14 +221,12 @@ typedef struct {
     int status;
     int parent;
     
-    uint32_t base;
-    uint32_t pages;
+    pt_entry_t* page_directory;
+    size_t text_base;
 
     cpu_t cpu;
     
     char pwd[2048];
-    char name[128];
-    char server_name[128];
     
     char stdin[2048];
     char stdout[2048];
@@ -239,22 +241,16 @@ typedef struct {
     int iowait_len;
     int iowait_done;
     
-    ipc_packet_t* ipc_queue;
-    uint32_t ipc_queue_ptr;
-    
-    uint32_t heap_base;
-    uint32_t heap_size;
+    size_t heap_base;
+    size_t heap_size;
     
     // signals
-    uint32_t sigabrt;
-    uint32_t sigfpe;
-    uint32_t sigill;
-    uint32_t sigint;
-    uint32_t sigsegv;
-    uint32_t sigterm;
-    
-    file_handle_t* file_handles;
-    int file_handles_ptr;
+    size_t sigabrt;
+    size_t sigfpe;
+    size_t sigill;
+    size_t sigint;
+    size_t sigsegv;
+    size_t sigterm;
 
     file_handle_v2_t* file_handles_v2;
     int file_handles_v2_ptr;
@@ -267,8 +263,8 @@ typedef struct {
     char* stdout;
     char* stderr;
     char* pwd;
-    char* name;
-    char* server_name;
+    char* unused0;
+    char* unused1;
     int argc;
     char** argv;
 } task_info_t;

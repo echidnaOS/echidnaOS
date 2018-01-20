@@ -86,8 +86,6 @@ void kernel_init(void) {
     char shell_path[] = "/sys/init";
     char tty_path[256];
     char root_path[] = "/";
-    char shell_name[] = "shell";
-    char shell_ser_name[] = "";
 
     task_info_t shell_exec = {
         shell_path,
@@ -95,8 +93,8 @@ void kernel_init(void) {
         tty_path,
         tty_path,
         root_path,
-        shell_name,
-        shell_ser_name,
+        0,
+        0,
         0,
         0
     };

@@ -14,7 +14,7 @@
 #define KRN_STAT_PROCWAIT_TASK  5
 #define KRN_STAT_VDEVWAIT_TASK  6
 
-#define EMPTY_PID               (task_t*)0xffffffff
+#define EMPTY_PID               (task_t *)0xffffffff
 #define TASK_RESERVED_SPACE     0x10000
 #define TASK_BASE               0x1000000
 
@@ -57,7 +57,7 @@ typedef struct {
     int status;
     int parent;
 
-    pt_entry_t* page_directory;
+    pt_entry_t *page_directory;
     size_t text_base;
 
     cpu_t cpu;
@@ -88,29 +88,29 @@ typedef struct {
     size_t sigsegv;
     size_t sigterm;
 
-    file_handle_v2_t* file_handles_v2;
+    file_handle_v2_t *file_handles_v2;
     int file_handles_v2_ptr;
 
 } task_t;
 
 typedef struct {
-    char* path;
-    char* stdin;
-    char* stdout;
-    char* stderr;
-    char* pwd;
-    char* unused0;
-    char* unused1;
+    char *path;
+    char *stdin;
+    char *stdout;
+    char *stderr;
+    char *pwd;
+    char *unused0;
+    char *unused1;
     int argc;
-    char** argv;
+    char **argv;
 } task_info_t;
 
-extern task_t** task_table;
+extern task_t **task_table;
 extern int current_task;
 
 void task_init(void);
-int general_execute(task_info_t*);
-int general_execute_block(task_info_t*);
+int general_execute(task_info_t *);
+int general_execute_block(task_info_t *);
 void task_scheduler(void);
 void task_quit(int, int64_t);
 

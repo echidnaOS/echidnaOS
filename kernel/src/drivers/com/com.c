@@ -23,7 +23,7 @@ typedef struct {
     uint16_t scratch_reg;
 } com_device;
 
-static char* com_names[] = { "com1", "com2", "com3", "com4" };
+static char *com_names[] = { "com1", "com2", "com3", "com4" };
 
 static uint16_t com_ports[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 

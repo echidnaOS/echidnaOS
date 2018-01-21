@@ -11,11 +11,11 @@
 
 #define MAX_STTY 1
 
-static char* stty_names[] = { "stty0", "stty1", "stty2", "stty3" };
+static char *stty_names[] = { "stty0", "stty1", "stty2", "stty3" };
 
-static char* com_devices[] = { ":://com1", ":://com2", ":://com3", ":://com4" };
+static char *com_devices[] = { ":://com1", ":://com2", ":://com3", ":://com4" };
 
-static char* devices[MAX_STTY];
+static char *devices[MAX_STTY];
 
 static int is_eof = 0;
 

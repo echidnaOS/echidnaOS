@@ -10,8 +10,8 @@
 #define SUCCESS 0
 #define EOF -1
 
-filesystem_t* filesystems;
-static mountpoint_t* mountpoints;
+filesystem_t *filesystems;
+static mountpoint_t *mountpoints;
 static int mountpoints_ptr = 0;
 static int filesystems_ptr = 0;
 
@@ -36,7 +36,7 @@ load_handle:
 
 }
 
-int vfs_translate_mnt(char* path, char** local_path) {
+int vfs_translate_mnt(char *path, char **local_path) {
     int guess = FAILURE;
     int guess_size = 0;
     for (int i = 0; i < mountpoints_ptr; i++) {
@@ -61,9 +61,9 @@ int vfs_translate_fs(int mountpoint) {
     return FAILURE;
 }
 
-void vfs_get_absolute_path(char* path_ptr, char* path) {
+void vfs_get_absolute_path(char *path_ptr, char *path) {
     // converts a relative path into an absolute one
-    char* orig_ptr = path_ptr;
+    char *orig_ptr = path_ptr;
     
     if (!*path) {
         kstrcpy(path_ptr, task_table[current_task]->pwd);
@@ -127,8 +127,8 @@ term:
     }
 }
 
-int vfs_cd(char* path) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_cd(char *path) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     char absolute_path[2048];
     
     vfs_metadata_t metadata;
@@ -143,13 +143,13 @@ int vfs_cd(char* path) {
     return SUCCESS;
 }
 
-int vfs_read(char* path, uint64_t loc) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_read(char *path, uint64_t loc) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     return vfs_kread(path, loc);
 }
 
-int vfs_kread(char* path, uint64_t loc) {
-    char* local_path;
+int vfs_kread(char *path, uint64_t loc) {
+    char *local_path;
     char absolute_path[2048];
     
     if (!kstrncmp(path, ":://", 4)) {
@@ -173,13 +173,13 @@ int vfs_kread(char* path, uint64_t loc) {
     return (*filesystems[filesystem].read)(local_path, loc, mountpoints[mountpoint].device);
 }
 
-int vfs_remove(char* path) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_remove(char *path) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     return vfs_kremove(path);
 }
 
-int vfs_kremove(char* path) {
-    char* local_path;
+int vfs_kremove(char *path) {
+    char *local_path;
     char absolute_path[2048];
 
 
@@ -194,13 +194,13 @@ int vfs_kremove(char* path) {
     return (*filesystems[filesystem].remove)(local_path, mountpoints[mountpoint].device);
 }
 
-int vfs_mkdir(char* path, uint16_t perms) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_mkdir(char *path, uint16_t perms) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     return vfs_kmkdir(path, perms);
 }
 
-int vfs_kmkdir(char* path, uint16_t perms) {
-    char* local_path;
+int vfs_kmkdir(char *path, uint16_t perms) {
+    char *local_path;
     char absolute_path[2048];
 
     vfs_metadata_t metadata;
@@ -219,13 +219,13 @@ int vfs_kmkdir(char* path, uint16_t perms) {
     return (*filesystems[filesystem].mkdir)(local_path, perms, mountpoints[mountpoint].device);
 }
 
-int vfs_create(char* path, uint16_t perms) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_create(char *path, uint16_t perms) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     return vfs_kcreate(path, perms);
 }
 
-int vfs_kcreate(char* path, uint16_t perms) {
-    char* local_path;
+int vfs_kcreate(char *path, uint16_t perms) {
+    char *local_path;
     char absolute_path[2048];
 
     vfs_metadata_t metadata;
@@ -244,13 +244,13 @@ int vfs_kcreate(char* path, uint16_t perms) {
     return (*filesystems[filesystem].create)(local_path, perms, mountpoints[mountpoint].device);
 }
 
-int vfs_write(char* path, uint64_t loc, uint8_t val) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_write(char *path, uint64_t loc, uint8_t val) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     return vfs_kwrite(path, loc, val);
 }
 
-int vfs_kwrite(char* path, uint64_t loc, uint8_t val) {
-    char* local_path;
+int vfs_kwrite(char *path, uint64_t loc, uint8_t val) {
+    char *local_path;
     char absolute_path[2048];
     
     if (!kstrncmp(path, ":://", 4)) {
@@ -274,10 +274,10 @@ int vfs_kwrite(char* path, uint64_t loc, uint8_t val) {
     return (*filesystems[filesystem].write)(local_path, val, loc, mountpoints[mountpoint].device);
 }
 
-int vfs_open(char* path, int flags, int mode) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+int vfs_open(char *path, int flags, int mode) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
 
-    char* local_path;
+    char *local_path;
     char absolute_path[2048];
 
     file_handle_v2_t handle = {0};
@@ -307,8 +307,8 @@ int vfs_open(char* path, int flags, int mode) {
     return create_file_handle_v2(current_task, handle);
 }
 
-int vfs_kopen(char* path, int flags, int mode) {
-    char* local_path;
+int vfs_kopen(char *path, int flags, int mode) {
+    char *local_path;
     char absolute_path[2048];
 
     file_handle_v2_t handle = {0};
@@ -340,8 +340,8 @@ int vfs_kopen(char* path, int flags, int mode) {
 
 extern int read_stat;
 
-int vfs_uread(int handle, char* ptr, int len) {
-    ptr = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)ptr);
+int vfs_uread(int handle, char *ptr, int len) {
+    ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)ptr);
     int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
     if (len <= MAX_SIMULTANOUS_VFS_ACCESS)
         return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
@@ -352,15 +352,15 @@ int vfs_uread(int handle, char* ptr, int len) {
     }
 }
 
-int vfs_kuread(int handle, char* ptr, int len) {
+int vfs_kuread(int handle, char *ptr, int len) {
     int filesystem = vfs_translate_fs(task_table[0]->file_handles_v2[handle].mountpoint);
     return (*filesystems[filesystem].uread)(task_table[0]->file_handles_v2[handle].internal_handle, ptr, len);
 }
 
 extern int write_stat;
 
-int vfs_uwrite(int handle, char* ptr, int len) {
-    ptr = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)ptr);
+int vfs_uwrite(int handle, char *ptr, int len) {
+    ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)ptr);
     int filesystem = vfs_translate_fs(task_table[current_task]->file_handles_v2[handle].mountpoint);
     if (len <= MAX_SIMULTANOUS_VFS_ACCESS)
         return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles_v2[handle].internal_handle, ptr, len);
@@ -371,7 +371,7 @@ int vfs_uwrite(int handle, char* ptr, int len) {
     }
 }
 
-int vfs_kuwrite(int handle, char* ptr, int len) {
+int vfs_kuwrite(int handle, char *ptr, int len) {
     int filesystem = vfs_translate_fs(task_table[0]->file_handles_v2[handle].mountpoint);
     return (*filesystems[filesystem].uwrite)(task_table[0]->file_handles_v2[handle].internal_handle, ptr, len);
 }
@@ -406,10 +406,10 @@ int vfs_kfork(int handle) {
 
 }
 
-int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
-    char* local_path;
+int vfs_list(char *path, vfs_metadata_t* metadata, uint32_t entry) {
+    char *local_path;
     char absolute_path[2048];
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
     
     metadata = (vfs_metadata_t*)get_phys_addr(task_table[current_task]->page_directory, (size_t)metadata);
     
@@ -424,14 +424,14 @@ int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry) {
     return (*filesystems[filesystem].list)(local_path, metadata, entry, mountpoints[mountpoint].device);
 }
 
-int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type) {
-    path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
-    metadata = (vfs_metadata_t*)get_phys_addr(task_table[current_task]->page_directory, (size_t)metadata);
+int vfs_get_metadata(char *path, vfs_metadata_t *metadata, int type) {
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    metadata = (vfs_metadata_t *)get_phys_addr(task_table[current_task]->page_directory, (size_t)metadata);
     return vfs_kget_metadata(path, metadata, type);
 }
 
-int vfs_kget_metadata(char* path, vfs_metadata_t* metadata, int type) {
-    char* local_path;
+int vfs_kget_metadata(char *path, vfs_metadata_t *metadata, int type) {
+    char *local_path;
     char absolute_path[2048];
     
     vfs_get_absolute_path(absolute_path, path);
@@ -445,7 +445,7 @@ int vfs_kget_metadata(char* path, vfs_metadata_t* metadata, int type) {
     return (*filesystems[filesystem].get_metadata)(local_path, metadata, type, mountpoints[mountpoint].device);
 }
 
-int vfs_mount(char* mountpoint, char* device, char* filesystem) {
+int vfs_mount(char *mountpoint, char *device, char *filesystem) {
     int i;
     for (i = 0; i < filesystems_ptr; i++)
         if (!kstrcmp(filesystems[i].name, filesystem)) break;
@@ -454,9 +454,9 @@ int vfs_mount(char* mountpoint, char* device, char* filesystem) {
     
     mountpoints = krealloc(mountpoints, sizeof(mountpoint_t) * (mountpoints_ptr+1));
     
-    kstrcpy(mountpoints[mountpoints_ptr].mountpoint, (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)mountpoint));
-    kstrcpy(mountpoints[mountpoints_ptr].device, (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)device));
-    kstrcpy(mountpoints[mountpoints_ptr].filesystem, (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)filesystem));
+    kstrcpy(mountpoints[mountpoints_ptr].mountpoint, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)mountpoint));
+    kstrcpy(mountpoints[mountpoints_ptr].device, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)device));
+    kstrcpy(mountpoints[mountpoints_ptr].filesystem, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)filesystem));
     
     kputs("\nMounted `"); kputs(mountpoints[mountpoints_ptr].device);
     kputs("' on `"); kputs(mountpoints[mountpoints_ptr].mountpoint);
@@ -505,20 +505,20 @@ int vfs_kclose(int handle) {
     return 0;
 }
 
-void vfs_install_fs(char* name,
-                    int (*read)(char* path, uint64_t loc, char* dev),
-                    int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
-                    int (*remove)(char* path, char* dev),
-                    int (*mkdir)(char* path, uint16_t perms, char* dev),
-                    int (*create)(char* path, uint16_t perms, char* dev),
-                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
-                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
-                    int (*mount)(char* device),
-                    int (*open)(char* path, int flags, int mode, char* dev),
+void vfs_install_fs(char *name,
+                    int (*read)(char *path, uint64_t loc, char *dev),
+                    int (*write)(char *path, uint8_t val, uint64_t loc, char *dev),
+                    int (*remove)(char *path, char *dev),
+                    int (*mkdir)(char *path, uint16_t perms, char *dev),
+                    int (*create)(char *path, uint16_t perms, char *dev),
+                    int (*get_metadata)(char *path, vfs_metadata_t *metadata, int type, char *dev),
+                    int (*list)(char *path, vfs_metadata_t *metadata, uint32_t entry, char *dev),
+                    int (*mount)(char *device),
+                    int (*open)(char *path, int flags, int mode, char *dev),
                     int (*close)(int handle),
                     int (*fork)(int handle),
-                    int (*uread)(int handle, char* ptr, int len),
-                    int (*uwrite)(int handle, char* ptr, int len),
+                    int (*uread)(int handle, char *ptr, int len),
+                    int (*uwrite)(int handle, char *ptr, int len),
                     int (*seek)(int handle, int offset, int type) ) {
     
     filesystems = krealloc(filesystems, sizeof(filesystem_t) * (filesystems_ptr+1));

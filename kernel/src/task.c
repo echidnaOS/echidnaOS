@@ -8,11 +8,11 @@
 
 #define FAILURE -1
 
-task_t** task_table;
+task_t **task_table;
 
 void task_init(void) {
     // allocate the task table
-    if ((task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t*))) == 0)
+    if ((task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t *))) == 0)
         panic("unable to allocate task table");
     // create kernel task
     if ((task_table[0] = kalloc(sizeof(task_t))) == 0)
@@ -27,7 +27,7 @@ int current_task = 0;
 
 static int idle_cpu = 1;
 
-void task_spinup(void*, pt_entry_t*);
+void task_spinup(void *, pt_entry_t *);
 
 static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0x1b,0x23,0x23,0x23,0x23,0x23,0x202 };
 
@@ -50,7 +50,7 @@ static int task_create(task_t new_task) {
     return new_pid;
 }
 
-extern filesystem_t* filesystems;
+extern filesystem_t *filesystems;
 int vfs_translate_fs(int mountpoint);
 
 void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
@@ -166,24 +166,24 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
     */
 }
 
-int general_execute_block(task_info_t* task_info) {
+int general_execute_block(task_info_t *task_info) {
     if (general_execute(task_info) == FAILURE)
         return -1;
     task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
     return 0;
 }
 
-int general_execute(task_info_t* task_info) {
+int general_execute(task_info_t *task_info) {
     // correct the struct pointer for kernel space
-    task_info = (task_info_t*)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info);
+    task_info = (task_info_t *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info);
     
     // correct pointers for kernel space
-    char* path = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->path);
-    char* pwd = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->pwd);
+    char *path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->path);
+    char *pwd = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->pwd);
     
-    char* ptr_stdin = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdin);
-    char* ptr_stdout = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdout);
-    char* ptr_stderr = (char*)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stderr);
+    char *ptr_stdin = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdin);
+    char *ptr_stdout = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdout);
+    char *ptr_stderr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stderr);
     
     vfs_metadata_t metadata;
     
@@ -207,7 +207,7 @@ int general_execute(task_info_t* task_info) {
 
     // use the new VFS stack
     int tmp_handle = vfs_kopen(path, O_RDWR, 0);
-    vfs_kuread(tmp_handle, (char*)(base + TASK_RESERVED_SPACE), metadata.size);
+    vfs_kuread(tmp_handle, (char *)(base + TASK_RESERVED_SPACE), metadata.size);
     vfs_kclose(tmp_handle);
 
     // generate the page tables
@@ -224,7 +224,7 @@ int general_execute(task_info_t* task_info) {
     
     if (new_pid == FAILURE) {
         // fail
-        kfree((void*)base);
+        kfree((void *)base);
         return FAILURE;
     }
     
@@ -253,16 +253,16 @@ int general_execute(task_info_t* task_info) {
     create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
     task_table[0]->file_handles_v2[khandle].free = 1;
 
-    *((int*)(base + 0x1000)) = task_info->argc;
+    *((int *)(base + 0x1000)) = task_info->argc;
     int argv_limit = 0x4000;
-    char** argv = (char**)(base + 0x1010);
-    char** src_argv = (char**)((uint32_t)task_info->argv + base);
+    char **argv = (char **)(base + 0x1010);
+    char **src_argv = (char **)((uint32_t)task_info->argv + base);
     // copy the argv's
     for (int i = 0; i < task_info->argc; i++) {
-        kstrcpy( (char*)(base + argv_limit),
-                 (char*)(src_argv[i] + base) );
-        argv[i] = (char*)argv_limit;
-        argv_limit += kstrlen((char*)(src_argv[i] + base)) + 1;
+        kstrcpy( (char *)(base + argv_limit),
+                 (char *)(src_argv[i] + base) );
+        argv[i] = (char *)argv_limit;
+        argv_limit += kstrlen((char *)(src_argv[i] + base)) + 1;
     }
     
     // debug logging
@@ -353,7 +353,7 @@ void task_scheduler(void) {
                     break;
                 case 2:
                     done = read(    task_table[current_task]->iowait_handle,
-                                    (char*)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
+                                    (char *)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
                                     task_table[current_task]->iowait_len - task_table[current_task]->iowait_done);
                     if (read_stat) {
                         task_table[current_task]->iowait_done += done;
@@ -366,7 +366,7 @@ void task_scheduler(void) {
                     break;
                 case 3:
                     done = write(    task_table[current_task]->iowait_handle,
-                                    (char*)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
+                                    (char *)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
                                     task_table[current_task]->iowait_len - task_table[current_task]->iowait_done);
                     if (write_stat) {
                         task_table[current_task]->iowait_done += done;
@@ -384,7 +384,7 @@ void task_scheduler(void) {
                 idle_cpu = 0;
                 //set_segment(0x3, task_table[current_task]->base, task_table[current_task]->pages);
                 //set_segment(0x4, task_table[current_task]->base, task_table[current_task]->pages);
-                task_spinup((void*)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory);
+                task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory);
             case KRN_STAT_IPCWAIT_TASK:
             case KRN_STAT_PROCWAIT_TASK:
             case KRN_STAT_VDEVWAIT_TASK:
@@ -412,9 +412,9 @@ void task_quit(int pid, int64_t return_value) {
         task_table[parent]->cpu.edx = (uint32_t)((return_value >> 32) & 0xffffffff);
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
     }
-    kfree((void*)task_table[pid]->file_handles_v2);
-    kfree((void*)task_table[pid]->text_base);
-    kfree((void*)task_table[pid]);
+    kfree((void *)task_table[pid]->file_handles_v2);
+    kfree((void *)task_table[pid]->text_base);
+    kfree((void *)task_table[pid]);
     task_table[pid] = EMPTY_PID;
     DISABLE_INTERRUPTS;
     ts_enable = 1;

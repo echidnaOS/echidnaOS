@@ -40,19 +40,19 @@ typedef struct {
 
 typedef struct {
     char name[128];
-    int (*read)(char* path, uint64_t loc, char* dev);
-    int (*write)(char* path, uint8_t val, uint64_t loc, char* dev);
-    int (*remove)(char* path, char* dev);
-    int (*mkdir)(char* path, uint16_t perms, char* dev);
-    int (*create)(char* path, uint16_t perms, char* dev);
-    int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev);
-    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev);
-    int (*mount)(char* device);
-    int (*open)(char* path, int flags, int mode, char* dev);
+    int (*read)(char *path, uint64_t loc, char *dev);
+    int (*write)(char *path, uint8_t val, uint64_t loc, char *dev);
+    int (*remove)(char *path, char *dev);
+    int (*mkdir)(char *path, uint16_t perms, char *dev);
+    int (*create)(char *path, uint16_t perms, char *dev);
+    int (*get_metadata)(char *path, vfs_metadata_t *metadata, int type, char *dev);
+    int (*list)(char *path, vfs_metadata_t *metadata, uint32_t entry, char *dev);
+    int (*mount)(char *device);
+    int (*open)(char *path, int flags, int mode, char *dev);
     int (*close)(int handle);
     int (*fork)(int handle);
-    int (*uread)(int handle, char* ptr, int len);
-    int (*uwrite)(int handle, char* ptr, int len);
+    int (*uread)(int handle, char *ptr, int len);
+    int (*uwrite)(int handle, char *ptr, int len);
     int (*seek)(int handle, int offset, int type);
 } filesystem_t;
 
@@ -65,26 +65,26 @@ typedef struct {
 
 
 int create_file_handle_v2(int pid, file_handle_v2_t handle);
-int read(int handle, char* ptr, int len);
-int write(int handle, char* ptr, int len);
+int read(int handle, char *ptr, int len);
+int write(int handle, char *ptr, int len);
 
-int vfs_list(char* path, vfs_metadata_t* metadata, uint32_t entry);
-int vfs_get_metadata(char* path, vfs_metadata_t* metadata, int type);
-int vfs_kget_metadata(char* path, vfs_metadata_t* metadata, int type);
-int vfs_read(char* path, uint64_t loc);
-int vfs_kread(char* path, uint64_t loc);
-int vfs_write(char* path, uint64_t loc, uint8_t val);
-int vfs_kwrite(char* path, uint64_t loc, uint8_t val);
-int vfs_remove(char* path);
-int vfs_kremove(char* path);
-int vfs_mkdir(char* path, uint16_t perms);
-int vfs_kmkdir(char* path, uint16_t perms);
-int vfs_create(char* path, uint16_t perms);
-int vfs_kcreate(char* path, uint16_t perms);
-int vfs_cd(char* path);
+int vfs_list(char *path, vfs_metadata_t *metadata, uint32_t entry);
+int vfs_get_metadata(char *path, vfs_metadata_t *metadata, int type);
+int vfs_kget_metadata(char *path, vfs_metadata_t *metadata, int type);
+int vfs_read(char *path, uint64_t loc);
+int vfs_kread(char *path, uint64_t loc);
+int vfs_write(char *path, uint64_t loc, uint8_t val);
+int vfs_kwrite(char *path, uint64_t loc, uint8_t val);
+int vfs_remove(char *path);
+int vfs_kremove(char *path);
+int vfs_mkdir(char *path, uint16_t perms);
+int vfs_kmkdir(char *path, uint16_t perms);
+int vfs_create(char *path, uint16_t perms);
+int vfs_kcreate(char *path, uint16_t perms);
+int vfs_cd(char *path);
 
-int vfs_open(char* path, int flags, int mode);
-int vfs_kopen(char* path, int flags, int mode);
+int vfs_open(char *path, int flags, int mode);
+int vfs_kopen(char *path, int flags, int mode);
 int vfs_close(int handle);
 int vfs_kclose(int handle);
 
@@ -92,26 +92,26 @@ int vfs_kfork(int handle);
 int vfs_seek(int handle, int offset, int type);
 int vfs_kseek(int handle, int offset, int type);
 
-int vfs_uread(int handle, char* ptr, int len);
-int vfs_kuread(int handle, char* ptr, int len);
-int vfs_uwrite(int handle, char* ptr, int len);
-int vfs_kuwrite(int handle, char* ptr, int len);
+int vfs_uread(int handle, char *ptr, int len);
+int vfs_kuread(int handle, char *ptr, int len);
+int vfs_uwrite(int handle, char *ptr, int len);
+int vfs_kuwrite(int handle, char *ptr, int len);
 
-int vfs_mount(char* mountpoint, char* device, char* filesystem);
+int vfs_mount(char *mountpoint, char *device, char *filesystem);
 void vfs_install_fs(char* name,
-                    int (*read)(char* path, uint64_t loc, char* dev),
-                    int (*write)(char* path, uint8_t val, uint64_t loc, char* dev),
-                    int (*remove)(char* path, char* dev),
-                    int (*mkdir)(char* path, uint16_t perms, char* dev),
-                    int (*create)(char* path, uint16_t perms, char* dev),
-                    int (*get_metadata)(char* path, vfs_metadata_t* metadata, int type, char* dev),
-                    int (*list)(char* path, vfs_metadata_t* metadata, uint32_t entry, char* dev),
-                    int (*mount)(char* device),
-                    int (*open)(char* path, int flags, int mode, char* dev),
+                    int (*read)(char *path, uint64_t loc, char *dev),
+                    int (*write)(char *path, uint8_t val, uint64_t loc, char *dev),
+                    int (*remove)(char *path, char *dev),
+                    int (*mkdir)(char *path, uint16_t perms, char *dev),
+                    int (*create)(char *path, uint16_t perms, char *dev),
+                    int (*get_metadata)(char *path, vfs_metadata_t *metadata, int type, char *dev),
+                    int (*list)(char *path, vfs_metadata_t *metadata, uint32_t entry, char *dev),
+                    int (*mount)(char *device),
+                    int (*open)(char *path, int flags, int mode, char *dev),
                     int (*close)(int handle),
                     int (*fork)(int handle),
-                    int (*uread)(int handle, char* ptr, int len),
-                    int (*uwrite)(int handle, char* ptr, int len),
+                    int (*uread)(int handle, char *ptr, int len),
+                    int (*uwrite)(int handle, char *ptr, int len),
                     int (*seek)(int handle, int offset, int type) );
 
 

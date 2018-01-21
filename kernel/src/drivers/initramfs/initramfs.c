@@ -12,10 +12,10 @@ int initramfs_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload) 
     if (loc >= INITRAMFS_SIZE)
         return EOF;
     if (type == 0) {
-        return (int)(*((uint8_t*)(INITRAMFS_BASE + (uint32_t)loc)));
+        return (int)(*((uint8_t *)(INITRAMFS_BASE + (uint32_t)loc)));
     }
     else if (type == 1) {
-        *((uint8_t*)(INITRAMFS_BASE + (uint32_t)loc)) = payload;
+        *((uint8_t *)(INITRAMFS_BASE + (uint32_t)loc)) = payload;
         return SUCCESS;
     }
 }

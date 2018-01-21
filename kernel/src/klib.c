@@ -5,7 +5,7 @@
 #include <paging.h>
 #include <tty.h>
 
-size_t kmemcpy(char* dest, const char* source, size_t count) {
+size_t kmemcpy(char *dest, const char *source, size_t count) {
     size_t i;
 
     for (i = 0; i < count; i++)
@@ -14,7 +14,7 @@ size_t kmemcpy(char* dest, const char* source, size_t count) {
     return i;
 }
 
-size_t kstrcpy(char* dest, const char* source) {
+size_t kstrcpy(char *dest, const char *source) {
     size_t i;
 
     for (i = 0; source[i]; i++)
@@ -25,7 +25,7 @@ size_t kstrcpy(char* dest, const char* source) {
     return i;
 }
 
-int kstrcmp(const char* dest, const char* source) {
+int kstrcmp(const char *dest, const char *source) {
     size_t i;
 
     for (i = 0; dest[i] == source[i]; i++)
@@ -34,7 +34,7 @@ int kstrcmp(const char* dest, const char* source) {
     return 1;
 }
 
-int kstrncmp(const char* dest, const char* source, size_t len) {
+int kstrncmp(const char *dest, const char *source, size_t len) {
     size_t i;
 
     for (i = 0; i < len; i++)
@@ -43,7 +43,7 @@ int kstrncmp(const char* dest, const char* source, size_t len) {
     return 0;
 }
 
-size_t kstrlen(const char* str) {
+size_t kstrlen(const char *str) {
     size_t len;
 
     for (len = 0; str[len]; len++);
@@ -56,12 +56,12 @@ typedef struct {
     size_t size;
 } kalloc_metadata_t;
 
-void* kalloc(size_t size) {
+void *kalloc(size_t size) {
     size_t pages = size / PAGE_SIZE;
     if (size % PAGE_SIZE) pages++;
 
     // allocate the size in page + allocate an additional page for metadata
-    char* ptr = kmalloc(pages + 1);
+    char *ptr = kmalloc(pages + 1);
     if (!ptr)
         return (void*)0;
     kalloc_metadata_t* metadata = (kalloc_metadata_t*)ptr;
@@ -74,34 +74,34 @@ void* kalloc(size_t size) {
     for (size_t i = 0; i < (pages * PAGE_SIZE); i++)
         ptr[i] = 0;
 
-    return (void*)ptr;
+    return (void *)ptr;
 }
 
-void kfree(void* addr) {
-    kalloc_metadata_t* metadata = (kalloc_metadata_t*)((size_t)addr - PAGE_SIZE);
+void kfree(void *addr) {
+    kalloc_metadata_t *metadata = (kalloc_metadata_t *)((size_t)addr - PAGE_SIZE);
 
-    kmfree((void*)metadata, metadata->pages + 1);
+    kmfree((void *)metadata, metadata->pages + 1);
 
     return;
 }
 
-void* krealloc(void* addr, size_t new_size) {
+void *krealloc(void *addr, size_t new_size) {
     if (!addr) return kalloc(new_size);
     if (!new_size) {
         kfree(addr);
-        return (void*)0;
+        return (void *)0;
     }
 
-    kalloc_metadata_t* metadata = (kalloc_metadata_t*)((size_t)addr - PAGE_SIZE);
+    kalloc_metadata_t *metadata = (kalloc_metadata_t *)((size_t)addr - PAGE_SIZE);
     
-    char* new_ptr;
+    char *new_ptr;
     if ((new_ptr = kalloc(new_size)) == 0)
         return (void*)0;
     
     if (metadata->size > new_size)
-        kmemcpy(new_ptr, (char*)addr, new_size);
+        kmemcpy(new_ptr, (char *)addr, new_size);
     else
-        kmemcpy(new_ptr, (char*)addr, metadata->size);
+        kmemcpy(new_ptr, (char *)addr, metadata->size);
     
     kfree(addr);
     
@@ -115,7 +115,7 @@ uint64_t power(uint64_t x, uint64_t y) {
     return res;
 }
 
-void kputs(const char* string) {
+void kputs(const char *string) {
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
       for (size_t i = 0; string[i]; i++) {
@@ -132,14 +132,14 @@ void kputs(const char* string) {
     return;
 }
 
-void tty_kputs(const char* string, int tty) {
+void tty_kputs(const char *string, int tty) {
     size_t i;
     for (i = 0; string[i]; i++)
         text_putchar(string[i], tty);
     return;
 }
 
-void knputs(const char* string, size_t len) {
+void knputs(const char *string, size_t len) {
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
       for (size_t i = 0; i < len; i++)
@@ -151,7 +151,7 @@ void knputs(const char* string, size_t len) {
     return;
 }
 
-void tty_knputs(const char* string, size_t len, int tty) {
+void tty_knputs(const char *string, size_t len, int tty) {
     size_t i;
     for (i = 0; i < len; i++)
         text_putchar(string[i], tty);

@@ -7,7 +7,7 @@
 
 void escape_parse(char c, uint8_t which_tty);
 
-static char* video_mem = (char*)0xB8000;
+static char *video_mem = (char *)0xB8000;
 
 static void clear_cursor(uint8_t which_tty) {
     tty[which_tty].field[(tty[which_tty].cursor_offset)+1] = tty[which_tty].text_palette;

@@ -256,13 +256,13 @@ int general_execute(task_info_t *task_info) {
     *((int *)(base + 0x1000)) = task_info->argc;
     int argv_limit = 0x4000;
     char **argv = (char **)(base + 0x1010);
-    char **src_argv = (char **)((uint32_t)task_info->argv + base);
+    char **src_argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->argv);
     // copy the argv's
     for (int i = 0; i < task_info->argc; i++) {
         kstrcpy( (char *)(base + argv_limit),
-                 (char *)(src_argv[i] + base) );
+                 (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i]) );
         argv[i] = (char *)argv_limit;
-        argv_limit += kstrlen((char *)(src_argv[i] + base)) + 1;
+        argv_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i])) + 1;
     }
     
     // debug logging

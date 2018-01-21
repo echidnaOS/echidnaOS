@@ -261,7 +261,7 @@ int general_execute(task_info_t *task_info) {
     for (int i = 0; i < task_info->argc; i++) {
         kstrcpy( (char *)(base + argv_limit),
                  (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i]) );
-        argv[i] = (char *)argv_limit;
+        argv[i] = (char *)(TASK_BASE + argv_limit);
         argv_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i])) + 1;
     }
     

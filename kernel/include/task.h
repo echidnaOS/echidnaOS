@@ -103,6 +103,7 @@ typedef struct {
     char *unused1;
     int argc;
     char **argv;
+    char **environ;
 } task_info_t;
 
 extern task_t **task_table;

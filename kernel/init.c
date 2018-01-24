@@ -93,6 +93,9 @@ void kernel_init(void) {
     char tty_path[256];
     char root_path[] = "/";
 
+    static char *env[] = { (char *)0 };
+    static char *argv[] = { "init", (char *)0 };
+
     task_info_t shell_exec = {
         shell_path,
         tty_path,
@@ -101,8 +104,9 @@ void kernel_init(void) {
         root_path,
         0,
         0,
-        0,
-        0
+        1,
+        argv,
+        env
     };
     
     if (vfs_mount("/", ":://initramfs", "echfs") == -2)

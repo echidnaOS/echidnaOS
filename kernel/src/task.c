@@ -199,18 +199,37 @@ int general_execute(task_info_t *task_info) {
     create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
     task_table[0]->file_handles_v2[khandle].free = 1;
 
+    int i;
+
     *((int *)(base + 0x1000)) = task_info->argc;
     int argv_limit = 0x4000;
     char **argv = (char **)(base + 0x1010);
     char **src_argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->argv);
-    // copy the argv's
-    for (int i = 0; i < task_info->argc; i++) {
+
+    /* prepare argv */
+    for (i = 0; argv[i]; i++) {
         kstrcpy( (char *)(base + argv_limit),
                  (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i]) );
         argv[i] = (char *)(TASK_BASE + argv_limit);
         argv_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i])) + 1;
     }
-    
+    /* argv null ptr as per standard */
+    argv[i] = (char *)0;
+
+    int environ_limit = 0x8000;
+    char **environ = (char **)(base + 0x1020);
+    char **src_environ = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->environ);
+
+    /* prepare environ */
+    for (i = 0; src_environ[i]; i++) {
+        kstrcpy( (char *)(base + environ_limit),
+                 (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_environ[i]) );
+        environ[i] = (char *)(TASK_BASE + environ_limit);
+        environ_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_environ[i])) + 1;
+    }
+    /* environ null ptr as per standard */
+    environ[i] = (char *)0;
+
     // debug logging
     /*
     kputs("\nNew task startup request completed with:");

@@ -17,12 +17,15 @@ char prog_pwd[128];
 
 int pid;
 
+extern char **environ;
+
 task_info_t prog_info = {
     prog_path,
     prog_stdin,
     prog_stdout,
     prog_stderr,
     prog_pwd,
+    0,
     0,
     0,
     0,
@@ -231,6 +234,7 @@ int main(int argc, char** argv) {
             OS_pwd(prog_pwd);
             prog_info.argc = s_argc;
             prog_info.argv = s_argv;
+            prog_info.environ = environ;
             if (!no_block) {
                 if (OS_general_execute_block(&prog_info) == -1)
                     fprintf(stderr, "shell: invalid command: `%s`.\n", input);
@@ -293,8 +297,10 @@ void get_argv(char** argv, char* string) {
     OS_what_stdout(prog_stdout);
     OS_what_stderr(prog_stderr);
 
-    if (!string[index])
+    if (!*string) {
         argv[0] = string;
+        return;
+    }
     
     while (string[index]) {
         if (string[index] == ' ') {
@@ -409,5 +415,8 @@ void get_argv(char** argv, char* string) {
             string[index++] = 0;
         else break;
     }
+
+    argv[arg] = (char *)0;
+
     return;
 }

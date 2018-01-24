@@ -54,24 +54,7 @@ extern filesystem_t *filesystems;
 int vfs_translate_fs(int mountpoint);
 
 void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
-    task_table[current_task]->cpu.ebx = ebx;
-    task_table[current_task]->cpu.ecx = ecx;
-    task_table[current_task]->cpu.edx = edx;
-    task_table[current_task]->cpu.esi = esi;
-    task_table[current_task]->cpu.edi = edi;
-    task_table[current_task]->cpu.ebp = ebp;
-    task_table[current_task]->cpu.esp = esp;
-    task_table[current_task]->cpu.eip = eip;
-    task_table[current_task]->cpu.cs = cs;
-    task_table[current_task]->cpu.ds = ds;
-    task_table[current_task]->cpu.es = es;
-    task_table[current_task]->cpu.fs = fs;
-    task_table[current_task]->cpu.gs = gs;
-    task_table[current_task]->cpu.ss = ss;
-    task_table[current_task]->cpu.eflags = eflags;
-    task_table[current_task]->cpu.eax = (uint32_t)(-1);
-    task_scheduler();
-    /*
+
     // forks the current task in a Unix-like way
 
     task_table[current_task]->cpu.eax = eax;
@@ -90,42 +73,18 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
     task_table[current_task]->cpu.gs = gs;
     task_table[current_task]->cpu.ss = ss;
     task_table[current_task]->cpu.eflags = eflags;
-    
-    task_t new_process = *task_table[current_task];
 
+    task_t new_process = *task_table[current_task];
+    /* parent */
     new_process.parent = current_task;
-    new_process.ipc_queue = 0;
-    new_process.ipc_queue_ptr = 0;
-    
-    *new_process.server_name = 0;
-    
-    uint32_t task_size = task_table[current_task]->pages * PAGE_SIZE;
-    
-    // allocate memory for the forked process
-    if ((new_process.base = (uint32_t)kalloc(task_size)) == 0) {
-        // fail
-        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
-        task_scheduler();
-    }
-    
-    // allocate memory for the file descriptors
-    if (!(new_process.file_handles = kalloc(task_table[current_task]->file_handles_ptr * sizeof(file_handle_t)))) {
-        // fail
-        kfree((void*)new_process.base);
-        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
-        task_scheduler();
-    }
-    
-    // clone the parent's file descriptors
-    kmemcpy((char*)new_process.file_handles, (char*)task_table[current_task]->file_handles, task_table[current_task]->file_handles_ptr * sizeof(file_handle_t));
-    
+    // generate the page tables
+    new_process.page_directory = fork_userspace(new_process.page_directory);
+
+    new_process.text_base = get_phys_addr(new_process.page_directory, TASK_BASE);
+
     // allocate memory for the new VFS's file descriptors
     if (!(new_process.file_handles_v2 = kalloc(task_table[current_task]->file_handles_v2_ptr * sizeof(file_handle_v2_t)))) {
         // fail
-        kfree((void*)new_process.base);
-        kfree(new_process.file_handles);
-        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
-        task_scheduler();
     }
 
     // clone new VFS descriptors
@@ -140,30 +99,17 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
         new_handle.internal_handle = (*filesystems[filesystem].fork)(task_table[current_task]->file_handles_v2[i].internal_handle);
         new_process.file_handles_v2[i] = new_handle;
     }
-    
-    // clone the process's memory
-    kmemcpy((char*)new_process.base, (char*)task_table[current_task]->base, task_size);
-    
+
     // attempt to create task
     int new_pid = task_create(new_process);
-    
-    if (new_pid == FAILURE) {
-        // fail
-        kfree((void*)new_process.base);
-        kfree(new_process.file_handles);
-        kfree(new_process.file_handles_v2);
-        task_table[current_task]->cpu.eax = (uint32_t)(FAILURE);
-        task_scheduler();
-    }
-    
+
     // return the PID to the forking process
     task_table[current_task]->cpu.eax = (uint32_t)new_pid;
-    
+
     // return 0 in the child process
     task_table[new_pid]->cpu.eax = 0;
-    
+
     task_scheduler();
-    */
 }
 
 int general_execute_block(task_info_t *task_info) {

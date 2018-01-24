@@ -9,7 +9,7 @@ kernel/echidna.bin: $(KERNEL_FILES)
 	$(MAKE) -C kernel
 
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
-	cd echidnafs && gcc echfs-utils.c -o echfs-utils
+	cd echidnafs && gcc -O2 echfs-utils.c -o echfs-utils
 
 update_wrappers:
 	cp gccwrappers/* tools/bin/

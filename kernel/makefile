@@ -10,7 +10,7 @@ OBJ = $(C_FILES:.c=.o) $(ASM_FILES:.asm=.o)
 BINS = $(REAL_FILES:.real=.bin)
 
 CHARDFLAGS = -std=gnu99 -masm=intel
-CFLAGS = 
+CFLAGS = -O2
 
 echidna.bin: $(BINS) $(OBJ) $(H_FILES)
 	$(CC) -o echidna.bin $(OBJ)

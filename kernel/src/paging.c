@@ -147,6 +147,29 @@ pt_entry_t *new_userspace(void) {
     return new_pd;
 }
 
+int destroy_userspace(pt_entry_t *pd) {
+    /* this function destroys a page table and frees all used pages */
+    /* including the task's text and data pages */
+
+    for (size_t i = TASK_BASE; i; i += PAGE_SIZE) {
+        if (!is_mapped(pd, i))
+            continue;
+        kmfree((char *)get_phys_addr(pd, i), 1);
+    }
+
+    /* free the page tables */
+
+    for (int i = 0; i < 1024; i++) {
+        if (pd[i] & 1) {
+            pt_entry_t *pt = (pt_entry_t *)(pd[i] & 0xfffff000);
+            kmfree(pt, 1);
+        }
+    }
+    kmfree(pd, 1);
+
+    return 0;
+}
+
 pt_entry_t *fork_userspace(pt_entry_t *pd) {
     /* allocate the new page directory */
 

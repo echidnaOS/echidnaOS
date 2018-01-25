@@ -80,8 +80,6 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
     // generate the page tables
     new_process.page_directory = fork_userspace(new_process.page_directory);
 
-    new_process.text_base = get_phys_addr(new_process.page_directory, TASK_BASE);
-
     // allocate memory for the new VFS's file descriptors
     if (!(new_process.file_handles_v2 = kalloc(task_table[current_task]->file_handles_v2_ptr * sizeof(file_handle_v2_t)))) {
         // fail
@@ -140,16 +138,11 @@ int general_execute(task_info_t *task_info) {
     new_task.cpu = default_cpu_status;
     new_task.parent = current_task;    // set parent
     
-    size_t base;
-    
     size_t pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
     if ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) % PAGE_SIZE) pages++;
-
-    // allocate memory for new process
-    if ((base = (size_t)kalloc(pages * PAGE_SIZE)) == 0)
-        return FAILURE;
     
     // load program into memory
+    size_t base = (size_t)kmalloc(pages);
 
     // use the new VFS stack
     int tmp_handle = vfs_kopen(path, O_RDWR, 0);
@@ -162,8 +155,6 @@ int general_execute(task_info_t *task_info) {
     for (size_t i = 0; i < pages; i++)
         map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
     new_task.page_directory = pd;
-
-    new_task.text_base = base;
     
     // attempt to create task
     int new_pid = task_create(new_task);
@@ -378,7 +369,7 @@ void task_quit(int pid, int64_t return_value) {
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
     }
     kfree((void *)task_table[pid]->file_handles_v2);
-    kfree((void *)task_table[pid]->text_base);
+    destroy_userspace(task_table[pid]->page_directory);
     kfree((void *)task_table[pid]);
     task_table[pid] = EMPTY_PID;
     DISABLE_INTERRUPTS;

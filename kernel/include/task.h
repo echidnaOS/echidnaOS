@@ -58,7 +58,6 @@ typedef struct {
     int parent;
 
     pt_entry_t *page_directory;
-    size_t text_base;
 
     cpu_t cpu;
 

@@ -100,17 +100,21 @@ int resize_heap(size_t heap_size) {
         size_t needed_pages = heap_pages - cur_heap_pages;
         // generate the page tables
         // map the process's memory
-        for (size_t i = 0; i < needed_pages; i++)
-            map_page(pd, cur_heap_base + i * PAGE_SIZE, (size_t)kmalloc(1), 0x07);
+        for (size_t i = 0; i < needed_pages; i++) {
+            size_t page = (size_t)kmalloc(1);
+            if (!page)
+                return -1;
+            map_page(pd, cur_heap_base + i * PAGE_SIZE, page, 0x07);
+            (task_table[current_task]->heap_size) += PAGE_SIZE;
+        }
     } else if (heap_pages < cur_heap_pages) {
         size_t unneeded_pages = cur_heap_pages - heap_pages;
         for (size_t i = 0; i < unneeded_pages; i++) {
             kmfree((void *)get_phys_addr(pd, cur_heap_base + i * PAGE_SIZE), 1);
             unmap_page(pd, cur_heap_base + i * PAGE_SIZE);
+            (task_table[current_task]->heap_size) -= PAGE_SIZE;
         }
     }
-
-    task_table[current_task]->heap_size = heap_size;
 
     return 0;
 }

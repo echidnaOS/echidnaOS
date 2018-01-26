@@ -11,7 +11,7 @@
 #define EOF -1
 
 filesystem_t *filesystems;
-static mountpoint_t *mountpoints;
+mountpoint_t *mountpoints;
 static int mountpoints_ptr = 0;
 static int filesystems_ptr = 0;
 

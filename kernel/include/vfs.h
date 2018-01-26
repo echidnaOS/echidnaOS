@@ -63,10 +63,15 @@ typedef struct {
 } mountpoint_t;
 
 
+extern filesystem_t *filesystems;
+extern mountpoint_t *mountpoints;
+
 
 int create_file_handle_v2(int pid, file_handle_v2_t handle);
 int read(int handle, char *ptr, int len);
 int write(int handle, char *ptr, int len);
+
+int vfs_translate_fs(int mountpoint);
 
 int vfs_list(char *path, vfs_metadata_t *metadata, uint32_t entry);
 int vfs_get_metadata(char *path, vfs_metadata_t *metadata, int type);

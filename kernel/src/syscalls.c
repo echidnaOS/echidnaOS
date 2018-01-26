@@ -143,22 +143,13 @@ void pwd(char *pwd_dump) {
 }
 
 void what_stdin(char *dump) {
-    dump = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)dump);
-
-    kstrcpy(dump, task_table[current_task]->stdin);
     return;
 }
 
 void what_stdout(char *dump) {
-    dump = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)dump);
-
-    kstrcpy(dump, task_table[current_task]->stdout);
     return;
 }
 
 void what_stderr(char *dump) {
-    dump = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)dump);
-
-    kstrcpy(dump, task_table[current_task]->stderr);
     return;
 }

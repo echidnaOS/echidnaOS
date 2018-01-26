@@ -268,10 +268,6 @@ int general_execute(task_info_t *task_info) {
     task_table[new_pid]->heap_size = 0;
     
     kstrcpy(task_table[new_pid]->pwd, pwd);
-    
-    kstrcpy(task_table[new_pid]->stdin, ptr_stdin);
-    kstrcpy(task_table[new_pid]->stdout, ptr_stdout);
-    kstrcpy(task_table[new_pid]->stderr, ptr_stderr);
 
     // create file handles for std streams
     // this is a huge hack FIXME

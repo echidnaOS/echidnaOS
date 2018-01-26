@@ -63,10 +63,6 @@ typedef struct {
 
     char pwd[2048];
 
-    char stdin[2048];
-    char stdout[2048];
-    char stderr[2048];
-
     char iowait_dev[2048];
     uint64_t iowait_loc;
     int iowait_type;

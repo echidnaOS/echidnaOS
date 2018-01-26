@@ -10,9 +10,8 @@
 #define KRN_STAT_ACTIVE_TASK    1
 #define KRN_STAT_RES_TASK       2
 #define KRN_STAT_IOWAIT_TASK    3
-#define KRN_STAT_IPCWAIT_TASK   4
+#define KRN_STAT_ZOMBIE_TASK    4
 #define KRN_STAT_PROCWAIT_TASK  5
-#define KRN_STAT_VDEVWAIT_TASK  6
 
 #define EMPTY_PID               (task_t *)0xffffffff
 #define TASK_RESERVED_SPACE     0x10000
@@ -56,6 +55,9 @@ typedef struct {
 
     int status;
     int parent;
+
+    int64_t return_value;
+    int *waitstat;
 
     pt_entry_t *page_directory;
 

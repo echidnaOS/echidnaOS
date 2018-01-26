@@ -28,6 +28,7 @@ int current_task = 0;
 static int idle_cpu = 1;
 
 void task_spinup(void *, pt_entry_t *);
+static void zombie_eval(int pid);
 
 static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0x1b,0x23,0x23,0x23,0x23,0x23,0x202 };
 
@@ -208,6 +209,7 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
 
 int swait(int *status) {
     task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
+    task_table[current_task]->waitstat = status;
     return 0;
 }
 
@@ -435,12 +437,10 @@ void task_scheduler(void) {
                 }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;
-                //set_segment(0x3, task_table[current_task]->base, task_table[current_task]->pages);
-                //set_segment(0x4, task_table[current_task]->base, task_table[current_task]->pages);
                 task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory);
-            case KRN_STAT_IPCWAIT_TASK:
+            case KRN_STAT_ZOMBIE_TASK:
+                zombie_eval(current_task);
             case KRN_STAT_PROCWAIT_TASK:
-            case KRN_STAT_VDEVWAIT_TASK:
             case KRN_STAT_RES_TASK:
                 current_task++;
                 continue;
@@ -452,21 +452,28 @@ void task_scheduler(void) {
 
 }
 
+static void zombie_eval(int pid) {
+    int parent = task_table[pid]->parent;
+
+    if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
+        task_table[parent]->cpu.eax = pid;
+        task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
+        kfree((void *)task_table[pid]);
+        task_table[pid] = EMPTY_PID;
+    }
+
+    return;
+}
+
 void task_quit_self(int64_t return_value) {
     task_quit(current_task, return_value);
 }
 
 void task_quit(int pid, int64_t return_value) {
-    int parent = task_table[pid]->parent;
-    if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
-        task_table[parent]->cpu.eax = (uint32_t)(return_value & 0xffffffff);
-        /* task_table[parent]->cpu.edx = (uint32_t)((return_value >> 32) & 0xffffffff); */
-        task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
-    }
+    task_table[pid]->return_value = return_value;
+    task_table[pid]->status = KRN_STAT_ZOMBIE_TASK;
     kfree((void *)task_table[pid]->file_handles_v2);
     destroy_userspace(task_table[pid]->page_directory);
-    kfree((void *)task_table[pid]);
-    task_table[pid] = EMPTY_PID;
     DISABLE_INTERRUPTS;
     ts_enable = 1;
     task_scheduler();

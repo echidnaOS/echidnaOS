@@ -54,6 +54,7 @@ extern vfs_list
 extern vfs_get_metadata
 extern general_execute
 extern general_execute_block
+extern execve
 extern register_vdev
 extern vdev_in_ready
 extern vdev_out_ready
@@ -72,7 +73,7 @@ routine_list:
         dd      task_quit_self          ; 0x00
         dd      general_execute         ; 0x01
         dd      0 ;general_execute_block; 0x02 - dummy entry
-        dd      0                       ; 0x03
+        dd      execve                  ; 0x03
         dd      0                       ; 0x04
         dd      0 ;task_fork            ; 0x05 - dummy entry
         dd      0                       ; 0x06

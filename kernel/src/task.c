@@ -53,6 +53,102 @@ static int task_create(task_t new_task) {
 extern filesystem_t *filesystems;
 int vfs_translate_fs(int mountpoint);
 
+int execve(char *path, char **argv, char **envp) {
+    int i;
+    int argc;
+    char *tmp_argv[256];
+    char *tmp_envp[256];
+
+    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)argv);
+    envp = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)envp);
+
+    vfs_metadata_t metadata;
+    if (vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2) return FAILURE;
+
+    size_t pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
+    if ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) % PAGE_SIZE) pages++;
+
+    /* copy argv in a tmp buffer */
+    for (i = 0; i < 256; i++) {
+        if (!argv[i])
+            break;
+        char *tmp_ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)argv[i]);
+        tmp_argv[i] = kalloc(kstrlen(tmp_ptr) + 1);
+        kstrcpy(tmp_argv[i], argv[i]);
+    }
+    tmp_argv[i] = 0;
+    argc = i;
+
+    /* copy envp in a tmp buffer */
+    for (i = 0; i < 256; i++) {
+        if (!envp[i])
+            break;
+        char *tmp_ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)envp[i]);
+        tmp_envp[i] = kalloc(kstrlen(tmp_ptr) + 1);
+        kstrcpy(tmp_envp[i], envp[i]);
+    }
+    tmp_envp[i] = 0;
+
+    /* now destroy old userspace for the process */
+    destroy_userspace(task_table[current_task]->page_directory);
+
+    /* reset CPU status */
+    task_table[current_task]->cpu = default_cpu_status;
+
+    // load program into memory
+    size_t base = (size_t)kmalloc(pages);
+
+    // use the new VFS stack
+    int tmp_handle = vfs_kopen(path, O_RDWR, 0);
+    vfs_kuread(tmp_handle, (char *)(base + TASK_RESERVED_SPACE), metadata.size);
+    vfs_kclose(tmp_handle);
+
+    // generate the page tables
+    pt_entry_t* pd = new_userspace();
+    // map the process's memory
+    for (size_t i = 0; i < pages; i++)
+        map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
+    task_table[current_task]->page_directory = pd;
+
+    task_table[current_task]->cpu.esp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
+    task_table[current_task]->cpu.eip = TASK_BASE + TASK_RESERVED_SPACE;
+
+    task_table[current_task]->heap_base = TASK_BASE + pages * PAGE_SIZE;
+    task_table[current_task]->heap_size = 0;
+
+    *((int *)(base + 0x1000)) = argc;
+    int argv_limit = 0x4000;
+    char **dest_argv = (char **)(base + 0x1010);
+
+    /* prepare argv */
+    for (i = 0; tmp_argv[i]; i++) {
+        kstrcpy((char *)(base + argv_limit), tmp_argv[i]);
+        dest_argv[i] = (char *)(TASK_BASE + argv_limit);
+        argv_limit += kstrlen(tmp_argv[i]) + 1;
+        kfree(tmp_argv[i]);
+    }
+    /* argv null ptr as per standard */
+    dest_argv[i] = (char *)0;
+
+    int envp_limit = 0x8000;
+    char **dest_envp = (char **)(base + 0x1020);
+
+    /* prepare environ */
+    for (i = 0; tmp_envp[i]; i++) {
+        kstrcpy((char *)(base + envp_limit), tmp_envp[i]);
+        dest_envp[i] = (char *)(TASK_BASE + envp_limit);
+        envp_limit += kstrlen(tmp_envp[i]) + 1;
+        kfree(tmp_envp[i]);
+    }
+    /* environ null ptr as per standard */
+    dest_envp[i] = (char *)0;
+
+    DISABLE_INTERRUPTS;
+    ts_enable = 1;
+    task_scheduler();
+}
+
 void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
 
     // forks the current task in a Unix-like way
@@ -198,7 +294,7 @@ int general_execute(task_info_t *task_info) {
     char **src_argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->argv);
 
     /* prepare argv */
-    for (i = 0; argv[i]; i++) {
+    for (i = 0; src_argv[i]; i++) {
         kstrcpy( (char *)(base + argv_limit),
                  (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i]) );
         argv[i] = (char *)(TASK_BASE + argv_limit);
@@ -354,8 +450,6 @@ void task_scheduler(void) {
     }
 
 }
-
-extern int ts_enable;
 
 void task_quit_self(int64_t return_value) {
     task_quit(current_task, return_value);

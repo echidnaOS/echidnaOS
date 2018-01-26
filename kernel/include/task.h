@@ -107,6 +107,7 @@ typedef struct {
 
 extern task_t **task_table;
 extern int current_task;
+extern int ts_enable;
 
 void task_init(void);
 int general_execute(task_info_t *);

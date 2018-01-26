@@ -224,6 +224,12 @@ int main(int argc, char** argv) {
             if (OS_vfs_cd(s_argv[1]) == -2)
                 fprintf(stderr, "shell: invalid directory: `%s`.\n", s_argv[1]);
         }
+        
+        else if (!strcmp("execve", s_argv[0])) {
+            if (s_argc == 1) continue;
+            if (OS_execve(s_argv[1], &s_argv[2], environ) == -1)
+                fprintf(stderr, "shell: invalid file: `%s`.\n", s_argv[1]);
+        }
 
         // return to prompt if no input
         else if (!input[0]) continue;

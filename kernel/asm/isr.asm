@@ -61,6 +61,7 @@ extern vdev_out_ready
 extern get_heap_base
 extern get_heap_size
 extern resize_heap
+extern swait
 
 section .data
 
@@ -74,7 +75,7 @@ routine_list:
         dd      general_execute         ; 0x01
         dd      0 ;general_execute_block; 0x02 - dummy entry
         dd      execve                  ; 0x03
-        dd      0                       ; 0x04
+        dd      0 ;wait                 ; 0x04
         dd      0 ;task_fork            ; 0x05 - dummy entry
         dd      0                       ; 0x06
         dd      0                       ; 0x07
@@ -241,6 +242,8 @@ syscall:
         ; special routines check
         cmp eax, 0x05
         je fork_isr
+        cmp eax, 0x04
+        je wait_isr
         ; disable task switch, reenable all interrupts
         push ds
         push 0x10
@@ -658,6 +661,31 @@ gen_exec_block_isr:
         mov eax, -1
         mov edx, -1
         iretd
+
+wait_isr:
+        ; save task status
+        push gs
+        push fs
+        push es
+        push ds
+        push ebp
+        push edi
+        push esi
+        push edx
+        push ecx
+        push ebx
+        push eax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        mov eax, 0xc00000   ; context swap to kernel
+        mov cr3, eax
+        push ecx
+        call swait
+        add esp, 4
+        call task_switch
 
 fork_isr:
         ; save task status

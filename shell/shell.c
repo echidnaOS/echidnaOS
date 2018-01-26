@@ -236,19 +236,14 @@ int main(int argc, char** argv) {
 
         // if the input did not match any command
         else {
-            strcpy(prog_path, s_argv[0]);
-            OS_pwd(prog_pwd);
-            prog_info.argc = s_argc;
-            prog_info.argv = s_argv;
-            prog_info.environ = environ;
-            if (!no_block) {
-                if (OS_general_execute_block(&prog_info) == -1)
-                    fprintf(stderr, "shell: invalid command: `%s`.\n", input);
-            } else {
-                if ((pid = OS_general_execute(&prog_info)) == -1)
-                    fprintf(stderr, "shell: invalid command: `%s`.\n", input);
-                else
-                    fprintf(stderr, "PID %d launched.\n", pid);
+            if (!fork()) {
+                if (OS_execve(s_argv[0], &s_argv[1], environ) == -1) {
+                    fprintf(stderr, "shell: invalid file: `%s`.\n", s_argv[0]);
+                    exit(1);
+                }
+            }
+            else {
+                printf("process returned: %d\n", OS_wait(0));
             }
         }
     }

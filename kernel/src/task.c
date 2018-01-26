@@ -206,6 +206,11 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
     task_scheduler();
 }
 
+int swait(int *status) {
+    task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
+    return 0;
+}
+
 int general_execute_block(task_info_t *task_info) {
     if (general_execute(task_info) == FAILURE)
         return -1;
@@ -455,7 +460,7 @@ void task_quit(int pid, int64_t return_value) {
     int parent = task_table[pid]->parent;
     if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
         task_table[parent]->cpu.eax = (uint32_t)(return_value & 0xffffffff);
-        task_table[parent]->cpu.edx = (uint32_t)((return_value >> 32) & 0xffffffff);
+        /* task_table[parent]->cpu.edx = (uint32_t)((return_value >> 32) & 0xffffffff); */
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
     }
     kfree((void *)task_table[pid]->file_handles_v2);

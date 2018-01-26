@@ -3,6 +3,8 @@ global handler_code
 global handler_irq_pic0
 global handler_irq_pic1
 global handler_div0
+global handler_gpf
+global handler_pf
 global irq0_handler
 global keyboard_isr
 global syscall
@@ -14,6 +16,8 @@ global write_stat
 extern keyboard_handler
 extern task_switch
 extern except_div0
+extern except_gen_prot_fault
+extern except_page_fault
 
 extern set_PIC0_mask
 extern get_PIC0_mask
@@ -153,13 +157,25 @@ handler_irq_pic1:
         pop eax
         iretd
 
-handler_div0:
+except_handler_setup:
         mov eax, 0xc00000
         mov cr3, eax
         mov ax, 0x10
         mov ds, ax
         mov es, ax
+        ret
+
+handler_div0:
+        call except_handler_setup
         call except_div0
+
+handler_gpf:
+        call except_handler_setup
+        call except_gen_prot_fault
+
+handler_pf:
+        call except_handler_setup
+        call except_page_fault
 
 irq0_handler:
         push ds

@@ -5,6 +5,8 @@ extern handler_code
 extern handler_irq_pic0
 extern handler_irq_pic1
 extern handler_div0
+extern handler_gpf
+extern handler_pf
 extern irq0_handler
 extern keyboard_isr
 extern syscall
@@ -117,9 +119,11 @@ load_IDT:
     call make_entry                 ; int 0x0C, stack-segment fault
     
     inc di
+    mov ebx, handler_gpf
     call make_entry                 ; int 0x0D, general protection fault
     
     inc di
+    mov ebx, handler_pf
     call make_entry                 ; int 0x0E, page fault
     
     add di, 2

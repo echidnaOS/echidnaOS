@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <sys_api.h>
 
@@ -237,13 +238,30 @@ int main(int argc, char** argv) {
         // if the input did not match any command
         else {
             if (!fork()) {
+                if (prog_stdin[0]) {
+                    close(0);
+                    open(prog_stdin, O_RDONLY, 0);
+                }
+                if (prog_stdout[0]) {
+                    close(1);
+                    open(prog_stdout, O_WRONLY, 0);
+                }
+                if (prog_stdout[0]) {
+                    close(2);
+                    open(prog_stderr, O_WRONLY, 0);
+                }
                 if (OS_execve(s_argv[0], &s_argv[1], environ) == -1) {
                     fprintf(stderr, "shell: invalid file: `%s`.\n", s_argv[0]);
+                    fprintf(stderr, "press enter.");
+                    getchar();
                     exit(1);
                 }
             }
             else {
-                printf("process returned: %d\n", OS_wait(0));
+                if (!no_block)
+                    printf("process returned: %d\n", OS_wait(0));
+                else
+                    puts("process launched");
             }
         }
     }
@@ -294,9 +312,9 @@ void get_argv(char** argv, char* string) {
     
     no_block = 0;
     
-    OS_what_stdin(prog_stdin);
-    OS_what_stdout(prog_stdout);
-    OS_what_stderr(prog_stderr);
+    prog_stdin[0] = 0;
+    prog_stdout[0] = 0;
+    prog_stderr[0] = 0;
 
     if (!*string) {
         argv[0] = string;

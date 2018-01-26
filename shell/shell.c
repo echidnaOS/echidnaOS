@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
 #include <sys_api.h>
 
@@ -250,7 +251,7 @@ int main(int argc, char** argv) {
                     close(2);
                     open(prog_stderr, O_WRONLY, 0);
                 }
-                if (OS_execve(s_argv[0], &s_argv[1], environ) == -1) {
+                if (execve(s_argv[0], &s_argv[1], environ) == -1) {
                     fprintf(stderr, "shell: invalid file: `%s`.\n", s_argv[0]);
                     fprintf(stderr, "press enter.");
                     getchar();
@@ -259,7 +260,7 @@ int main(int argc, char** argv) {
             }
             else {
                 if (!no_block)
-                    printf("process returned: %d\n", OS_wait(0));
+                    printf("process returned: %d\n", wait(0));
                 else
                     puts("process launched");
             }

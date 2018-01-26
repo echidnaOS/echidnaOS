@@ -4,12 +4,19 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <initramfs.h>
+
+/* location of the kernel's page directory */
 #define KERNEL_PAGES            0x800000
 #define KERNEL_PAGE             (KERNEL_PAGES + 0x400000)
+#define KERNEL_BASE             0x100000
+#define KERNEL_TOP              0x1000000
+
+/* arch specific values */
 #define PAGE_SIZE               4096
-#define INITRAMFS_BASE          0x1000000
-#define INITRAMFS_SIZE          0x800000
-#define KRNL_MEMORY_BASE        (INITRAMFS_BASE + INITRAMFS_SIZE)
+#define PAGE_ENTRIES            1024
+
+#define MEMORY_BASE             (INITRAMFS_BASE + INITRAMFS_SIZE)
 
 
 typedef uint32_t pt_entry_t;

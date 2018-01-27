@@ -49,8 +49,6 @@ tools: packages gcc-7.1.0 binutils-2.28
 	cp -rv tools/* echidnaOS-toolchain/tools/
 	cp -rv gcc-7.1.0.tar.bz2 binutils-2.28.tar.bz2 echidnaOS-toolchain/
 	cd echidnaOS-toolchain && ./maketools.sh
-	cp echidnaOS-toolchain/newlib-patch/newlib/libc/sys/echidnaos/sys_api.h echidnaOS-toolchain/toolchain/usr/include/
-	cp echidnaOS-toolchain/newlib-patch/newlib/libc/sys/echidnaos/sys_api.h echidnaOS-toolchain/toolchain/usr/i386-echidnaos/include/
 
 gcc-7.1.0.tar.bz2:
 	wget ftp://ftp.gnu.org/gnu/gcc/gcc-7.1.0/gcc-7.1.0.tar.bz2

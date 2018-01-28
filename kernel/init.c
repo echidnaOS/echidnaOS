@@ -14,7 +14,7 @@ extern int ts_enable;
 
 void kernel_init(void) {
 
-    full_identity_map((pt_entry_t *)KERNEL_PAGES);
+    init_paging();
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
       debug_kernel_console_init();

@@ -22,6 +22,8 @@ extern except_page_fault
 extern set_PIC0_mask
 extern get_PIC0_mask
 
+extern kernel_pagemap
+
 ; API calls
 extern open
 extern close
@@ -158,7 +160,7 @@ handler_irq_pic1:
         iretd
 
 except_handler_setup:
-        mov eax, 0xc00000
+        mov eax, dword [kernel_pagemap]
         mov cr3, eax
         mov ax, 0x10
         mov ds, ax
@@ -203,7 +205,7 @@ irq0_handler:
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         call task_switch
     .ts_abort:
@@ -229,7 +231,7 @@ keyboard_isr:
         mov eax, cr3        ; save context
         push dword [interrupted_cr3]
         mov dword [interrupted_cr3], eax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         xor eax, eax
         in al, 0x60     ; read from keyboard
@@ -295,7 +297,7 @@ syscall:
         mov gs, bx
         mov ebx, cr3        ; save context
         mov dword [interrupted_cr3], ebx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         mov ebx, 4
         push edx
@@ -343,7 +345,7 @@ vfs_read_isr:
         mov gs, bx
         mov ebx, cr3        ; save context
         mov dword [interrupted_cr3], ebx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         push esi
         push edi
@@ -388,7 +390,7 @@ vfs_read_isr:
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         push 0      ; VFS read type
         push esi
@@ -417,7 +419,7 @@ vfs_write_isr:
         mov gs, bx
         mov ebx, cr3        ; save context
         mov dword [interrupted_cr3], ebx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         push esi
         push edi
@@ -462,7 +464,7 @@ vfs_write_isr:
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         push 1      ; VFS write type
         push esi
@@ -492,7 +494,7 @@ read_isr:
         mov gs, bx
         mov ebx, cr3        ; save context
         mov dword [interrupted_cr3], ebx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         push esi
         push edi
@@ -538,7 +540,7 @@ read_isr:
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         push eax
         push 2      ; read type
@@ -568,7 +570,7 @@ write_isr:
         mov gs, bx
         mov ebx, cr3        ; save context
         mov dword [interrupted_cr3], ebx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         push esi
         push edi
@@ -614,7 +616,7 @@ write_isr:
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, 0xc00000   ; context swap to kernel
+        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, ebx
         push eax
         push 3      ; write type
@@ -645,7 +647,7 @@ gen_exec_block_isr:
         mov gs, ax
         mov eax, cr3        ; save context
         mov dword [interrupted_cr3], eax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         push esi
         push edi
@@ -696,7 +698,7 @@ wait_isr:
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         push ecx
         call swait
@@ -721,6 +723,6 @@ fork_isr:
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, 0xc00000   ; context swap to kernel
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
         mov cr3, eax
         call task_fork

@@ -11,5 +11,5 @@ void panic(const char *msg) {
     tty_kputs("\n!!! KERNEL PANIC !!!\n\nError info: ", current_tty);
     tty_kputs(msg, current_tty);
     tty_kputs("\n\nSYSTEM HALTED", current_tty);
-    asm volatile ("hlt");
+    SYSTEM_HALT;
 }

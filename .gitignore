@@ -9,6 +9,7 @@
 /initramfs.img
 /echidnafs/echfs-utils
 /kernel/**/*.o
+/kernel/initramfs*
 /libc/*.o
 /libc/libc
 /misc/*.o

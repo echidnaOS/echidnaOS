@@ -4,25 +4,22 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <initramfs.h>
-
 /* location of the kernel's page directory */
-#define KERNEL_PAGES            0x800000
-#define KERNEL_PAGE             (KERNEL_PAGES + 0x400000)
+#define KERNEL_PAGE             kernel_pagemap
 #define KERNEL_BASE             0x100000
 #define KERNEL_TOP              0x1000000
+#define MEMORY_BASE             0x1000000
 
 /* arch specific values */
 #define PAGE_SIZE               4096
 #define PAGE_ENTRIES            1024
 
-#define MEMORY_BASE             (INITRAMFS_BASE + INITRAMFS_SIZE)
-
 
 typedef uint32_t pt_entry_t;
 
+void init_paging(void);
 
-void full_identity_map(pt_entry_t *);
+void full_identity_map(void);
 pt_entry_t *new_userspace(void);
 void *kmalloc(size_t);
 void kmfree(void *, size_t);
@@ -33,7 +30,7 @@ int is_mapped(pt_entry_t *, size_t);
 pt_entry_t *fork_userspace(pt_entry_t *);
 int destroy_userspace(pt_entry_t *);
 
-
+extern pt_entry_t *kernel_pagemap;
 
 
 #endif

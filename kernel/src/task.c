@@ -19,7 +19,7 @@ void task_init(void) {
         panic("unable to allocate kernel task");
     kstrcpy(task_table[0]->pwd, "/");
     task_table[0]->status = KRN_STAT_RES_TASK;
-    task_table[0]->page_directory = (pt_entry_t*)KERNEL_PAGE;
+    task_table[0]->page_directory = kernel_pagemap;
     return;
 }
 

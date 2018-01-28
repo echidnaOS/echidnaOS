@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define SEARCH_FAILURE          0xffffffffffffffff
 #define ROOT_ID                 0xffffffffffffffff
@@ -407,6 +410,34 @@ void import_cmd(int argc, char** argv) {
     if (argc < 5) {
         fprintf(stderr, "%s: %s: missing argument: destination file.\n", argv[0], argv[2]);
         return;
+    }
+
+    struct stat s;
+    stat(argv[3], &s);
+    if (!S_ISREG(s.st_mode)) {
+        fprintf(stderr, "%s: warning: source file `%s` is not a regular file, exiting.\n", argv[0], argv[3]);
+        return;
+    }
+
+    // make directory
+    if (path_resolver(argv[4], FILE_TYPE).failure) {
+        char newdirname[4096];
+        int i = 0;
+subdir:
+        for (;; i++) {
+            if (argv[4][i] == '/')
+                break;
+            newdirname[i] = argv[4][i];
+        }
+        newdirname[i] = 0;
+        char *oldargv3 = argv[3];
+        argv[3] = newdirname;
+        mkdir_cmd(argc, argv);
+        argv[3] = oldargv3;
+        if (path_resolver(argv[4], FILE_TYPE).failure) {
+            newdirname[i++] = '/';
+            goto subdir;
+        }
     }
     
     // check if the file exists

@@ -12,14 +12,23 @@
 
 static uint32_t mem_bitmap[BITMAP_FULL] = {0};
 
-int rd_bitmap(size_t i) {
+void init_paging(void) {
+    full_identity_map();
+
+    for (size_t i = 0; i < BITMAP_FULL; i++)
+        mem_bitmap[i] = 0;
+
+    return;
+}
+
+static int rd_bitmap(size_t i) {
     size_t entry = i / 32;
     size_t offset = i % 32;
 
     return (int)((mem_bitmap[entry] >> offset) & 1);
 }
 
-void wr_bitmap(size_t i, int val) {
+static void wr_bitmap(size_t i, int val) {
     size_t entry = i / 32;
     size_t offset = i % 32;
 
@@ -31,7 +40,7 @@ void wr_bitmap(size_t i, int val) {
 }
 
 void *kmalloc(size_t pages) {
-    /* allocate memory pages using a bytemap to track free and used pages */
+    /* allocate memory pages using a bitmap to track free and used pages */
 
     /* find contiguous free pages */
     size_t pg_counter = 0;

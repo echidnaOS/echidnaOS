@@ -5,7 +5,7 @@ notarget: echidna.img
 shell/sh: shell/shell.c
 	$(MAKE) -C shell
 
-kernel/echidna.bin: $(KERNEL_FILES)
+kernel/echidna.bin: kernel/initramfs $(KERNEL_FILES)
 	$(MAKE) -C kernel
 
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
@@ -16,24 +16,26 @@ update_wrappers:
 
 clean:
 	cd echidnafs && rm -f echfs-utils
+	rm -f kernel/initramfs
 	$(MAKE) clean -C shell
 	$(MAKE) clean -C kernel
 
-echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin shell/sh
-	dd bs=32768 count=256 if=/dev/zero of=initramfs.img
-	echidnafs/echfs-utils initramfs.img format
-	echidnafs/echfs-utils initramfs.img mkdir dev
-	echidnafs/echfs-utils initramfs.img mkdir bin
-	echidnafs/echfs-utils initramfs.img mkdir sys
-	echidnafs/echfs-utils initramfs.img mkdir docs
-	echidnafs/echfs-utils initramfs.img import ./shell/sh /sys/init
-	echidnafs/echfs-utils initramfs.img import ./LICENSE.md /docs/license
+kernel/initramfs: echidnafs/echfs-utils shell/sh
+	dd bs=32768 count=256 if=/dev/zero of=kernel/initramfs
+	echidnafs/echfs-utils kernel/initramfs format
+	echidnafs/echfs-utils kernel/initramfs mkdir dev
+	echidnafs/echfs-utils kernel/initramfs mkdir bin
+	echidnafs/echfs-utils kernel/initramfs mkdir sys
+	echidnafs/echfs-utils kernel/initramfs mkdir docs
+	echidnafs/echfs-utils kernel/initramfs import ./shell/sh /sys/init
+	echidnafs/echfs-utils kernel/initramfs import ./LICENSE.md /docs/license
+
+echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
 	echidnafs/echfs-utils echidna.img format
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
-	echidnafs/echfs-utils echidna.img import ./initramfs.img initramfs.img
 	rm tools/bin/kcc
 
 clean-tools:

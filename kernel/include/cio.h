@@ -13,6 +13,13 @@
                     "hlt;"      \
                     "jmp 1b;"   \
                  )
+#define SYSTEM_HALT              \
+    asm volatile (              \
+                    "1:"        \
+                    "cli;"      \
+                    "hlt;"      \
+                    "jmp 1b;"   \
+                 )
 
 #define port_out_b(port, value) ({				\
 	asm volatile (	"out dx, al"				\

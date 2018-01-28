@@ -30,7 +30,7 @@ typedef struct {
     int free;
     int mountpoint;
     int internal_handle;
-} file_handle_v2_t;
+} file_handle_t;
 
 typedef struct {
     char filename[2048];
@@ -67,7 +67,7 @@ extern filesystem_t *filesystems;
 extern mountpoint_t *mountpoints;
 
 
-int create_file_handle_v2(int pid, file_handle_v2_t handle);
+int create_file_handle(int pid, file_handle_t handle);
 int read(int handle, char *ptr, int len);
 int write(int handle, char *ptr, int len);
 

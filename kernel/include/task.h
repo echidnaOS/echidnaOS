@@ -85,8 +85,8 @@ typedef struct {
     size_t sigsegv;
     size_t sigterm;
 
-    file_handle_v2_t *file_handles_v2;
-    int file_handles_v2_ptr;
+    file_handle_t *file_handles;
+    int file_handles_ptr;
 
 } task_t;
 

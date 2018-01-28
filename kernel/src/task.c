@@ -178,21 +178,21 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
     new_process.page_directory = fork_userspace(new_process.page_directory);
 
     // allocate memory for the new VFS's file descriptors
-    if (!(new_process.file_handles_v2 = kalloc(task_table[current_task]->file_handles_v2_ptr * sizeof(file_handle_v2_t)))) {
+    if (!(new_process.file_handles = kalloc(task_table[current_task]->file_handles_ptr * sizeof(file_handle_t)))) {
         // fail
     }
 
     // clone new VFS descriptors
-    for (int i = 0; i < task_table[current_task]->file_handles_v2_ptr; i++) {
-        file_handle_v2_t new_handle = {0};
-        if (task_table[current_task]->file_handles_v2[i].free) {
-            new_process.file_handles_v2[i].free = 1;
+    for (int i = 0; i < task_table[current_task]->file_handles_ptr; i++) {
+        file_handle_t new_handle = {0};
+        if (task_table[current_task]->file_handles[i].free) {
+            new_process.file_handles[i].free = 1;
             continue;
         }
-        new_handle.mountpoint = task_table[current_task]->file_handles_v2[i].mountpoint;
+        new_handle.mountpoint = task_table[current_task]->file_handles[i].mountpoint;
         int filesystem = vfs_translate_fs(new_handle.mountpoint);
-        new_handle.internal_handle = (*filesystems[filesystem].fork)(task_table[current_task]->file_handles_v2[i].internal_handle);
-        new_process.file_handles_v2[i] = new_handle;
+        new_handle.internal_handle = (*filesystems[filesystem].fork)(task_table[current_task]->file_handles[i].internal_handle);
+        new_process.file_handles[i] = new_handle;
     }
 
     // attempt to create task
@@ -280,14 +280,14 @@ int general_execute(task_info_t *task_info) {
     // this is a huge hack FIXME
     int khandle;
     khandle = vfs_kopen(ptr_stdin, O_RDONLY, 0);
-    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
-    task_table[0]->file_handles_v2[khandle].free = 1;
+    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
+    task_table[0]->file_handles[khandle].free = 1;
     khandle = vfs_kopen(ptr_stdout, O_WRONLY, 0);
-    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
-    task_table[0]->file_handles_v2[khandle].free = 1;
+    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
+    task_table[0]->file_handles[khandle].free = 1;
     khandle = vfs_kopen(ptr_stderr, O_WRONLY, 0);
-    create_file_handle_v2(new_pid, task_table[0]->file_handles_v2[khandle]);
-    task_table[0]->file_handles_v2[khandle].free = 1;
+    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
+    task_table[0]->file_handles[khandle].free = 1;
 
     int i;
 
@@ -472,7 +472,7 @@ void task_quit_self(int64_t return_value) {
 void task_quit(int pid, int64_t return_value) {
     task_table[pid]->return_value = return_value;
     task_table[pid]->status = KRN_STAT_ZOMBIE_TASK;
-    kfree((void *)task_table[pid]->file_handles_v2);
+    kfree((void *)task_table[pid]->file_handles);
     destroy_userspace(task_table[pid]->page_directory);
     DISABLE_INTERRUPTS;
     ts_enable = 1;

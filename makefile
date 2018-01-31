@@ -11,9 +11,6 @@ kernel/echidna.bin: kernel/initramfs $(KERNEL_FILES)
 echidnafs/echfs-utils: echidnafs/echfs-utils.c
 	cd echidnafs && gcc -O2 echfs-utils.c -o echfs-utils
 
-update_wrappers:
-	cp gccwrappers/* tools/bin/
-
 clean:
 	cd echidnafs && rm -f echfs-utils
 	rm -f kernel/initramfs
@@ -30,13 +27,12 @@ kernel/initramfs: echidnafs/echfs-utils shell/sh
 	echidnafs/echfs-utils kernel/initramfs import ./shell/sh /sys/init
 	echidnafs/echfs-utils kernel/initramfs import ./LICENSE.md /docs/license
 
-echidna.img: update_wrappers echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin
+echidna.img: echidnafs/echfs-utils bootloader/bootloader.asm kernel/echidna.bin
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
 	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
 	echidnafs/echfs-utils echidna.img format
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin
-	rm tools/bin/kcc
 
 clean-tools:
 	rm -rf gcc-7.1.0 binutils-2.28 build-gcc build-binutils

@@ -1,5 +1,5 @@
 export PATH := ../tools/bin:$(PATH)
-CC = kcc
+CC = i386-elf-gcc
 XXD = xxd
 PREFIX = 
 
@@ -11,11 +11,18 @@ OBJ = $(C_FILES:.c=.o) $(ASM_FILES:.asm=.o)
 BINS = $(REAL_FILES:.real=.bin)
 INITRAMFS = initramfs
 
-CHARDFLAGS = -std=gnu99 -masm=intel
+CHARDFLAGS = -std=gnu99 -masm=intel \
+    -ffreestanding \
+    -I./include/ \
+
+CLINKFLAGS = -nostdlib \
+    -static-libgcc -lgcc \
+    -T ./linker.ld
+
 CFLAGS = -O2
 
 echidna.bin: initramfs_obj.o $(BINS) $(OBJ) $(H_FILES)
-	$(CC) -o echidna.bin $(OBJ) initramfs_obj.o
+	$(CC) $(OBJ) initramfs_obj.o $(CLINKFLAGS) -o echidna.bin
 
 initramfs_obj.o: $(INITRAMFS)
 	$(XXD) -i $(INITRAMFS) > initramfs.c

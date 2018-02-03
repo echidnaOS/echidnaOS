@@ -1,5 +1,4 @@
-export PATH := ../tools/bin:$(PATH)
-CC = i386-elf-gcc
+CC = i386-echidnaos-gcc
 XXD = xxd
 PREFIX = 
 

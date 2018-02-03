@@ -54,6 +54,8 @@ static int task_create(task_t new_task) {
 extern filesystem_t *filesystems;
 int vfs_translate_fs(int mountpoint);
 
+static int do_not_schedule = 0;
+
 int execve(char *path, char **argv, char **envp) {
     int i;
     int argc;
@@ -92,7 +94,8 @@ int execve(char *path, char **argv, char **envp) {
     tmp_envp[i] = 0;
 
     /* now destroy old userspace for the process */
-    destroy_userspace(task_table[current_task]->page_directory);
+    if (task_table[current_task]->page_directory != kernel_pagemap)
+        destroy_userspace(task_table[current_task]->page_directory);
 
     /* reset CPU status */
     task_table[current_task]->cpu = default_cpu_status;
@@ -106,7 +109,7 @@ int execve(char *path, char **argv, char **envp) {
     vfs_kclose(tmp_handle);
 
     // generate the page tables
-    pt_entry_t* pd = new_userspace();
+    pt_entry_t *pd = new_userspace();
     // map the process's memory
     for (size_t i = 0; i < pages; i++)
         map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
@@ -145,9 +148,52 @@ int execve(char *path, char **argv, char **envp) {
     /* environ null ptr as per standard */
     dest_envp[i] = (char *)0;
 
+    if (do_not_schedule)
+        return 0;
+
     DISABLE_INTERRUPTS;
     ts_enable = 1;
     task_scheduler();
+}
+
+int kexec(  char *path, char **argv, char **envp,
+            char *stdin, char *stdout, char *stderr,
+            char *pwd ) {
+    int new_pid;
+    task_t new_task = {0};
+    if ((new_pid = task_create(new_task)) == FAILURE)
+        return FAILURE;
+
+    // create file handles for std streams
+    // this is a huge hack FIXME
+    int khandle;
+    khandle = vfs_kopen(stdin, O_RDONLY, 0);
+    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
+    task_table[0]->file_handles[khandle].free = 1;
+    khandle = vfs_kopen(stdout, O_WRONLY, 0);
+    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
+    task_table[0]->file_handles[khandle].free = 1;
+    khandle = vfs_kopen(stderr, O_WRONLY, 0);
+    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
+    task_table[0]->file_handles[khandle].free = 1;
+
+    task_table[new_pid]->status = KRN_STAT_ACTIVE_TASK;
+    task_table[new_pid]->parent = 0;
+    task_table[new_pid]->page_directory = kernel_pagemap;
+
+    kstrcpy(task_table[new_pid]->pwd, pwd);
+
+    current_task = new_pid;
+
+    do_not_schedule = 1;
+    if (execve(path, argv, envp) == FAILURE) {
+        do_not_schedule = 0;
+        task_table[new_pid] = EMPTY_PID;
+        return FAILURE;
+    } else {
+        do_not_schedule = 0;
+        return 0;
+    }
 }
 
 void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {

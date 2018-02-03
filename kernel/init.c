@@ -8,6 +8,7 @@
 #include <cio.h>
 #include <tty.h>
 #include <system.h>
+#include <panic.h>
 
 size_t memory_size;
 extern int ts_enable;
@@ -88,40 +89,29 @@ void kernel_init(void) {
     set_PIC1_mask(0b11111111);
     
     ENABLE_INTERRUPTS;
-    
-    char shell_path[] = "/sys/init";
-    char tty_path[256];
-    char root_path[] = "/";
 
     static char *env[] = { (char *)0 };
-    static char *argv[] = { "init", (char *)0 };
+    static char *argv[] = { "/sys/init", (char *)0 };
 
-    task_info_t shell_exec = {
-        shell_path,
-        tty_path,
-        tty_path,
-        tty_path,
-        root_path,
-        0,
-        0,
-        1,
-        argv,
-        env
-    };
-    
     if (vfs_mount("/", ":://initramfs", "echfs") == -2)
-        for(;;);
-    vfs_mount("/dev", "devfs", "devfs");
+        panic("Unable to mount initramfs on /");
+    if (vfs_mount("/dev", "devfs", "devfs") == -2)
+        panic("Unable to mount devfs on /dev");
 
     // launch the shell
     kputs("\nKERNEL INIT DONE!\n");
-    kstrcpy(tty_path, "/dev/tty0");
-    general_execute(&shell_exec);
-    kstrcpy(tty_path, "/dev/tty1");
-    general_execute(&shell_exec);
-    kstrcpy(tty_path, "/dev/tty2");
-    general_execute(&shell_exec);
-    
+
+    if (kexec("/sys/init", argv, env, "/dev/tty0", "/dev/tty0", "/dev/tty0", "/") == -1)
+        panic("Unable to start /sys/init");
+    if (kexec("/sys/init", argv, env, "/dev/tty1", "/dev/tty1", "/dev/tty1", "/") == -1)
+        panic("Unable to start /sys/init");
+    if (kexec("/sys/init", argv, env, "/dev/tty2", "/dev/tty2", "/dev/tty2", "/") == -1)
+        panic("Unable to start /sys/init");
+    if (kexec("/sys/init", argv, env, "/dev/tty3", "/dev/tty3", "/dev/tty3", "/") == -1)
+        panic("Unable to start /sys/init");
+    if (kexec("/sys/init", argv, env, "/dev/tty4", "/dev/tty4", "/dev/tty4", "/") == -1)
+        panic("Unable to start /sys/init");
+
     // wait for task scheduler
     ts_enable = 1;
     ENTER_IDLE;

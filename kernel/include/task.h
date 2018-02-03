@@ -113,7 +113,9 @@ int general_execute_block(task_info_t *);
 void task_scheduler(void);
 void task_quit(int, int64_t);
 
-
+int kexec(  char *path, char **argv, char **envp,
+            char *stdin, char *stdout, char *stderr,
+            char *pwd );
 
 
 #endif

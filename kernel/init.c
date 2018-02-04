@@ -80,7 +80,7 @@ void kernel_init(void) {
     task_init();
 
     /* print welcome to tty0 */
-    kputs("Welcome to echidnaOS!\n");
+    kprint(KPRN_DBG, "Welcome to echidnaOS!\n");
     kputs("\n"); kprn_ui(memory_size); kputs(" bytes ("); kprn_ui(memory_size / 0x100000); kputs(" MiB) of memory detected.\n");
 
     kputs("\nInitialising drivers...");

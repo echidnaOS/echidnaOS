@@ -32,6 +32,11 @@ void load_TSS(void);
 
 void load_IDT(void);
 
+extern uint32_t uptime_raw;
+extern uint32_t uptime_raw_high;
+extern uint32_t uptime_frac;
+extern uint32_t uptime_sec;
+extern uint32_t uptime_sec_high;
 
 
 

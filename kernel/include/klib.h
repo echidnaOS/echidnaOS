@@ -27,8 +27,12 @@ void kprn_ui(uint64_t);
 void tty_kprn_ui(uint64_t, int);
 void kprn_x(uint64_t);
 void tty_kprn_x(uint64_t, int);
+void kprint(int type, const char *fmt, ...);
 
-
+#define KPRN_INFO   0
+#define KPRN_WARN   1
+#define KPRN_ERR    2
+#define KPRN_DBG    3
 
 
 

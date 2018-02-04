@@ -6,12 +6,19 @@ global handler_div0
 global handler_gpf
 global handler_pf
 global irq0_handler
+global rtc_handler
 global keyboard_isr
 global syscall
 
 global ts_enable
 global read_stat
 global write_stat
+
+extern uptime_raw
+extern uptime_raw_high
+extern uptime_frac
+extern uptime_sec
+extern uptime_sec_high
 
 extern keyboard_handler
 extern task_switch
@@ -153,6 +160,34 @@ handler_irq_pic0:
 
 handler_irq_pic1:
         push eax
+        mov al, 0x20    ; acknowledge interrupt to both PICs
+        out 0xA0, al
+        out 0x20, al
+        pop eax
+        iretd
+
+rtc_handler:
+        inc dword [uptime_raw]
+        jno .nooverflow
+        mov dword [uptime_raw], 0
+        inc dword [uptime_raw_high]
+    .nooverflow:
+        inc dword [uptime_frac]
+        cmp dword [uptime_frac], 1024
+        je .overflow
+        jmp .out
+    .overflow:
+        mov dword [uptime_frac], 0
+        inc dword [uptime_sec]
+        jo .overflow1
+        jmp .out
+    .overflow1:
+        inc dword [uptime_sec_high]
+    .out:
+        push eax
+        mov al, 0x0c
+        out 0x70, al
+        in al, 0x71
         mov al, 0x20    ; acknowledge interrupt to both PICs
         out 0xA0, al
         out 0x20, al

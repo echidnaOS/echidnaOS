@@ -4,6 +4,7 @@
 #include <klib.h>
 #include <paging.h>
 #include <tty.h>
+#include <system.h>
 
 size_t kmemcpy(char *dest, const char *source, size_t count) {
     size_t i;
@@ -242,4 +243,34 @@ void tty_kprn_x(uint64_t x, int tty) {
     tty_kputs(buf + i, tty);
 
     return;
+}
+
+void kprint(int type, const char *fmt, ...) {
+
+    /* print timestamp */
+    kputs("["); kprn_ui(uptime_sec); kputs("."); kprn_ui(uptime_frac);
+    kputs(":"); kprn_ui(uptime_raw); kputs("] ");
+
+    switch (type) {
+        case KPRN_INFO:
+            kputs("\e[36minfo\e[37m: ");
+            break;
+        case KPRN_WARN:
+            kputs("\e[33mwarning\e[37m: ");
+            break;
+        case KPRN_ERR:
+            kputs("\e[31mERROR\e[37m: ");
+            break;
+        case KPRN_DBG:
+            kputs("\e[36mDEBUG\e[37m: ");
+            break;
+        default:
+            return;
+    }
+
+    /* print format */
+    kputs(fmt);
+
+    return;
+
 }

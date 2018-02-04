@@ -8,6 +8,7 @@ extern handler_div0
 extern handler_gpf
 extern handler_pf
 extern irq0_handler
+extern rtc_handler
 extern keyboard_isr
 extern syscall
 
@@ -176,10 +177,11 @@ load_IDT:
     call make_entry
     
     inc di
-    mov ebx, handler_irq_pic1
+    mov ebx, rtc_handler
     call make_entry
     
     inc di
+    mov ebx, handler_irq_pic1
     call make_entry
     
     inc di

@@ -564,7 +564,7 @@ int echfs_mount(char* dev) {
     
     // verify signature
     if (!fstrncmp(4, "_ECH_FS_", 8)) {
-        kputs("\nechidnaFS signature invalid, mount failed!");
+        kprint(KPRN_ERR, "echidnaFS signature invalid, mount failed!");
         return FAILURE;
     }
     

@@ -457,10 +457,12 @@ int vfs_mount(char *mountpoint, char *device, char *filesystem) {
     kstrcpy(mountpoints[mountpoints_ptr].mountpoint, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)mountpoint));
     kstrcpy(mountpoints[mountpoints_ptr].device, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)device));
     kstrcpy(mountpoints[mountpoints_ptr].filesystem, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)filesystem));
-    
-    kputs("\nMounted `"); kputs(mountpoints[mountpoints_ptr].device);
-    kputs("' on `"); kputs(mountpoints[mountpoints_ptr].mountpoint);
-    kputs("' using filesystem: "); kputs(mountpoints[mountpoints_ptr].filesystem);
+
+    kprint(KPRN_INFO, "Mounted `%s' on `%s' FS: `%s'",
+        mountpoints[mountpoints_ptr].device,
+        mountpoints[mountpoints_ptr].mountpoint,
+        mountpoints[mountpoints_ptr].filesystem
+    );
     mountpoints_ptr++;
     return SUCCESS;
 }

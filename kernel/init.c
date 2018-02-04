@@ -80,10 +80,10 @@ void kernel_init(void) {
     task_init();
 
     /* print welcome to tty0 */
-    kprint(KPRN_DBG, "Welcome to echidnaOS!\n");
-    kputs("\n"); kprn_ui(memory_size); kputs(" bytes ("); kprn_ui(memory_size / 0x100000); kputs(" MiB) of memory detected.\n");
+    kprint(KPRN_INFO, "Welcome to echidnaOS!");
+    kprint(KPRN_INFO, "%u bytes (%u MiB) of memory detected.", (unsigned int)memory_size, (unsigned int)(memory_size / 0x100000));
 
-    kputs("\nInitialising drivers...");
+    kprint(KPRN_INFO, "Initialising drivers...");
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
     init_streams();
     init_initramfs();
@@ -98,7 +98,7 @@ void kernel_init(void) {
 
     /******* END OF DRIVER INITIALISATION CALLS *******/
 
-    kputs("\nInitialising file systems...");
+    kprint(KPRN_INFO, "Initialising file systems...");
     /******* FILE SYSTEM INSTALLATION CALLS *******/
     install_devfs();
     install_echfs();
@@ -121,7 +121,7 @@ void kernel_init(void) {
     if (vfs_mount("/dev", "devfs", "devfs") == -2)
         panic("Unable to mount devfs on /dev");
 
-    kputs("\nKERNEL INIT DONE!\n");
+    kprint(KPRN_INFO, "Kernel initialisation complete, starting init...");
 
     /* launch PID 0 */
     static char *env[] = { (char *)0 };

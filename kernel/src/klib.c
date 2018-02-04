@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <kernel.h>
 #include <klib.h>
 #include <paging.h>
@@ -246,6 +247,9 @@ void tty_kprn_x(uint64_t x, int tty) {
 }
 
 void kprint(int type, const char *fmt, ...) {
+    va_list args;
+
+    va_start(args, fmt);
 
     /* print timestamp */
     kputs("["); kprn_ui(uptime_sec); kputs("."); kprn_ui(uptime_frac);
@@ -268,9 +272,31 @@ void kprint(int type, const char *fmt, ...) {
             return;
     }
 
-    /* print format */
-    kputs(fmt);
-
-    return;
-
+    for (;;) {
+        char c;
+        while (*fmt && *fmt != '%') knputs(fmt++, 1);
+        if (!*fmt++) {
+            va_end(args);
+            kputs("\n");
+            return;
+        }
+        switch (*fmt++) {
+            case 's':
+                kputs(va_arg(args, const char *));
+                break;
+            case 'u':
+                kprn_ui((uint64_t)va_arg(args, unsigned int));
+                break;
+            case 'x':
+                kprn_x((uint64_t)va_arg(args, unsigned int));
+                break;
+            case 'c':
+                c = (char)va_arg(args, int);
+                knputs(&c, 1);
+                break;
+            default:
+                kputs("?");
+                break;
+        }
+    }
 }

@@ -57,7 +57,7 @@ int com_io_wrapper(uint32_t dev, uint64_t loc, int type, uint8_t payload) {
 
 void init_com(void) {
 
-    kputs("\nInitialising COM device driver...");
+    kprint(KPRN_INFO, "Initialising COM device driver...");
     
     int ii = 0;
     for (int i = 0; i < MAX_PORTS; i++) {
@@ -68,7 +68,7 @@ void init_com(void) {
         }
         ii++;
         kernel_add_device(com_names[i], i, 0, &com_io_wrapper);
-        kputs("\nInitialised "); kputs(com_names[i]);
+        kprint(KPRN_INFO, "Initialised %s", com_names[i]);
     }
 
 }

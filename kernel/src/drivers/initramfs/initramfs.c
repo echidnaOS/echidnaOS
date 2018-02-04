@@ -24,10 +24,10 @@ int initramfs_io_wrapper(uint32_t unused0, uint64_t loc, int type, uint8_t paylo
 
 void init_initramfs(void) {
 
-    kputs("\nInitialising initramfs driver...");
+    kprint(KPRN_INFO, "Initialising initramfs driver...");
 
     kernel_add_device("initramfs", 0, initramfs_len, &initramfs_io_wrapper);
 
-    kputs("\nInitialised initramfs.");
+    kprint(KPRN_INFO, "Initialised initramfs.");
 
 }

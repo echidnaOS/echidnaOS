@@ -43,7 +43,19 @@ typedef struct {
     uint8_t checksum;
 } __attribute__((packed)) edid_info_struct_t;
 
+typedef struct {
+    uint8_t pad0[18];
+    uint16_t res_x;
+    uint16_t res_y;
+    uint8_t pad1[3];
+    uint8_t bpp;
+    uint8_t pad2[24];
+} __attribute__((packed)) vbe_mode_info_t;
 
+typedef struct {
+    vbe_mode_info_t *vbe_mode_info;
+    uint16_t mode;
+} get_vbe_t;
 
 
 #endif

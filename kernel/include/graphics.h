@@ -49,7 +49,9 @@ typedef struct {
     uint16_t res_y;
     uint8_t pad1[3];
     uint8_t bpp;
-    uint8_t pad2[24];
+    uint8_t pad2[14];
+    uint32_t framebuffer;
+    uint8_t pad3[212];
 } __attribute__((packed)) vbe_mode_info_t;
 
 typedef struct {

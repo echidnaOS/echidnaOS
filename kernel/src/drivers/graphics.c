@@ -9,6 +9,8 @@ edid_info_struct_t edid_info_struct;
 vbe_mode_info_t vbe_mode_info;
 get_vbe_t get_vbe;
 
+uint32_t *framebuffer;
+
 int edid_width = 0;
 int edid_height = 0;
 
@@ -17,6 +19,7 @@ uint16_t vid_modes[1024];
 void get_vbe_info(vbe_info_struct_t *vbe_info_struct);
 void get_edid_info(edid_info_struct_t *edid_info_struct);
 void get_vbe_mode_info(get_vbe_t *get_vbe);
+void set_vbe_mode(uint16_t mode);
 
 void init_graphics(void) {
     kprint(KPRN_INFO, "Initialising VBE...");
@@ -71,7 +74,11 @@ void init_graphics(void) {
             && vbe_mode_info.bpp == 32) {
             /* mode found */
             kprint(KPRN_INFO, "VBE found matching mode %x, attempting to set.", get_vbe.mode);
-
+            framebuffer = (uint32_t *)vbe_mode_info.framebuffer;
+            kprint(KPRN_INFO, "Framebuffer address: %x", vbe_mode_info.framebuffer);
+            DISABLE_INTERRUPTS;
+            set_vbe_mode(get_vbe.mode);
+            ENABLE_INTERRUPTS;
             goto success;
         }
     }

@@ -91,9 +91,7 @@ void kernel_init(void) {
     init_com();
     init_stty();
     init_pcspk();
-    DISABLE_INTERRUPTS;
     init_graphics();
-    ENABLE_INTERRUPTS;
 
 
     /******* END OF DRIVER INITIALISATION CALLS *******/

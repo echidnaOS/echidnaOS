@@ -37,23 +37,13 @@ typedef struct {
     int noscroll;
 } tty_t;
 
+extern int ttys_ready;
 
 extern uint8_t current_tty;
 extern tty_t tty[KRNL_TTY_COUNT];
 
 void switch_tty(uint8_t which_tty);
-void tty_refresh(uint8_t which_tty);
 void text_putchar(char c, uint8_t which_tty);
-uint32_t text_get_cursor_pos_x(uint8_t which_tty);
-uint32_t text_get_cursor_pos_y(uint8_t which_tty);
-void text_set_cursor_pos(uint32_t x, uint32_t y, uint8_t which_tty);
-void text_set_cursor_palette(uint32_t fg, uint32_t bg, uint8_t which_tty);
-uint8_t text_get_cursor_palette(uint8_t which_tty);
-void text_set_text_palette(uint32_t fg, uint32_t bg, uint8_t which_tty);
-uint8_t text_get_text_palette(uint8_t which_tty);
-void text_clear(uint8_t which_tty);
-void text_disable_cursor(uint8_t which_tty);
-void text_enable_cursor(uint8_t which_tty);
 
 void vga_disable_cursor(void);
 void vga_80_x_50(void);

@@ -61,6 +61,9 @@ typedef struct {
 
 void plot_px(int x, int y, uint32_t hex, uint8_t which_tty);
 extern uint32_t *framebuffer;
+extern uint8_t vga_font[4096];
+extern int edid_width;
+extern int edid_height;
 
 
 #endif

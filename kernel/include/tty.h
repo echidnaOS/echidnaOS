@@ -12,11 +12,15 @@
 #define VD_COLS 160
 
 typedef struct {
-    uint32_t cursor_offset;
+    int cursor_x;
+    int cursor_y;
     int cursor_status;
-    uint8_t cursor_palette;
-    uint8_t text_palette;
-    char field[VD_ROWS * VD_COLS];
+    uint32_t cursor_bg_col;
+    uint32_t cursor_fg_col;
+    uint32_t text_bg_col;
+    uint32_t text_fg_col;
+    uint32_t *field;
+    char *grid;
     char kb_l1_buffer[KB_L1_SIZE];
     char kb_l2_buffer[KB_L2_SIZE];
     uint16_t kb_l1_buffer_index;
@@ -43,9 +47,9 @@ void text_putchar(char c, uint8_t which_tty);
 uint32_t text_get_cursor_pos_x(uint8_t which_tty);
 uint32_t text_get_cursor_pos_y(uint8_t which_tty);
 void text_set_cursor_pos(uint32_t x, uint32_t y, uint8_t which_tty);
-void text_set_cursor_palette(uint8_t c, uint8_t which_tty);
+void text_set_cursor_palette(uint32_t fg, uint32_t bg, uint8_t which_tty);
 uint8_t text_get_cursor_palette(uint8_t which_tty);
-void text_set_text_palette(uint8_t c, uint8_t which_tty);
+void text_set_text_palette(uint32_t fg, uint32_t bg, uint8_t which_tty);
 uint8_t text_get_text_palette(uint8_t which_tty);
 void text_clear(uint8_t which_tty);
 void text_disable_cursor(uint8_t which_tty);

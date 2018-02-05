@@ -2,76 +2,104 @@
 #include <kernel.h>
 #include <klib.h>
 #include <tty.h>
+#include <graphics.h>
+#include <panic.h>
 
-#define VIDEO_BOTTOM (VD_ROWS*VD_COLS)-1
+extern uint8_t vga_font[4096];
+extern int edid_width;
+extern int edid_height;
+
+int rows;
+int cols;
+
+void plot_char(char c, int x, int y, uint32_t hex_fg, uint32_t hex_bg, uint8_t which_tty) {
+    int orig_x = x;
+
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 8; j++) {
+            if ((vga_font[c * 16 + i] >> 7 - j) & 1)
+                plot_px(x++, y, hex_fg, which_tty);
+            else
+                plot_px(x++, y, hex_bg, which_tty);
+        }
+        y++;
+        x = orig_x;
+    }
+
+    return;
+}
+
+void plot_char_grid(char c, int x, int y, uint32_t hex_fg, uint32_t hex_bg, uint8_t which_tty) {
+    plot_char(c, x * 8, y * 16, hex_fg, hex_bg, which_tty);
+    tty[which_tty].grid[x + y * cols] = c;
+    return;
+}
 
 void escape_parse(char c, uint8_t which_tty);
 
-static char *video_mem = (char *)0xB8000;
-
 static void clear_cursor(uint8_t which_tty) {
-    tty[which_tty].field[(tty[which_tty].cursor_offset)+1] = tty[which_tty].text_palette;
-    if (which_tty == current_tty)
-        video_mem[(tty[which_tty].cursor_offset)+1] = tty[which_tty].text_palette;
+    plot_char_grid(tty[which_tty].grid[tty[which_tty].cursor_x + tty[which_tty].cursor_y * cols],
+        tty[which_tty].cursor_x, tty[which_tty].cursor_y,
+        tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
     return;
 }
 
 static void draw_cursor(uint8_t which_tty) {
-    if (tty[which_tty].cursor_status) {
-        tty[which_tty].field[(tty[which_tty].cursor_offset)+1] = tty[which_tty].cursor_palette;
-        if (which_tty == current_tty)
-            video_mem[(tty[which_tty].cursor_offset)+1] = tty[which_tty].cursor_palette;
-    }
+    plot_char_grid(tty[which_tty].grid[tty[which_tty].cursor_x + tty[which_tty].cursor_y * cols],
+        tty[which_tty].cursor_x, tty[which_tty].cursor_y,
+        tty[which_tty].cursor_fg_col, tty[which_tty].cursor_bg_col, which_tty);
     return;
 }
 
 static void scroll(uint8_t which_tty) {
-    uint32_t i;
-    // move the text up by one row
-    for (i=0; i<=VIDEO_BOTTOM-VD_COLS; i++)
-        tty[which_tty].field[i] = tty[which_tty].field[i+VD_COLS];
-    // clear the last line of the screen
-    for (i=VIDEO_BOTTOM; i>VIDEO_BOTTOM-VD_COLS; i -= 2) {
-        tty[which_tty].field[i] = tty[which_tty].text_palette;
-        tty[which_tty].field[i-1] = ' ';
-    }
+    /* move the text up by one row */
+    for (size_t i = edid_width * 16; i < edid_width * edid_height; i++)
+        tty[which_tty].field[i - edid_width * 16] = tty[which_tty].field[i];
     tty_refresh(which_tty);
+    /* notify grid */
+    for (int i = cols; i < rows * cols; i++)
+        tty[which_tty].grid[i - cols] = tty[which_tty].grid[i];
+    /* clear the last line of the screen */
+    for (int i = 0; i < cols; i++)
+        plot_char_grid(' ', i, rows - 1,
+            tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
     return;
 }
 
 void text_clear(uint8_t which_tty) {
-    uint32_t i;
-    clear_cursor(which_tty);
-    for (i=0; i<VIDEO_BOTTOM; i += 2) {
-        tty[which_tty].field[i] = ' ';
-        tty[which_tty].field[i+1] = tty[which_tty].text_palette;
+    for (size_t i = 0; i < (edid_width * edid_height); i++) {
+        tty[which_tty].field[i] = TTY_DEF_TXT_BG_COL;
     }
-    tty[which_tty].cursor_offset = 0;
-    draw_cursor(which_tty);
+    for (size_t i = 0; i < (rows * cols); i++) {
+        tty[which_tty].grid[i] = ' ';
+    }
     tty_refresh(which_tty);
+    tty[which_tty].cursor_x = 0;
+    tty[which_tty].cursor_y = 0;
+    draw_cursor(which_tty);
     return;
 }
 
 void text_clear_no_move(uint8_t which_tty) {
-    uint32_t i;
-    clear_cursor(which_tty);
-    for (i=0; i<VIDEO_BOTTOM; i += 2) {
-        tty[which_tty].field[i] = ' ';
-        tty[which_tty].field[i+1] = tty[which_tty].text_palette;
+    for (size_t i = 0; i < (edid_width * edid_height); i++) {
+        tty[which_tty].field[i] = TTY_DEF_TXT_BG_COL;
     }
-    draw_cursor(which_tty);
+    for (size_t i = 0; i < (rows * cols); i++) {
+        tty[which_tty].grid[i] = ' ';
+    }
     tty_refresh(which_tty);
+    draw_cursor(which_tty);
     return;
 }
 
 void text_enable_cursor(uint8_t which_tty) {
-    tty[which_tty].cursor_status=1;
+    tty[which_tty].cursor_status = 1;
     draw_cursor(which_tty);
     return;
 }
 
 void text_disable_cursor(uint8_t which_tty) {
-    tty[which_tty].cursor_status=0;
+    tty[which_tty].cursor_status = 0;
     clear_cursor(which_tty);
     return;
 }
@@ -88,55 +116,67 @@ void text_putchar(char c, uint8_t which_tty) {
             tty[which_tty].escape = 1;
             return;
         case 0x0A:
-            if (text_get_cursor_pos_y(which_tty) == (VD_ROWS - 1)) {
+            if (text_get_cursor_pos_y(which_tty) == (rows - 1)) {
                 clear_cursor(which_tty);
                 scroll(which_tty);
-                text_set_cursor_pos(0, (VD_ROWS - 1), which_tty);
+                text_set_cursor_pos(0, (rows - 1), which_tty);
             } else
                 text_set_cursor_pos(0, (text_get_cursor_pos_y(which_tty) + 1), which_tty);
             break;
         case 0x08:
-            if (tty[which_tty].cursor_offset) {
+            if (tty[which_tty].cursor_x || tty[which_tty].cursor_y) {
                 clear_cursor(which_tty);
-                tty[which_tty].cursor_offset -= 2;
-                tty[which_tty].field[tty[which_tty].cursor_offset] = ' ';
-                if (which_tty == current_tty)
-                    video_mem[tty[which_tty].cursor_offset] = ' ';
+                if (tty[which_tty].cursor_x)
+                    tty[which_tty].cursor_x--;
+                else {
+                    tty[which_tty].cursor_y--;
+                    tty[which_tty].cursor_x = cols - 1;
+                }
+                plot_char_grid(' ', tty[which_tty].cursor_x, tty[which_tty].cursor_y,
+                    tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
                 draw_cursor(which_tty);
             }
             break;
         default:
             clear_cursor(which_tty);
-            tty[which_tty].field[tty[which_tty].cursor_offset] = c;
-            if (which_tty == current_tty)
-                video_mem[tty[which_tty].cursor_offset] = c;
-            if (tty[which_tty].cursor_offset >= (VIDEO_BOTTOM - 1)) {
-                if (tty[which_tty].noscroll) goto dont_move;
+            plot_char_grid(c, tty[which_tty].cursor_x++, tty[which_tty].cursor_y,
+                tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
+            if (tty[which_tty].cursor_x == cols) {
+                tty[which_tty].cursor_x = 0;
+                tty[which_tty].cursor_y++;
+            }
+            if (tty[which_tty].cursor_y == rows) {
+                tty[which_tty].cursor_y--;
+                if (tty[which_tty].noscroll)
+                    goto dont_move;
                 scroll(which_tty);
-                tty[which_tty].cursor_offset = VIDEO_BOTTOM - (VD_COLS - 1);
-            } else
-                tty[which_tty].cursor_offset += 2;
+            }
 dont_move:
             draw_cursor(which_tty);
     }
     return;
 }
 
-static uint8_t ansi_colours[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+static uint32_t ansi_colours[] = {
+    0x00000000,              /* black */
+    0x00aa0000,              /* red */
+    0x0000aa00,              /* green */
+    0x00aa5500,              /* brown */
+    0x000000aa,              /* blue */
+    0x00aa00aa,              /* magenta */
+    0x0000aaaa,              /* cyan */
+    0x00aaaaaa,              /* grey */
+};
 
 void sgr(uint8_t which_tty) {
 
     if (tty[which_tty].esc_value0 >= 30 && tty[which_tty].esc_value0 <= 37) {
-        uint8_t pal = text_get_text_palette(which_tty);
-        pal = (pal & 0xf0) + ansi_colours[tty[which_tty].esc_value0 - 30];
-        text_set_text_palette(pal, which_tty);
+        tty[which_tty].text_fg_col = ansi_colours[tty[which_tty].esc_value0 - 30];
         return;
     }
 
     if (tty[which_tty].esc_value0 >= 40 && tty[which_tty].esc_value0 <= 47) {
-        uint8_t pal = text_get_text_palette(which_tty);
-        pal = (pal & 0x0f) + ansi_colours[tty[which_tty].esc_value0 - 40] * 0x10;
-        text_set_text_palette(pal, which_tty);
+        tty[which_tty].text_bg_col = ansi_colours[tty[which_tty].esc_value0 - 40];
         return;
     }
 
@@ -172,8 +212,8 @@ void escape_parse(char c, uint8_t which_tty) {
         case 'B':
             if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 1;
             if ((text_get_cursor_pos_y(which_tty) + tty[which_tty].esc_value0) >
-                (VD_ROWS - 1))
-                tty[which_tty].esc_value0 = (VD_ROWS - 1) - text_get_cursor_pos_y(which_tty);
+                (rows - 1))
+                tty[which_tty].esc_value0 = (rows - 1) - text_get_cursor_pos_y(which_tty);
             text_set_cursor_pos(text_get_cursor_pos_x(which_tty),
                                 text_get_cursor_pos_y(which_tty)
                                 + tty[which_tty].esc_value0,
@@ -182,8 +222,8 @@ void escape_parse(char c, uint8_t which_tty) {
         case 'C':
             if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 1;
             if ((text_get_cursor_pos_x(which_tty) + tty[which_tty].esc_value0) >
-                (VD_COLS / 2 - 1))
-                tty[which_tty].esc_value0 = (VD_COLS / 2 - 1) - text_get_cursor_pos_x(which_tty);
+                (cols - 1))
+                tty[which_tty].esc_value0 = (cols - 1) - text_get_cursor_pos_x(which_tty);
             text_set_cursor_pos(text_get_cursor_pos_x(which_tty)
                                 + tty[which_tty].esc_value0,
                                 text_get_cursor_pos_y(which_tty),
@@ -204,10 +244,10 @@ void escape_parse(char c, uint8_t which_tty) {
             tty[which_tty].esc_value1 -= 1;
             if (tty[which_tty].esc_default0) tty[which_tty].esc_value0 = 0;
             if (tty[which_tty].esc_default1) tty[which_tty].esc_value1 = 0;
-            if (tty[which_tty].esc_value1 >= (VD_COLS / 2))
-                tty[which_tty].esc_value1 = (VD_COLS / 2) - 1;
-            if (tty[which_tty].esc_value0 >= VD_ROWS)
-                tty[which_tty].esc_value0 = VD_ROWS - 1;
+            if (tty[which_tty].esc_value1 >= cols)
+                tty[which_tty].esc_value1 = cols - 1;
+            if (tty[which_tty].esc_value0 >= rows)
+                tty[which_tty].esc_value0 = rows - 1;
             text_set_cursor_pos(tty[which_tty].esc_value1, tty[which_tty].esc_value0, which_tty);
             break;
         case 'm':
@@ -250,36 +290,47 @@ void escape_parse(char c, uint8_t which_tty) {
     return;
 }
 
-void text_set_cursor_palette(uint8_t c, uint8_t which_tty) {
-    tty[which_tty].cursor_palette = c;
+void text_set_cursor_palette(uint32_t fg, uint32_t bg, uint8_t which_tty) {
+    tty[which_tty].cursor_fg_col = fg;
+    tty[which_tty].cursor_bg_col = bg;
     draw_cursor(which_tty);
     return;
 }
 
-uint8_t text_get_cursor_palette(uint8_t which_tty) {
-    return tty[which_tty].cursor_palette;
+uint32_t text_get_cursor_fg_col(uint8_t which_tty) {
+    return tty[which_tty].cursor_fg_col;
 }
 
-void text_set_text_palette(uint8_t c, uint8_t which_tty) {
-    tty[which_tty].text_palette = c;
+uint32_t text_get_cursor_bg_col(uint8_t which_tty) {
+    return tty[which_tty].cursor_bg_col;
+}
+
+void text_set_text_palette(uint32_t fg, uint32_t bg, uint8_t which_tty) {
+    tty[which_tty].text_fg_col = fg;
+    tty[which_tty].text_bg_col = bg;
     return;
 }
 
-uint8_t text_get_text_palette(uint8_t which_tty) {
-    return tty[which_tty].text_palette;
+uint32_t text_get_text_fg_col(uint8_t which_tty) {
+    return tty[which_tty].text_fg_col;
+}
+
+uint32_t text_get_text_bg_col(uint8_t which_tty) {
+    return tty[which_tty].text_bg_col;
 }
 
 uint32_t text_get_cursor_pos_x(uint8_t which_tty) {
-    return (tty[which_tty].cursor_offset % VD_COLS) / 2;
+    return tty[which_tty].cursor_x;
 }
 
 uint32_t text_get_cursor_pos_y(uint8_t which_tty) {
-    return tty[which_tty].cursor_offset / VD_COLS;
+    return tty[which_tty].cursor_y;
 }
 
 void text_set_cursor_pos(uint32_t x, uint32_t y, uint8_t which_tty) {
     clear_cursor(which_tty);
-    tty[which_tty].cursor_offset = (y*VD_COLS)+(x*2);
+    tty[which_tty].cursor_x = x;
+    tty[which_tty].cursor_y = y;
     draw_cursor(which_tty);
     return;
 }
@@ -287,7 +338,7 @@ void text_set_cursor_pos(uint32_t x, uint32_t y, uint8_t which_tty) {
 // -- tty --
 
 tty_t tty[KRNL_TTY_COUNT];
-uint8_t current_tty;
+uint8_t current_tty = 0;
 
 void switch_tty(uint8_t which_tty) {
     current_tty = which_tty;
@@ -296,8 +347,10 @@ void switch_tty(uint8_t which_tty) {
 }
 
 void init_tty(void) {
-    uint32_t i;
-    for (i=0; i<KRNL_TTY_COUNT; i++) {
+    cols = edid_width / 8;
+    rows = edid_height / 16;
+
+    for (int i = 0; i < KRNL_TTY_COUNT; i++) {
         tty[i].esc_value = &tty[i].esc_value0;
         tty[i].esc_value0 = 0;
         tty[i].esc_value1 = 0;
@@ -305,24 +358,35 @@ void init_tty(void) {
         tty[i].esc_default0 = 1;
         tty[i].esc_default1 = 1;
         tty[i].escape = 0;
-        tty[i].cursor_offset = 0;
+        tty[i].cursor_x = 0;
+        tty[i].cursor_y = 0;
         tty[i].cursor_status = 1;
-        tty[i].cursor_palette = TTY_DEF_CUR_PAL;
-        tty[i].text_palette = TTY_DEF_TXT_PAL;
+        tty[i].cursor_bg_col = TTY_DEF_CUR_BG_COL;
+        tty[i].cursor_fg_col = TTY_DEF_CUR_FG_COL;
+        tty[i].text_bg_col = TTY_DEF_TXT_BG_COL;
+        tty[i].text_fg_col = TTY_DEF_TXT_FG_COL;
         tty[i].raw = 0;
         tty[i].noblock = 0;
         tty[i].noscroll = 0;
-        for (uint32_t ii=0; ii<VIDEO_BOTTOM; ii += 2) {
-            tty[i].field[ii] = ' ';
-            tty[i].field[ii+1] = TTY_DEF_TXT_PAL;
+        tty[i].field = kalloc(edid_width * edid_height * sizeof(uint32_t));
+        if (!tty[i].field)
+            panic("Out of memory while allocating framebuffers");
+        tty[i].grid = kalloc(rows * cols);
+        if (!tty[i].grid)
+            panic("Out of memory while allocating framebuffers");
+        for (size_t j = 0; j < (edid_width * edid_height); j++) {
+            tty[i].field[j] = TTY_DEF_TXT_BG_COL;
         }
-        tty[i].field[1] = TTY_DEF_CUR_PAL;
+        for (size_t j = 0; j < (rows * cols); j++) {
+            tty[i].grid[j] = ' ';
+        }
+        plot_char_grid(' ', 0, 0, TTY_DEF_CUR_FG_COL, TTY_DEF_CUR_BG_COL, i);
     }
     return;
 }
 
 void tty_refresh(uint8_t which_tty) {
     if (which_tty == current_tty)
-        kmemcpy(video_mem, tty[current_tty].field, VD_ROWS*VD_COLS);
+        kmemcpy((char *)framebuffer, (char *)tty[current_tty].field, (edid_width * edid_height * 4));
     return;
 }

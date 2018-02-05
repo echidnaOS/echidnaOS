@@ -3,6 +3,7 @@
 #include <klib.h>
 #include <graphics.h>
 #include <cio.h>
+#include <tty.h>
 
 vbe_info_struct_t vbe_info_struct;
 edid_info_struct_t edid_info_struct;
@@ -20,8 +21,26 @@ void get_vbe_info(vbe_info_struct_t *vbe_info_struct);
 void get_edid_info(edid_info_struct_t *edid_info_struct);
 void get_vbe_mode_info(get_vbe_t *get_vbe);
 void set_vbe_mode(uint16_t mode);
+void dump_vga_font(uint8_t *bitmap);
+
+uint8_t vga_font[4096];
+
+void plot_px(int x, int y, uint32_t hex, uint8_t which_tty) {
+    size_t fb_i = x + edid_width * y;
+
+    tty[which_tty].field[fb_i] = hex;
+    if (current_tty == which_tty)
+        framebuffer[fb_i] = hex;
+
+    return;
+}
 
 void init_graphics(void) {
+    kprint(KPRN_INFO, "Dumping VGA font...");
+    DISABLE_INTERRUPTS;
+    dump_vga_font(vga_font);
+    ENABLE_INTERRUPTS;
+
     kprint(KPRN_INFO, "Initialising VBE...");
 
     DISABLE_INTERRUPTS;
@@ -55,9 +74,9 @@ void init_graphics(void) {
     edid_height += ((int)edid_info_struct.det_timing_desc1[7] & 0xf0) << 4;
 
     if (!edid_width || !edid_height) {
-        kprint(KPRN_WARN, "EDID returned 0, defaulting to 800x600");
-        edid_width = 800;
-        edid_height = 600;
+        kprint(KPRN_WARN, "EDID returned 0, defaulting to 1024x768");
+        edid_width = 1024;
+        edid_height = 768;
     }
 
     kprint(KPRN_INFO, "EDID recommended res: %ux%u", edid_width, edid_height);

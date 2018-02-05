@@ -4,6 +4,7 @@ global get_vbe_info
 global get_edid_info
 global get_vbe_mode_info
 global set_vbe_mode
+global dump_vga_font
 
 section .data
 
@@ -22,6 +23,10 @@ get_vbe_mode_info_end:
 %define set_vbe_mode_size           set_vbe_mode_end - set_vbe_mode_bin
 set_vbe_mode_bin:                   incbin "blobs/set_vbe_mode.bin"
 set_vbe_mode_end:
+
+%define dump_vga_font_size           dump_vga_font_end - dump_vga_font_bin
+dump_vga_font_bin:                   incbin "blobs/dump_vga_font.bin"
+dump_vga_font_end:
 
 get_vbe_info:
     ; void get_vbe_info(vbe_info_struct_t* vbe_info_struct);
@@ -87,6 +92,24 @@ set_vbe_mode:
     mov ebx, dword [esp+20]
     mov esi, set_vbe_mode_bin
     mov ecx, set_vbe_mode_size
+    call real_routine
+
+    pop ebp
+    pop edi
+    pop esi
+    pop ebx
+    ret
+
+dump_vga_font:
+    ; void dump_vga_font(uint8_t *bitmap);
+    push ebx
+    push esi
+    push edi
+    push ebp
+
+    mov ebx, dword [esp+20]
+    mov esi, dump_vga_font_bin
+    mov ecx, dump_vga_font_size
     call real_routine
 
     pop ebp

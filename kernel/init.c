@@ -9,6 +9,7 @@
 #include <tty.h>
 #include <system.h>
 #include <panic.h>
+#include <graphics.h>
 
 size_t memory_size;
 extern int ts_enable;
@@ -64,10 +65,6 @@ void kernel_init(void) {
     vga_disable_cursor();
     ENABLE_INTERRUPTS;
 
-    /* initialise TTYs */
-    init_tty();
-    switch_tty(0);
-
     /* detect memory */
     DISABLE_INTERRUPTS;
     memory_size = detect_mem();
@@ -79,7 +76,14 @@ void kernel_init(void) {
     /* initialise scheduler */
     task_init();
 
-    /* print welcome to tty0 */
+    /****** END OF EARLY BOOTSTRAP ******/
+
+    /* initialise graphics mode and TTYs */
+    init_graphics();
+    init_tty();
+    switch_tty(0);
+
+    /* print welcome */
     kprint(KPRN_INFO, "Welcome to echidnaOS!");
     kprint(KPRN_INFO, "%u bytes (%u MiB) of memory detected.", (unsigned int)memory_size, (unsigned int)(memory_size / 0x100000));
 
@@ -91,7 +95,6 @@ void kernel_init(void) {
     init_com();
     init_stty();
     init_pcspk();
-    init_graphics();
 
 
     /******* END OF DRIVER INITIALISATION CALLS *******/
@@ -105,7 +108,6 @@ void kernel_init(void) {
     /******* END OF FILE SYSTEM INSTALLATION CALLS *******/
 
 
-    /* END OF EARLY BOOTSTRAP */
 
     /* enable PIT and keyboard IRQs */
     DISABLE_INTERRUPTS;

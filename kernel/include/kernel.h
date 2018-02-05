@@ -22,8 +22,10 @@
 #define KB_L2_SIZE 2048
 
 #define KRNL_TTY_COUNT 7
-#define TTY_DEF_CUR_PAL 0x70
-#define TTY_DEF_TXT_PAL 0x07
+#define TTY_DEF_CUR_BG_COL 0x00ffffff
+#define TTY_DEF_CUR_FG_COL 0x00000000
+#define TTY_DEF_TXT_BG_COL 0x00000000
+#define TTY_DEF_TXT_FG_COL 0x00808080
 
 
 // vfs tunables

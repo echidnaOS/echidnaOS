@@ -59,5 +59,8 @@ typedef struct {
     uint16_t mode;
 } get_vbe_t;
 
+void plot_px(int x, int y, uint32_t hex, uint8_t which_tty);
+extern uint32_t *framebuffer;
+
 
 #endif

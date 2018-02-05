@@ -20,6 +20,7 @@ void init_com(void);
 void init_stty(void);
 void init_graphics(void);
 void init_initramfs(void);
+void init_fb(void);
 
 void keyboard_init(void);
 

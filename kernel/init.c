@@ -92,6 +92,7 @@ void kernel_init(void) {
     init_streams();
     init_initramfs();
     init_tty_drv();
+    init_fb();
     init_com();
     init_stty();
     init_pcspk();
@@ -112,7 +113,7 @@ void kernel_init(void) {
     /* enable PIT and keyboard IRQs */
     DISABLE_INTERRUPTS;
     set_PIC0_mask(0b11111000);
-    set_PIC1_mask(0b11111110);    
+    set_PIC1_mask(0b11111110);
     ENABLE_INTERRUPTS;
 
     /* mount essential filesystems */

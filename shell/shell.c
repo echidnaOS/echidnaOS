@@ -87,6 +87,18 @@ int main(int argc, char** argv) {
             else
                 printf("handle closed\n");
         }
+
+        else if (!strcmp("edit", s_argv[0])) {
+            if (s_argc == 1) continue;
+            FILE *fp = fopen(s_argv[1], "w");
+            for (;;) {
+                int c = getchar();
+                if (c == '|')
+                    break;
+                fputc(c, fp);
+            }
+            fclose(fp);
+        }
         
         else if (!strcmp("write", s_argv[0])) {
             char buf[6] = "12345";
@@ -251,7 +263,7 @@ int main(int argc, char** argv) {
                     close(2);
                     open(prog_stderr, O_WRONLY, 0);
                 }
-                if (execve(s_argv[0], &s_argv[1], environ) == -1) {
+                if (execve(s_argv[0], s_argv, environ) == -1) {
                     fprintf(stderr, "shell: invalid file: `%s`.\n", s_argv[0]);
                     fprintf(stderr, "press enter.");
                     getchar();

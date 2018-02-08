@@ -78,7 +78,7 @@ int execve(char *path, char **argv, char **envp) {
             break;
         char *tmp_ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)argv[i]);
         tmp_argv[i] = kalloc(kstrlen(tmp_ptr) + 1);
-        kstrcpy(tmp_argv[i], argv[i]);
+        kstrcpy(tmp_argv[i], tmp_ptr);
     }
     tmp_argv[i] = 0;
     argc = i;
@@ -89,7 +89,7 @@ int execve(char *path, char **argv, char **envp) {
             break;
         char *tmp_ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)envp[i]);
         tmp_envp[i] = kalloc(kstrlen(tmp_ptr) + 1);
-        kstrcpy(tmp_envp[i], envp[i]);
+        kstrcpy(tmp_envp[i], tmp_ptr);
     }
     tmp_envp[i] = 0;
 

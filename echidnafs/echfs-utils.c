@@ -159,6 +159,11 @@ entry_t rd_entry(uint64_t entry) {
     entry_t res;
     uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
 
+    if (loc >= (dirstart + dirsize) * BYTES_PER_BLOCK) {
+        fprintf(stderr, "PANIC! ATTEMPTING TO READ DIRECTORY OUT OF BOUNDS!\n");
+        exit(-1);
+    }
+
     res.parent_id = rd_qword(loc);
     loc += sizeof(uint64_t);
     res.type = rd_byte(loc++);
@@ -186,6 +191,11 @@ entry_t rd_entry(uint64_t entry) {
 
 void wr_entry(uint64_t entry, entry_t entry_src) {
     uint64_t loc = (dirstart * BYTES_PER_BLOCK) + (entry * sizeof(entry_t));
+
+    if (loc >= (dirstart + dirsize) * BYTES_PER_BLOCK) {
+        fprintf(stderr, "PANIC! ATTEMPTING TO WRITE DIRECTORY OUT OF BOUNDS!\n");
+        exit(-1);
+    }
 
     wr_qword(loc, entry_src.parent_id);
     loc += sizeof(uint64_t);

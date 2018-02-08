@@ -25,12 +25,15 @@ kernel/initramfs: echidnafs/echfs-utils shell_target
 	echidnafs/echfs-utils kernel/initramfs mkdir sys
 	echidnafs/echfs-utils kernel/initramfs mkdir docs
 	echidnafs/echfs-utils kernel/initramfs mkdir mnt
+# aa
+	echidnafs/echfs-utils kernel/initramfs import echidnaOS-toolchain/native/lib/gcc/i386-echidnaos/7.1.0/specs home/mint/repos/echidnaOS/echidnaOS-toolchain/native/lib/gcc/i386-echidnaos/specs
+# bb
 	echidnafs/echfs-utils kernel/initramfs import ./shell/sh /sys/init
 	echidnafs/echfs-utils kernel/initramfs import ./LICENSE.md /docs/license
 
 echidna.img: echidnafs/echfs-utils kernel_target
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
-	dd bs=32768 count=8192 if=/dev/zero >> ./echidna.img
+	dd bs=32768 count=16384 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
 	echidnafs/echfs-utils echidna.img format
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin

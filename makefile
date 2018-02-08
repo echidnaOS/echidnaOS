@@ -24,6 +24,7 @@ kernel/initramfs: echidnafs/echfs-utils shell_target
 	echidnafs/echfs-utils kernel/initramfs mkdir bin
 	echidnafs/echfs-utils kernel/initramfs mkdir sys
 	echidnafs/echfs-utils kernel/initramfs mkdir docs
+	echidnafs/echfs-utils kernel/initramfs mkdir mnt
 	echidnafs/echfs-utils kernel/initramfs import ./shell/sh /sys/init
 	echidnafs/echfs-utils kernel/initramfs import ./LICENSE.md /docs/license
 

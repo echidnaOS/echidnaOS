@@ -21,6 +21,7 @@ void init_stty(void);
 void init_graphics(void);
 void init_initramfs(void);
 void init_fb(void);
+void init_ata(void);
 
 void keyboard_init(void);
 

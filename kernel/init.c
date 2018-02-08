@@ -91,6 +91,7 @@ void kernel_init(void) {
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
     init_streams();
     init_initramfs();
+    init_ata();
     init_tty_drv();
     init_fb();
     init_com();
@@ -121,6 +122,8 @@ void kernel_init(void) {
         panic("Unable to mount initramfs on /");
     if (vfs_mount("/dev", "devfs", "devfs") == -2)
         panic("Unable to mount devfs on /dev");
+    if (vfs_mount("/mnt", "/dev/hda", "echfs") == -2)
+        ;
 
     kprint(KPRN_INFO, "Kernel initialisation complete, starting init...");
 

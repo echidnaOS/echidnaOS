@@ -6,13 +6,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
 
 #define SEARCH_FAILURE          0xffffffffffffffff
 #define ROOT_ID                 0xffffffffffffffff
-#define ENTRIES_PER_BLOCK       2
+#define ENTRIES_PER_BLOCK       (BYTES_PER_BLOCK / 256)
 #define FILENAME_LEN            218
 #define RESERVED_BLOCKS         16
-#define BYTES_PER_BLOCK         32768
 #define FILE_TYPE               0
 #define DIRECTORY_TYPE          1
 #define DELETED_ENTRY           0xfffffffffffffffe
@@ -26,13 +26,7 @@ typedef struct {
     uint8_t perms;
     uint16_t owner;
     uint16_t group;
-    uint8_t hundreths;
-    uint8_t seconds;
-    uint8_t minutes;
-    uint8_t hours;
-    uint8_t day;
-    uint8_t month;
-    uint16_t year;
+    uint64_t time;
     uint64_t payload;
     uint64_t size;
 } __attribute__((packed)) entry_t;
@@ -56,6 +50,7 @@ uint64_t fatstart = RESERVED_BLOCKS;
 uint64_t dirsize;
 uint64_t dirstart;
 uint64_t datastart;
+uint64_t BYTES_PER_BLOCK;
 
 uint64_t power(uint64_t x, uint64_t y) {
     uint64_t res;
@@ -174,14 +169,8 @@ entry_t rd_entry(uint64_t entry) {
     loc += sizeof(uint16_t);
     res.group = rd_word(loc);
     loc += sizeof(uint16_t);
-    res.hundreths = rd_byte(loc++);
-    res.seconds = rd_byte(loc++);
-    res.minutes = rd_byte(loc++);
-    res.hours = rd_byte(loc++);
-    res.day = rd_byte(loc++);
-    res.month = rd_byte(loc++);
-    res.year = rd_word(loc);
-    loc += sizeof(uint16_t);
+    res.time = rd_qword(loc);
+    loc += sizeof(uint64_t);
     res.payload = rd_qword(loc);
     loc += sizeof(uint64_t);
     res.size = rd_qword(loc);
@@ -207,14 +196,8 @@ void wr_entry(uint64_t entry, entry_t entry_src) {
     loc += sizeof(uint16_t);
     wr_word(loc, entry_src.group);
     loc += sizeof(uint16_t);
-    wr_byte(loc++, entry_src.hundreths);
-    wr_byte(loc++, entry_src.seconds);
-    wr_byte(loc++, entry_src.minutes);
-    wr_byte(loc++, entry_src.hours);
-    wr_byte(loc++, entry_src.day);
-    wr_byte(loc++, entry_src.month);
-    wr_word(loc, entry_src.year);
-    loc += sizeof(uint16_t);
+    wr_qword(loc, entry_src.time);
+    loc += sizeof(uint64_t);
     wr_qword(loc, entry_src.payload);
     loc += sizeof(uint64_t);
     wr_qword(loc, entry_src.size);
@@ -400,6 +383,7 @@ void mkdir_cmd(int argc, char** argv) {
     entry.payload = get_free_id();
     if (verbose) fprintf(stdout, "new directory's ID: %" PRIu64 "\n", entry.payload);
     if (verbose) fprintf(stdout, "writing to entry #%" PRIu64 "\n", i);
+    entry.time = (uint64_t)time(NULL);
     
     wr_entry(i, entry);
     
@@ -467,6 +451,7 @@ subdir:
     entry.payload = import_chain(source);
     fseek(source, 0L, SEEK_END);
     entry.size = (uint64_t)ftell(source);
+    entry.time = (uint64_t)time(NULL);
     
     // find empty entry
     for (i = 0; ; i++) {
@@ -536,9 +521,31 @@ void ls_cmd(int argc, char** argv) {
     return;
 }
 
-void format_pass1(void) {
+void format_pass1(int argc, char **argv) {
+
+    if (argc <= 3) {
+        fprintf(stderr, "%s: error: unspecified block size.\n", argv[0]);
+        fclose(image);
+        abort();
+    }
 
     if (verbose) fprintf(stdout, "formatting...\n");
+
+    BYTES_PER_BLOCK = atoi(argv[3]);
+
+    if ((BYTES_PER_BLOCK <= 0) || (BYTES_PER_BLOCK % 512)) {
+        fprintf(stderr, "%s: error: block size MUST be a multiple of 512.\n", argv[0]);
+        fclose(image);
+        abort();
+    }
+    
+    if (imgsize % BYTES_PER_BLOCK) {
+        fprintf(stderr, "%s: error: image is not block-aligned.\n", argv[0]);
+        fclose(image);
+        abort();
+    }
+
+    blocks = imgsize / BYTES_PER_BLOCK;
 
     // write signature
     fstrcpy_out(4, "_ECH_FS_");
@@ -546,6 +553,8 @@ void format_pass1(void) {
     wr_qword(12, blocks);
     // directory size
     wr_qword(20, blocks / 20); // blocks / 20 (roughly 5% of the total)
+    // block size
+    wr_qword(28, BYTES_PER_BLOCK);
     
     fseek(image, (RESERVED_BLOCKS * BYTES_PER_BLOCK), SEEK_SET);
     if (verbose) fprintf(stdout, "zeroing");
@@ -600,7 +609,19 @@ int main(int argc, char** argv) {
     imgsize = (uint64_t)ftell(image);    
     rewind(image);
     
+    if ((argc > 2) && (!strcmp(argv[2], "format"))) format_pass1(argc, argv);
+    
+    if (!fstrncmp(4, "_ECH_FS_", 8)) {
+        fprintf(stderr, "%s: error: echidnaFS signature missing.\n", argv[0]);
+        fclose(image);
+        return EXIT_FAILURE;
+    }
+    if (verbose) fprintf(stdout, "echidnaFS signature found\n");
+    
     if (verbose) fprintf(stdout, "image size: %" PRIu64 " bytes\n", imgsize);
+
+    BYTES_PER_BLOCK = rd_qword(28);
+    if (verbose) fprintf(stdout, "bytes per block: %" PRIu64 "\n", BYTES_PER_BLOCK);
     
     if (imgsize % BYTES_PER_BLOCK) {
         fprintf(stderr, "%s: error: image is not block-aligned.\n", argv[0]);
@@ -611,15 +632,6 @@ int main(int argc, char** argv) {
     blocks = imgsize / BYTES_PER_BLOCK;
     
     if (verbose) fprintf(stdout, "block count: %" PRIu64 "\n", blocks);
-    
-    if ((argc > 2) && (!strcmp(argv[2], "format"))) format_pass1();
-    
-    if (!fstrncmp(4, "_ECH_FS_", 8)) {
-        fprintf(stderr, "%s: error: echidnaFS signature missing.\n", argv[0]);
-        fclose(image);
-        return EXIT_FAILURE;
-    }
-    if (verbose) fprintf(stdout, "echidnaFS signature found\n");
     
     if (verbose) fprintf(stdout, "declared block count: %" PRIu64 "\n", rd_qword(12));
     if (rd_qword(12) != blocks) {

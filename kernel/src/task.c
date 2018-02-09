@@ -189,9 +189,11 @@ int kexec(  char *path, char **argv, char **envp,
     if (execve(path, argv, envp) == FAILURE) {
         do_not_schedule = 0;
         task_table[new_pid] = EMPTY_PID;
+        current_task = 0;
         return FAILURE;
     } else {
         do_not_schedule = 0;
+        current_task = 0;
         return 0;
     }
 }
@@ -414,8 +416,8 @@ void task_scheduler(void) {
         if (!task_table[current_task]) {
             current_task = 0;
             if (idle_cpu) {
-            // if no process took CPU time, wait for the next
-            // context switch idling
+                /* if no process took CPU time, wait for the next */
+                /* context switch idling */
                 ENTER_IDLE;
             }
             idle_cpu = 1;

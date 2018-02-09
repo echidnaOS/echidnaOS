@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#define BB                      asm volatile ("xchg bx, bx")
 #define DISABLE_INTERRUPTS      asm volatile ("cli")
 #define ENABLE_INTERRUPTS       asm volatile ("sti")
 #define ENTER_IDLE              \

@@ -143,8 +143,9 @@ void kernel_init(void) {
     if (kexec("/sys/init", argv, env, "/dev/tty4", "/dev/tty4", "/dev/tty4", "/") == -1)
         panic("Unable to start /sys/init");
 
-    /* wait for task scheduler */
+    /* launch scheduler for the first time */
+    DISABLE_INTERRUPTS;
     ts_enable = 1;
-    ENTER_IDLE;
+    task_scheduler();
 
 }

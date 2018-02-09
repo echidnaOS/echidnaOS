@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
             }
             else {
                 if (!no_block)
-                    printf("process returned: %d\n", wait(0));
+                    wait(0); //printf("process returned: %d\n", wait(0));
                 else
                     puts("process launched");
             }

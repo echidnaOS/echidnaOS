@@ -5,7 +5,7 @@
 #include <graphics.h>
 #include <panic.h>
 
-int ttys_ready = 0;
+static int ttys_ready = 0;
 
 static int rows;
 static int cols;
@@ -117,6 +117,9 @@ static void text_disable_cursor(uint8_t which_tty) {
 }
 
 void text_putchar(char c, uint8_t which_tty) {
+    if (!ttys_ready)
+        return;
+
     if (tty[which_tty].escape) {
         escape_parse(c, which_tty);
         return;

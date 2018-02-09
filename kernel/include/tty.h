@@ -37,8 +37,6 @@ typedef struct {
     int noscroll;
 } tty_t;
 
-extern int ttys_ready;
-
 extern uint8_t current_tty;
 extern tty_t tty[KRNL_TTY_COUNT];
 

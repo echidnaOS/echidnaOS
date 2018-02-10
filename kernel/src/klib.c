@@ -276,6 +276,7 @@ void kprint(int type, const char *fmt, ...) {
 
     for (;;) {
         char c;
+        size_t len;
         while (*fmt && *fmt != '%') knputs(fmt++, 1);
         if (!*fmt++) {
             va_end(args);
@@ -289,6 +290,11 @@ void kprint(int type, const char *fmt, ...) {
                     kputs("(null)");
                 else
                     kputs(str);
+                break;
+            case 'k':
+                str = (char *)va_arg(args, const char *);
+                len = va_arg(args, size_t);
+                knputs(str, len);
                 break;
             case 'u':
                 kprn_ui((uint64_t)va_arg(args, unsigned int));

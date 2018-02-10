@@ -40,6 +40,9 @@ void kernel_init(void) {
     init_graphics();
     init_tty();
 
+    /* initialise ACPI */
+    init_acpi();
+
     /* print welcome */
     kprint(KPRN_INFO, "Welcome to echidnaOS!");
 

@@ -9,7 +9,7 @@
 #endif
 
 void init_tty(void);
-void init_rtc(void);
+void init_acpi(void);
 
 // driver inits
 

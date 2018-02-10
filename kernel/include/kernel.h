@@ -5,7 +5,7 @@
 // misc tunables
 
 #define KRNL_PIT_FREQ 4000
-//#define _SERIAL_KERNEL_OUTPUT_
+#define _SERIAL_KERNEL_OUTPUT_
 
 
 // task tunables

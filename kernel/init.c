@@ -12,7 +12,6 @@
 #include <graphics.h>
 
 size_t memory_size;
-extern int ts_enable;
 
 void kernel_init(void) {
     /* interrupts disabled */
@@ -20,6 +19,14 @@ void kernel_init(void) {
     /* disable all IRQs */
     set_PIC0_mask(0b11111111);
     set_PIC1_mask(0b11111111);
+
+    /* build descriptor tables */
+    load_GDT();
+    load_IDT();
+    load_TSS();
+
+    /* detect memory */
+    memory_size = detect_mem();
 
     /* initialise paging */
     init_paging();
@@ -29,62 +36,37 @@ void kernel_init(void) {
       debug_kernel_console_init();
     #endif
 
+    /* initialise graphics mode and TTYs */
+    init_graphics();
+    init_tty();
+
+    /* print welcome */
+    kprint(KPRN_INFO, "Welcome to echidnaOS!");
+
     /* remap PIC */
     map_PIC(0x20, 0x28);
 
-    /* build descriptor tables */
-    load_GDT();
-    load_IDT();
-    load_TSS();
-
-    /* enable RTC timer */
-    init_rtc();
-
-    /* enable RTC IRQ (IRQ 8) */
-    set_PIC0_mask(0b11111011);
-    set_PIC1_mask(0b11111110);
+    /* set PIT frequency */
+    set_pit_freq(KRNL_PIT_FREQ);
 
     /* disable scheduler */
     ts_enable = 0;
 
-    /* enable interrupts */
+    /* enable IRQ 0 */
+    set_PIC0_mask(0b11111110);
+    set_PIC1_mask(0b11111111);
+
+    /* enable interrupts for the first time */
     ENABLE_INTERRUPTS;
 
     /* initialise keyboard driver */
     keyboard_init();
-
-    #ifndef _BIG_FONTS_
-      /* enter 80x50 text mode */
-      DISABLE_INTERRUPTS;
-      vga_80_x_50();
-      ENABLE_INTERRUPTS;
-    #endif
-
-    /* disable VGA cursor */
-    DISABLE_INTERRUPTS;
-    vga_disable_cursor();
-    ENABLE_INTERRUPTS;
-
-    /* detect memory */
-    DISABLE_INTERRUPTS;
-    memory_size = detect_mem();
-    ENABLE_INTERRUPTS;
-
-    /* set PIT frequency */
-    set_pit_freq(KRNL_PIT_FREQ);
 
     /* initialise scheduler */
     task_init();
 
     /****** END OF EARLY BOOTSTRAP ******/
 
-    /* initialise graphics mode and TTYs */
-    init_graphics();
-    init_tty();
-    switch_tty(0);
-
-    /* print welcome */
-    kprint(KPRN_INFO, "Welcome to echidnaOS!");
     kprint(KPRN_INFO, "%u bytes (%u MiB) of memory detected.", (unsigned int)memory_size, (unsigned int)(memory_size / 0x100000));
 
     kprint(KPRN_INFO, "Initialising drivers...");
@@ -111,10 +93,10 @@ void kernel_init(void) {
 
 
 
-    /* enable PIT and keyboard IRQs */
+    /* enable keyboard IRQ */
     DISABLE_INTERRUPTS;
-    set_PIC0_mask(0b11111000);
-    set_PIC1_mask(0b11111110);
+    set_PIC0_mask(0b11111100);
+    set_PIC1_mask(0b11111111);
     ENABLE_INTERRUPTS;
 
     /* mount essential filesystems */

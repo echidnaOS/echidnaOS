@@ -28,7 +28,6 @@ uint8_t vga_font[4096];
 void plot_px(int x, int y, uint32_t hex, uint8_t which_tty) {
     size_t fb_i = x + edid_width * y;
 
-    tty[which_tty].field[fb_i] = hex;
     if (current_tty == which_tty)
         framebuffer[fb_i] = hex;
 
@@ -36,16 +35,14 @@ void plot_px(int x, int y, uint32_t hex, uint8_t which_tty) {
 }
 
 void init_graphics(void) {
+    /* interrupts are supposed to be OFF */
+
     kprint(KPRN_INFO, "Dumping VGA font...");
-    DISABLE_INTERRUPTS;
     dump_vga_font(vga_font);
-    ENABLE_INTERRUPTS;
 
     kprint(KPRN_INFO, "Initialising VBE...");
 
-    DISABLE_INTERRUPTS;
     get_vbe_info(&vbe_info_struct);
-    ENABLE_INTERRUPTS;
 
     /* copy the video mode array somewhere else because it might get overwritten */
     for (size_t i = 0; ; i++) {
@@ -64,9 +61,7 @@ void init_graphics(void) {
 
     kprint(KPRN_INFO, "Calling EDID...");
 
-    DISABLE_INTERRUPTS;
     get_edid_info(&edid_info_struct);
-    ENABLE_INTERRUPTS;
 
     edid_width = (int)edid_info_struct.det_timing_desc1[2];
     edid_width += ((int)edid_info_struct.det_timing_desc1[4] & 0xf0) << 4;
@@ -85,9 +80,7 @@ void init_graphics(void) {
     get_vbe.vbe_mode_info = &vbe_mode_info;
     for (size_t i = 0; vid_modes[i] != 0xffff; i++) {
         get_vbe.mode = vid_modes[i];
-        DISABLE_INTERRUPTS;
         get_vbe_mode_info(&get_vbe);
-        ENABLE_INTERRUPTS;
         if (vbe_mode_info.res_x == edid_width
             && vbe_mode_info.res_y == edid_height
             && vbe_mode_info.bpp == 32) {
@@ -95,9 +88,7 @@ void init_graphics(void) {
             kprint(KPRN_INFO, "VBE found matching mode %x, attempting to set.", get_vbe.mode);
             framebuffer = (uint32_t *)vbe_mode_info.framebuffer;
             kprint(KPRN_INFO, "Framebuffer address: %x", vbe_mode_info.framebuffer);
-            DISABLE_INTERRUPTS;
             set_vbe_mode(get_vbe.mode);
-            ENABLE_INTERRUPTS;
             goto success;
         }
     }

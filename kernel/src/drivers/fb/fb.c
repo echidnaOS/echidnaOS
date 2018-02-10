@@ -13,21 +13,15 @@ static int fb_io_wrapper(uint32_t which_tty, uint64_t loc, int type, uint8_t pay
     if (loc >= edid_width * edid_height * 4)
         return -1;
     if (type == 0) {
-        return *((uint8_t *)tty[which_tty].field + loc);
+        return *((uint8_t *)framebuffer + loc);
     }
     else if (type == 1) {
-        *((uint8_t *)tty[which_tty].field + loc) = payload;
-        if (current_tty == which_tty)
-            *((uint8_t *)framebuffer + loc) = payload;
+        *((uint8_t *)framebuffer + loc) = payload;
         return 0;
     }
 }
 
 void init_fb(void) {
-
-    kprint(KPRN_INFO, "Initialising framebuffer devices...");
-
-    for (int i = 0; i < KRNL_TTY_COUNT; i++)
-        kernel_add_device(fb_names[i], i, edid_width * edid_height * 4, &fb_io_wrapper);
-
+    kprint(KPRN_INFO, "Initialising framebuffer device...");
+    kernel_add_device(fb_names[0], 0, edid_width * edid_height * 4, &fb_io_wrapper);
 }

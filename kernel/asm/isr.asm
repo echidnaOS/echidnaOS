@@ -6,19 +6,12 @@ global handler_div0
 global handler_gpf
 global handler_pf
 global irq0_handler
-global rtc_handler
 global keyboard_isr
 global syscall
 
 global ts_enable
 global read_stat
 global write_stat
-
-extern uptime_raw
-extern uptime_raw_high
-extern uptime_frac
-extern uptime_sec
-extern uptime_sec_high
 
 extern keyboard_handler
 extern task_switch
@@ -76,9 +69,11 @@ extern get_heap_size
 extern resize_heap
 extern swait
 
+extern timer_interrupt
+
 section .data
 
-ts_enable dd 1
+ts_enable dd 0
 read_stat dd 0
 write_stat dd 0
 interrupted_cr3 dd 0
@@ -166,34 +161,6 @@ handler_irq_pic1:
         pop eax
         iretd
 
-rtc_handler:
-        inc dword [uptime_raw]
-        jno .nooverflow
-        mov dword [uptime_raw], 0
-        inc dword [uptime_raw_high]
-    .nooverflow:
-        inc dword [uptime_frac]
-        cmp dword [uptime_frac], 1024
-        je .overflow
-        jmp .out
-    .overflow:
-        mov dword [uptime_frac], 0
-        inc dword [uptime_sec]
-        jo .overflow1
-        jmp .out
-    .overflow1:
-        inc dword [uptime_sec_high]
-    .out:
-        push eax
-        mov al, 0x0c
-        out 0x70, al
-        in al, 0x71
-        mov al, 0x20    ; acknowledge interrupt to both PICs
-        out 0xA0, al
-        out 0x20, al
-        pop eax
-        iretd
-
 except_handler_setup:
         mov eax, dword [kernel_pagemap]
         mov cr3, eax
@@ -215,6 +182,38 @@ handler_pf:
         call except_page_fault
 
 irq0_handler:
+        ; first execute all the time-based routines (tty refresh...)
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        push ds
+        push es
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov eax, cr3        ; save context
+        push dword [interrupted_cr3]
+        mov dword [interrupted_cr3], eax
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, eax
+        call timer_interrupt
+        mov eax, dword [interrupted_cr3]
+        mov cr3, eax    ; restore context
+        pop dword [interrupted_cr3]
+        pop es
+        pop ds
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        ; check whether we want task switches or not
         push ds
         push 0x10
         pop ds

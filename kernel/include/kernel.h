@@ -5,7 +5,7 @@
 // misc tunables
 
 #define KRNL_PIT_FREQ 4000
-//#define _SERIAL_KERNEL_OUTPUT_
+#define _SERIAL_KERNEL_OUTPUT_
 
 
 // task tunables
@@ -16,8 +16,6 @@
 
 // tty tunables
 
-#define _BIG_FONTS_
-
 #define KB_L1_SIZE 256
 #define KB_L2_SIZE 2048
 
@@ -26,6 +24,8 @@
 #define TTY_DEF_CUR_FG_COL 0x00000000
 #define TTY_DEF_TXT_BG_COL 0x00000000
 #define TTY_DEF_TXT_FG_COL 0x00808080
+
+#define TTY_REDRAW_LIMIT 200
 
 
 // vfs tunables

@@ -6,24 +6,13 @@
 #include <panic.h>
 
 static int ttys_ready = 0;
+int tty_needs_refresh = -1;
 
 static int rows;
 static int cols;
 
 static void escape_parse(char c, uint8_t which_tty);
 static void text_set_cursor_pos(uint32_t x, uint32_t y, uint8_t which_tty);
-
-static void tty_refresh(uint8_t which_tty) {
-    if (which_tty == current_tty) {
-        asm volatile (
-            "rep movsd;"
-            :
-            : "c" (edid_width * edid_height), "D" (framebuffer), "S" (tty[current_tty].field)
-            :
-        );
-    }
-    return;
-}
 
 static void plot_char(char c, int x, int y, uint32_t hex_fg, uint32_t hex_bg, uint8_t which_tty) {
     int orig_x = x;
@@ -45,62 +34,70 @@ static void plot_char(char c, int x, int y, uint32_t hex_fg, uint32_t hex_bg, ui
 static void plot_char_grid(char c, int x, int y, uint32_t hex_fg, uint32_t hex_bg, uint8_t which_tty) {
     plot_char(c, x * 8, y * 16, hex_fg, hex_bg, which_tty);
     tty[which_tty].grid[x + y * cols] = c;
+    tty[which_tty].gridfg[x + y * cols] = hex_fg;
+    tty[which_tty].gridbg[x + y * cols] = hex_bg;
     return;
 }
 
 static void clear_cursor(uint8_t which_tty) {
-    plot_char_grid(tty[which_tty].grid[tty[which_tty].cursor_x + tty[which_tty].cursor_y * cols],
-        tty[which_tty].cursor_x, tty[which_tty].cursor_y,
+    plot_char(tty[which_tty].grid[tty[which_tty].cursor_x + tty[which_tty].cursor_y * cols],
+        tty[which_tty].cursor_x * 8, tty[which_tty].cursor_y * 16,
         tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
     return;
 }
 
 static void draw_cursor(uint8_t which_tty) {
     if (tty[which_tty].cursor_status)
-        plot_char_grid(tty[which_tty].grid[tty[which_tty].cursor_x + tty[which_tty].cursor_y * cols],
-            tty[which_tty].cursor_x, tty[which_tty].cursor_y,
+        plot_char(tty[which_tty].grid[tty[which_tty].cursor_x + tty[which_tty].cursor_y * cols],
+            tty[which_tty].cursor_x * 8, tty[which_tty].cursor_y * 16,
             tty[which_tty].cursor_fg_col, tty[which_tty].cursor_bg_col, which_tty);
     return;
 }
 
+void tty_refresh(int which_tty) {
+    if (which_tty == current_tty) {
+        /* interpret the grid and print the chars */
+        for (size_t i = 0; i < (rows * cols); i++) {
+            plot_char_grid(tty[which_tty].grid[i], i % cols, i / cols,
+                tty[which_tty].gridfg[i], tty[which_tty].gridbg[i], which_tty);
+        }
+        draw_cursor(which_tty);
+    }
+    return;
+}
+
 static void scroll(uint8_t which_tty) {
-    /* move the text up by one row */
-    for (size_t i = edid_width * 16; i < edid_width * edid_height; i++)
-        tty[which_tty].field[i - edid_width * 16] = tty[which_tty].field[i];
-    tty_refresh(which_tty);
     /* notify grid */
-    for (int i = cols; i < rows * cols; i++)
+    for (int i = cols; i < rows * cols; i++) {
         tty[which_tty].grid[i - cols] = tty[which_tty].grid[i];
+        tty[which_tty].gridbg[i - cols] = tty[which_tty].gridbg[i];
+        tty[which_tty].gridfg[i - cols] = tty[which_tty].gridfg[i];
+    }
     /* clear the last line of the screen */
-    for (int i = 0; i < cols; i++)
-        plot_char_grid(' ', i, rows - 1,
-            tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
+    for (int i = rows * cols - cols; i < rows * cols; i++) {
+        tty[which_tty].grid[i] = ' ';
+        tty[which_tty].gridbg[i] = tty[which_tty].text_bg_col;
+        tty[which_tty].gridfg[i] = tty[which_tty].text_fg_col;
+    }
+    tty_needs_refresh = which_tty;
     return;
 }
 
 static void text_clear(uint8_t which_tty) {
-    for (size_t i = 0; i < (edid_width * edid_height); i++) {
-        tty[which_tty].field[i] = TTY_DEF_TXT_BG_COL;
-    }
     for (size_t i = 0; i < (rows * cols); i++) {
         tty[which_tty].grid[i] = ' ';
     }
-    tty_refresh(which_tty);
     tty[which_tty].cursor_x = 0;
     tty[which_tty].cursor_y = 0;
-    draw_cursor(which_tty);
+    tty_needs_refresh = which_tty;
     return;
 }
 
 static void text_clear_no_move(uint8_t which_tty) {
-    for (size_t i = 0; i < (edid_width * edid_height); i++) {
-        tty[which_tty].field[i] = TTY_DEF_TXT_BG_COL;
-    }
     for (size_t i = 0; i < (rows * cols); i++) {
         tty[which_tty].grid[i] = ' ';
     }
-    tty_refresh(which_tty);
-    draw_cursor(which_tty);
+    tty_needs_refresh = which_tty;
     return;
 }
 
@@ -132,9 +129,8 @@ void text_putchar(char c, uint8_t which_tty) {
             return;
         case 0x0A:
             if (tty[which_tty].cursor_y == (rows - 1)) {
-                clear_cursor(which_tty);
-                scroll(which_tty);
                 text_set_cursor_pos(0, (rows - 1), which_tty);
+                scroll(which_tty);
             } else
                 text_set_cursor_pos(0, (tty[which_tty].cursor_y + 1), which_tty);
             break;
@@ -153,7 +149,6 @@ void text_putchar(char c, uint8_t which_tty) {
             }
             break;
         default:
-            clear_cursor(which_tty);
             plot_char_grid(c, tty[which_tty].cursor_x++, tty[which_tty].cursor_y,
                 tty[which_tty].text_fg_col, tty[which_tty].text_bg_col, which_tty);
             if (tty[which_tty].cursor_x == cols) {
@@ -314,7 +309,7 @@ uint8_t current_tty = 0;
 
 void switch_tty(uint8_t which_tty) {
     current_tty = which_tty;
-    tty_refresh(which_tty);
+    tty_refresh(current_tty);
     return;
 }
 
@@ -340,19 +335,20 @@ void init_tty(void) {
         tty[i].raw = 0;
         tty[i].noblock = 0;
         tty[i].noscroll = 0;
-        tty[i].field = kalloc(edid_width * edid_height * sizeof(uint32_t));
         tty[i].grid = kalloc(rows * cols);
-        if (!tty[i].field || !tty[i].grid)
-            panic("Out of memory while allocating framebuffers");
-        for (size_t j = 0; j < (edid_width * edid_height); j++) {
-            tty[i].field[j] = TTY_DEF_TXT_BG_COL;
-        }
+        tty[i].gridbg = kalloc(rows * cols * sizeof(uint32_t));
+        tty[i].gridfg = kalloc(rows * cols * sizeof(uint32_t));
+        if (!tty[i].grid || !tty[i].gridbg || !tty[i].gridfg)
+            panic("Out of memory while allocating TTYs");
         for (size_t j = 0; j < (rows * cols); j++) {
             tty[i].grid[j] = ' ';
+            tty[i].gridbg[j] = TTY_DEF_TXT_BG_COL;
+            tty[i].gridfg[j] = TTY_DEF_TXT_FG_COL;
         }
-        plot_char_grid(' ', 0, 0, TTY_DEF_CUR_FG_COL, TTY_DEF_CUR_BG_COL, i);
     }
 
+    current_tty = 0;
     ttys_ready = 1;
+    tty_refresh(current_tty);
     return;
 }

@@ -4,13 +4,6 @@
 #include <kernel.h>
 #include <stddef.h>
 
-#ifdef _BIG_FONTS_
-  #define VD_ROWS 25
-#else
-  #define VD_ROWS 50
-#endif
-#define VD_COLS 160
-
 typedef struct {
     int cursor_x;
     int cursor_y;
@@ -19,8 +12,9 @@ typedef struct {
     uint32_t cursor_fg_col;
     uint32_t text_bg_col;
     uint32_t text_fg_col;
-    uint32_t *field;
     char *grid;
+    uint32_t *gridbg;
+    uint32_t *gridfg;
     char kb_l1_buffer[KB_L1_SIZE];
     char kb_l2_buffer[KB_L2_SIZE];
     uint16_t kb_l1_buffer_index;
@@ -40,6 +34,8 @@ typedef struct {
 extern uint8_t current_tty;
 extern tty_t tty[KRNL_TTY_COUNT];
 
+extern int tty_needs_refresh;
+void tty_refresh(int which_tty);
 void switch_tty(uint8_t which_tty);
 void text_putchar(char c, uint8_t which_tty);
 

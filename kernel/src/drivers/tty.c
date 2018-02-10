@@ -87,18 +87,22 @@ static void scroll(uint8_t which_tty) {
 static void text_clear(uint8_t which_tty) {
     for (size_t i = 0; i < (rows * cols); i++) {
         tty[which_tty].grid[i] = ' ';
+        tty[which_tty].gridbg[i] = tty[which_tty].text_bg_col;
+        tty[which_tty].gridfg[i] = tty[which_tty].text_fg_col;
     }
     tty[which_tty].cursor_x = 0;
     tty[which_tty].cursor_y = 0;
-    tty_needs_refresh = which_tty;
+    tty_refresh(which_tty);
     return;
 }
 
 static void text_clear_no_move(uint8_t which_tty) {
     for (size_t i = 0; i < (rows * cols); i++) {
         tty[which_tty].grid[i] = ' ';
+        tty[which_tty].gridbg[i] = tty[which_tty].text_bg_col;
+        tty[which_tty].gridfg[i] = tty[which_tty].text_fg_col;
     }
-    tty_needs_refresh = which_tty;
+    tty_refresh(which_tty);
     return;
 }
 

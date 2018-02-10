@@ -65,5 +65,7 @@ extern uint8_t vga_font[4096];
 extern int edid_width;
 extern int edid_height;
 
+extern int modeset_done;
+
 
 #endif

@@ -4,11 +4,14 @@
 #include <graphics.h>
 #include <cio.h>
 #include <tty.h>
+#include <panic.h>
 
 vbe_info_struct_t vbe_info_struct;
 edid_info_struct_t edid_info_struct;
 vbe_mode_info_t vbe_mode_info;
 get_vbe_t get_vbe;
+
+int modeset_done = 0;
 
 uint32_t *framebuffer;
 
@@ -68,14 +71,15 @@ void init_graphics(void) {
     edid_height = (int)edid_info_struct.det_timing_desc1[5];
     edid_height += ((int)edid_info_struct.det_timing_desc1[7] & 0xf0) << 4;
 
+    kprint(KPRN_INFO, "EDID recommended res: %ux%u", edid_width, edid_height);
+
     if (!edid_width || !edid_height) {
         kprint(KPRN_WARN, "EDID returned 0, defaulting to 1024x768");
         edid_width = 1024;
         edid_height = 768;
     }
 
-    kprint(KPRN_INFO, "EDID recommended res: %ux%u", edid_width, edid_height);
-
+retry:
     /* try to set the mode */
     get_vbe.vbe_mode_info = &vbe_mode_info;
     for (size_t i = 0; vid_modes[i] != 0xffff; i++) {
@@ -93,10 +97,31 @@ void init_graphics(void) {
         }
     }
 
-    kprint(KPRN_ERR, "VBE couldn't find a matching video mode.");
-    return;
+    if (edid_width > 1024 || edid_height > 768) {
+        kprint(KPRN_WARN, "EDID modesetting failed, defaulting to 1024x768.");
+        edid_width = 1024;
+        edid_height = 768;
+        goto retry;
+    }
+
+    if (edid_width == 1024 && edid_height == 768) {
+        kprint(KPRN_WARN, "1024x768 modesetting failed, defaulting to 800x600.");
+        edid_width = 800;
+        edid_height = 600;
+        goto retry;
+    }
+
+    if (edid_width == 800 && edid_height == 600) {
+        kprint(KPRN_WARN, "800x600 modesetting failed, defaulting to 640x480.");
+        edid_width = 640;
+        edid_height = 480;
+        goto retry;
+    }
+
+    panic("VBE: can't set video mode.");
 
 success:
+    modeset_done = 1;
     kprint(KPRN_INFO, "VBE init done.");
     return;
 }

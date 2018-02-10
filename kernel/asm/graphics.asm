@@ -28,6 +28,8 @@ set_vbe_mode_end:
 dump_vga_font_bin:                   incbin "blobs/dump_vga_font.bin"
 dump_vga_font_end:
 
+section .text
+
 get_vbe_info:
     ; void get_vbe_info(vbe_info_struct_t* vbe_info_struct);
     push ebx

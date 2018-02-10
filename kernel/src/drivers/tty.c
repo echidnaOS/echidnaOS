@@ -4,6 +4,7 @@
 #include <tty.h>
 #include <graphics.h>
 #include <panic.h>
+#include <bios_io.h>
 
 static int ttys_ready = 0;
 int tty_needs_refresh = -1;
@@ -114,8 +115,12 @@ static void text_disable_cursor(uint8_t which_tty) {
 }
 
 void text_putchar(char c, uint8_t which_tty) {
-    if (!ttys_ready)
+    if (!ttys_ready && !modeset_done) {
+        char cstr[2] = {0,0};
+        cstr[0] = c;
+        bios_print(cstr);
         return;
+    }
 
     if (tty[which_tty].escape) {
         escape_parse(c, which_tty);

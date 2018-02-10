@@ -10,10 +10,23 @@ xor edx, edx
 mov edi, edid_struct
 int 0x10
 
+cmp al, 0x4f
+jne fail
+test ah, ah
+jnz fail
+
 mov ecx, 0x80
 pop edi
 mov esi, edid_struct
 a32 o32 rep movsb
+
+ret
+
+fail:
+mov ecx, 0x80
+pop edi
+xor al, al
+a32 o32 rep stosb
 
 ret
 

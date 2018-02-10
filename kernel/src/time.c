@@ -5,7 +5,6 @@
 
 uint64_t uptime_raw = 0;
 uint64_t uptime_sec = 0;
-static int tty_refresh_timeout = 0;
 
 void timer_interrupt(void) {
 

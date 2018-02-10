@@ -5,13 +5,16 @@
 // misc tunables
 
 #define KRNL_PIT_FREQ 4000
-#define _SERIAL_KERNEL_OUTPUT_
+//#define _SERIAL_KERNEL_OUTPUT_
 
 
 // task tunables
 
 #define KRNL_MAX_TASKS 65536
 #define DEFAULT_STACK 0x10000
+
+
+#define MAX_MADT 128
 
 
 // tty tunables

@@ -33,11 +33,59 @@ typedef struct {
     acpi_sdt_t sdt;
     uint32_t local_controller_addr;
     uint32_t flags;
+    uint8_t madt_entries_begin;
 } __attribute__((packed)) madt_t;
 
 rsdp_t *rsdp;
 rsdt_t *rsdt;
 madt_t *madt;
+
+typedef struct {
+    uint8_t type;
+    uint8_t length;
+} __attribute__((packed)) madt_header_t;
+
+typedef struct {
+    madt_header_t madt_header;
+    uint8_t processor_id;
+    uint8_t apic_id;
+    uint32_t flags;
+} __attribute__((packed)) local_apic_t;
+
+typedef struct {
+    madt_header_t madt_header;
+    uint8_t apic_id;
+    uint8_t reserved;
+    uint32_t addr;
+    uint32_t gsib;
+} __attribute__((packed)) io_apic_t;
+
+typedef struct {
+    madt_header_t madt_header;
+    uint8_t bus_source;
+    uint8_t irq_source;
+    uint32_t gsi;
+    uint16_t flags;
+} __attribute__((packed)) iso_t;
+
+typedef struct {
+    madt_header_t madt_header;
+    uint8_t processor;
+    uint16_t flags;
+    uint8_t lint;
+} __attribute__((packed)) nmi_t;
+
+local_apic_t *local_apics[MAX_MADT];
+size_t local_apic_ptr = 0;
+
+io_apic_t *io_apics[MAX_MADT];
+size_t io_apic_ptr = 0;
+
+iso_t *isos[MAX_MADT];
+size_t iso_ptr = 0;
+
+nmi_t *nmis[MAX_MADT];
+size_t nmi_ptr = 0;
 
 void init_acpi(void) {
     kprint(KPRN_INFO, "Initialising ACPI...");
@@ -78,6 +126,36 @@ madt_found:
     kprint(KPRN_INFO, "OEMID: %k", madt->sdt.oem_id, 6);
     kprint(KPRN_INFO, "OEM table ID: %k", madt->sdt.oem_table_id, 8);
     kprint(KPRN_INFO, "OEM rev.: %u", madt->sdt.oem_rev);
+
+    /* parse the MADT entries */
+    for (uint8_t *madt_ptr = (uint8_t *)(&madt->madt_entries_begin);
+        (size_t)madt_ptr < (size_t)madt + madt->sdt.length;
+        madt_ptr += *(madt_ptr + 1)) {
+        switch (*(madt_ptr)) {
+            case 0:
+                /* processor local APIC */
+                kprint(KPRN_INFO, "Found local APIC #%u", local_apic_ptr);
+                local_apics[local_apic_ptr++] = (local_apic_t *)madt_ptr;
+                break;
+            case 1:
+                /* I/O APIC */
+                kprint(KPRN_INFO, "Found I/O APIC #%u", io_apic_ptr);
+                io_apics[io_apic_ptr++] = (io_apic_t *)madt_ptr;
+                break;
+            case 2:
+                /* interrupt source override */
+                kprint(KPRN_INFO, "Found ISO #%u", iso_ptr);
+                isos[iso_ptr++] = (iso_t *)madt_ptr;
+                break;
+            case 4:
+                /* NMI */
+                kprint(KPRN_INFO, "Found NMI #%u", nmi_ptr);
+                nmis[nmi_ptr++] = (nmi_t *)madt_ptr;
+                break;
+            default:
+                break;
+        }
+    }
 
     return;
 

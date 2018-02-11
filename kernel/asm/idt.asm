@@ -2,6 +2,7 @@ global load_IDT
 
 extern handler_simple
 extern handler_code
+extern handler_irq_apic
 extern handler_irq_pic0
 extern handler_irq_pic1
 extern handler_div0
@@ -20,7 +21,7 @@ IDT:
 
     align 4
     .IDTStart:
-        times 0x81 dq 0
+        times 0x100 dq 0
     .IDTEnd:
 
 section .text
@@ -157,53 +158,130 @@ load_IDT:
     call make_entry
     
     inc di
+    mov ebx, handler_irq_apic
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+    
+    inc di
+    call make_entry
+
+    mov di, 0xa0
     mov ebx, handler_irq_pic0
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
     inc di
     mov ebx, handler_irq_pic1
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
     call make_entry
-    
+
     inc di
+    call make_entry
+
+    mov di, 0x90
+    mov ebx, handler_irq_apic
+    call make_entry
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
+    inc di
+    call make_entry
+
+    mov di, 0xff
     call make_entry
     
     mov di, 0x80
     mov dl, 11101110b
     mov ebx, syscall
-    call make_entry  
+    call make_entry
     
     lidt [IDT]
     

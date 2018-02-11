@@ -16,10 +16,6 @@ size_t memory_size;
 void kernel_init(void) {
     /* interrupts disabled */
 
-    /* disable all IRQs */
-    set_PIC0_mask(0b11111111);
-    set_PIC1_mask(0b11111111);
-
     /* build descriptor tables */
     load_GDT();
     load_IDT();
@@ -40,37 +36,28 @@ void kernel_init(void) {
     init_graphics();
     init_tty();
 
-    /* initialise ACPI */
-    init_acpi();
-
-    /* print welcome */
-    kprint(KPRN_INFO, "Welcome to echidnaOS!");
-
-    /* remap PIC */
-    map_PIC(0x20, 0x28);
-
     /* set PIT frequency */
     set_pit_freq(KRNL_PIT_FREQ);
 
     /* disable scheduler */
     ts_enable = 0;
 
-    /* enable IRQ 0 */
-    set_PIC0_mask(0b11111110);
-    set_PIC1_mask(0b11111111);
+    /* initialise ACPI */
+    init_acpi();
+
+    /* initialise APIC */
+    init_apic();
 
     /* enable interrupts for the first time */
     ENABLE_INTERRUPTS;
+
+    /****** END OF EARLY BOOTSTRAP ******/
 
     /* initialise keyboard driver */
     keyboard_init();
 
     /* initialise scheduler */
     task_init();
-
-    /****** END OF EARLY BOOTSTRAP ******/
-
-    kprint(KPRN_INFO, "%u bytes (%u MiB) of memory detected.", (unsigned int)memory_size, (unsigned int)(memory_size / 0x100000));
 
     kprint(KPRN_INFO, "Initialising drivers...");
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
@@ -93,14 +80,6 @@ void kernel_init(void) {
 
 
     /******* END OF FILE SYSTEM INSTALLATION CALLS *******/
-
-
-
-    /* enable keyboard IRQ */
-    DISABLE_INTERRUPTS;
-    set_PIC0_mask(0b11111100);
-    set_PIC1_mask(0b11111111);
-    ENABLE_INTERRUPTS;
 
     /* mount essential filesystems */
     if (vfs_mount("/", ":://initramfs", "echfs") == -2)

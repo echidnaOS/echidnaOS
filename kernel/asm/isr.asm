@@ -1,5 +1,6 @@
 global handler_simple
 global handler_code
+global handler_irq_apic
 global handler_irq_pic0
 global handler_irq_pic1
 global handler_div0
@@ -23,6 +24,8 @@ extern set_PIC0_mask
 extern get_PIC0_mask
 
 extern kernel_pagemap
+
+extern eoi
 
 ; API calls
 extern open
@@ -146,6 +149,10 @@ handler_code:
         add esp, 4
         iretd
 
+handler_irq_apic:
+        call eoi_wrapper
+        iretd
+
 handler_irq_pic0:
         push eax
         mov al, 0x20    ; acknowledge interrupt to PIC0
@@ -160,6 +167,39 @@ handler_irq_pic1:
         out 0x20, al
         pop eax
         iretd
+
+eoi_wrapper:
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        push ds
+        push es
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov eax, cr3        ; save context
+        push dword [interrupted_cr3]
+        mov dword [interrupted_cr3], eax
+        mov eax, dword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, eax
+        call eoi
+        mov eax, dword [interrupted_cr3]
+        mov cr3, eax    ; restore context
+        pop dword [interrupted_cr3]
+        pop es
+        pop ds
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        ret
 
 except_handler_setup:
         mov eax, dword [kernel_pagemap]
@@ -231,9 +271,8 @@ irq0_handler:
         push edx
         push ecx
         push ebx
-        push eax        
-        mov al, 0x20    ; acknowledge interrupt to PIC0
-        out 0x20, al
+        push eax
+        call eoi_wrapper
         mov ax, 0x10
         mov ds, ax
         mov es, ax
@@ -243,10 +282,7 @@ irq0_handler:
         mov cr3, eax
         call task_switch
     .ts_abort:
-        push eax
-        mov al, 0x20    ; acknowledge interrupt to PIC0
-        out 0x20, al
-        pop eax
+        call eoi_wrapper
         iretd
 
 keyboard_isr:
@@ -272,8 +308,7 @@ keyboard_isr:
         push eax
         call keyboard_handler
         add esp, 4
-        mov al, 0x20    ; acknowledge interrupt to PIC0
-        out 0x20, al
+        call eoi_wrapper
         mov eax, dword [interrupted_cr3]
         mov cr3, eax    ; restore context
         pop dword [interrupted_cr3]

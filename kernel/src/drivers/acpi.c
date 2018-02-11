@@ -29,7 +29,7 @@ void init_acpi(void) {
     for (size_t i = 0x80000; i < 0x100000; i++) {
         if (i == 0xa0000 - 4) {
             /* skip video mem and mapped hardware */
-            i = 0xeffff;
+            i = 0xdffff;
             continue;
         }
         if (!kstrncmp((char *)i, "RSD PTR ", 8)) {

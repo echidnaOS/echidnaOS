@@ -30,92 +30,74 @@ dump_vga_font_end:
 
 section .text
 
+bits 64
+
 get_vbe_info:
     ; void get_vbe_info(vbe_info_struct_t* vbe_info_struct);
-    push ebx
-    push esi
-    push edi
-    push ebp
+    push rbx
+    push rbp
 
-    mov ebx, dword [esp+20]
-    mov esi, get_vbe_info_bin
-    mov ecx, get_vbe_info_size
+    mov rbx, rdi
+    mov rsi, get_vbe_info_bin
+    mov rcx, get_vbe_info_size
     call real_routine
 
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+    pop rbp
+    pop rbx
     ret
 
 get_edid_info:
     ; void get_edid_info(edid_info_struct_t* edid_info_struct);
-    push ebx
-    push esi
-    push edi
-    push ebp
+    push rbx
+    push rbp
 
-    mov ebx, dword [esp+20]
-    mov esi, get_edid_info_bin
-    mov ecx, get_edid_info_size
+    mov rbx, rdi
+    mov rsi, get_edid_info_bin
+    mov rcx, get_edid_info_size
     call real_routine
 
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+    pop rbp
+    pop rbx
     ret
 
 get_vbe_mode_info:
     ; void get_vbe_mode_info(get_vbe_t* get_vbe);
-    push ebx
-    push esi
-    push edi
-    push ebp
+    push rbx
+    push rbp
 
-    mov ebx, dword [esp+20]
-    mov esi, get_vbe_mode_info_bin
-    mov ecx, get_vbe_mode_info_size
+    mov rbx, rdi
+    mov rsi, get_vbe_mode_info_bin
+    mov rcx, get_vbe_mode_info_size
     call real_routine
 
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+    pop rbp
+    pop rbx
     ret
 
 set_vbe_mode:
     ; void set_vbe_mode(uint16_t mode);
-    push ebx
-    push esi
-    push edi
-    push ebp
+    push rbx
+    push rbp
 
-    mov ebx, dword [esp+20]
-    mov esi, set_vbe_mode_bin
-    mov ecx, set_vbe_mode_size
+    mov rbx, rdi
+    mov rsi, set_vbe_mode_bin
+    mov rcx, set_vbe_mode_size
     call real_routine
 
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+    pop rbp
+    pop rbx
     ret
 
 dump_vga_font:
     ; void dump_vga_font(uint8_t *bitmap);
-    push ebx
-    push esi
-    push edi
-    push ebp
+    push rbx
+    push rbp
 
-    mov ebx, dword [esp+20]
-    mov esi, dump_vga_font_bin
-    mov ecx, dump_vga_font_size
+    mov rbx, rdi
+    mov rsi, dump_vga_font_bin
+    mov rcx, dump_vga_font_size
     call real_routine
 
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+    pop rbp
+    pop rbx
     ret

@@ -17,9 +17,7 @@ void kernel_init(void) {
     /* interrupts disabled */
 
     /* build descriptor tables */
-    load_GDT();
     load_IDT();
-    load_TSS();
 
     /* detect memory */
     memory_size = detect_mem();

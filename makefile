@@ -18,7 +18,7 @@ clean:
 	$(MAKE) clean -C kernel
 
 kernel/initramfs: echidnafs/echfs-utils shell_target
-	dd bs=32768 count=256 if=/dev/zero of=kernel/initramfs
+	dd bs=32768 count=128 if=/dev/zero of=kernel/initramfs
 	echidnafs/echfs-utils kernel/initramfs format 32768
 	echidnafs/echfs-utils kernel/initramfs mkdir dev
 	echidnafs/echfs-utils kernel/initramfs mkdir bin

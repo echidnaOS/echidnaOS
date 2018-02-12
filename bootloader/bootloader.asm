@@ -12,11 +12,6 @@ arch_specific:
 
 mov esp, 0xEFFFF0
 
-; void kernel_init(uint8_t boot_drive);
-xor eax, eax
-mov al, byte [drive_number]
-push eax
-
 xor eax, eax
 xor ebx, ebx
 xor ecx, ecx
@@ -25,6 +20,6 @@ xor esi, esi
 xor edi, edi
 xor ebp, ebp
 
-call 0x100000					; Jump to the newly loaded kernel
+jmp 0x100000					; Jump to the newly loaded kernel
 
 times 4096-($-$$)			db 0x00				; Padding

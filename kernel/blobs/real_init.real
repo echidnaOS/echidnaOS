@@ -1,31 +1,39 @@
 org 0x1000
-bits 32
+bits 64
 
 ; Save stack
-mov dword [saved_stack], esp
+mov qword [saved_stack], rsp
+
+; Save arg for later
+mov dword [arg], ebx
 
 ; Save pmode IDT
-sidt [pmode_idt]
+sidt [lmode_idt]
 
 ; Load real mode IDT
 lidt [real_idt]
 
-; Load 16-bit segments
-jmp 0x28:pmode16
-pmode16:
-bits 16
-;mov ax, 0x30
-;mov ds, ax
-;mov es, ax
-;mov fs, ax
-;mov gs, ax
-;mov ss, ax
-
 ; save cr3
-mov eax, cr3
+mov rax, cr3
 mov dword [cr3_reg], eax
 
-; Leave protected mode
+; Load 16-bit segments
+jmp far [ptr16]
+
+ptr16:
+dq pmode16
+dw 0x28
+
+pmode16:
+bits 16
+mov ax, 0x30
+mov ds, ax
+mov es, ax
+mov ss, ax
+mov fs, ax
+mov gs, ax
+
+; Leave long mode
 mov eax, cr0
 and eax, 01111111111111111111111111111110b
 mov cr0, eax
@@ -36,40 +44,43 @@ real_mode:
 xor ax, ax
 mov ds, ax
 mov es, ax
-;mov fs, ax
-;mov gs, ax
+mov fs, ax
+mov gs, ax
 mov ax, 0x1000
 mov ss, ax
 mov esp, 0xFFF0
 
+; Retrieve arg
+mov ebx, dword [arg]
+
 ; Call actual routine
 call 0x8000
-
-; Load pmode IDT
-lidt [pmode_idt]
 
 ; load cr3
 mov eax, dword [cr3_reg]
 mov cr3, eax
 
-; Enter protected mode
+; Enter long mode
 mov eax, cr0
 or eax, 0x80000001
 mov cr0, eax
 
-; Load pmode segments
-jmp 0x08:.pmode
-.pmode:
-bits 32
+; Load long mode segments
+jmp 0x08:.lmode
+.lmode:
+bits 64
 mov ax, 0x10
 mov ds, ax
 mov es, ax
-;mov fs, ax
-;mov gs, ax
+mov fs, ax
+mov gs, ax
 mov ss, ax
 
+; Load lmode IDT
+lidt [lmode_idt]
+
 ; Restore stack
-mov esp, dword [saved_stack]
+mov rsp, qword [saved_stack]
 
 ; Return
 ret
@@ -77,14 +88,15 @@ ret
 data:
 
 align 4
-pmode_idt:
+lmode_idt:
     dw 0
-    dd 0
+    dq 0
 
 align 4
 real_idt:
     dw 0x3FF
-    dd 0
+    dq 0
 
+arg dd 0
 cr3_reg dd 0
-saved_stack dd 0
+saved_stack dq 0

@@ -12,18 +12,14 @@ section .text
 
 bios_print:
     ; void bios_print(const char *msg);
-    push ebx
-    push esi
-    push edi
-    push ebp
+    push rbx
+    push rbp
 
-    mov ebx, dword [esp+20]
-    mov esi, bios_print_bin
-    mov ecx, bios_print_size
+    mov rbx, rdi
+    mov rsi, bios_print_bin
+    mov rcx, bios_print_size
     call real_routine
 
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+    pop rbp
+    pop rbx
     ret

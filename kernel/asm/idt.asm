@@ -17,70 +17,73 @@ section .data
 align 4
 IDT:
     dw .IDTEnd - .IDTStart - 1	; IDT size
-    dd .IDTStart				; IDT start
+    dq .IDTStart				; IDT start
 
     align 4
     .IDTStart:
-        times 0x100 dq 0
+        times 0x100 dq 0,0 ; 64 bit IDT entries are 128 bit
     .IDTEnd:
 
 section .text
 
-bits 32
-
 make_entry:
-; EBX = address
+; RBX = address
 ; CX = selector
 ; DL = type
 ; DI = vector
 
-    push eax
-    push ebx
-    push ecx
-    push edx
-    push edi
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rdi
 
-    push edx
+    push rdx
 
-    mov eax, 8
-    and edi, 0x0000FFFF
-    mul edi
-    add eax, IDT.IDTStart
-    mov edi, eax
+    mov rax, 16
+    and rdi, 0x0000FFFF
+    mul rdi
+    add rax, IDT.IDTStart
+    mov rdi, rax
 
     mov ax, bx
     stosw
     mov ax, cx
     stosw
-    inc edi
-    pop edx
+    inc rdi
+    pop rdx
     mov al, dl
     stosb
-    shr ebx, 16
+    shr rbx, 16
     mov ax, bx
     stosw
+    shr rbx, 16
+    mov eax, ebx
+    stosd
+    xor eax, eax
+    stosd
 
-    pop edi
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    pop rdi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
     ret
 
 load_IDT:
-    push ebx
-    push ecx
-    push edx
-    push edi
+    push rbx
+    push rcx
+    push rdx
+    push rdi
     
     xor di, di
     mov dl, 10001110b
     mov cx, 0x08
-    mov ebx, handler_div0
+    mov rbx, handler_div0
     call make_entry                 ; int 0x00, divide by 0
 
     inc di
-    mov ebx, handler_simple
+    mov rbx, handler_simple
     call make_entry                 ; int 0x01, debug
     
     inc di
@@ -102,15 +105,15 @@ load_IDT:
     call make_entry                 ; int 0x07, device not available
     
     inc di
-    mov ebx, handler_code
+    mov rbx, handler_code
     call make_entry                 ; int 0x08, double fault
     
     inc di
-    mov ebx, handler_simple
+    mov rbx, handler_simple
     call make_entry                 ; int 0x09, coprocessor segment overrun
     
     add di, 2
-    mov ebx, handler_code
+    mov rbx, handler_code
     call make_entry                 ; int 0x0A, invalid TSS
     
     inc di
@@ -120,23 +123,23 @@ load_IDT:
     call make_entry                 ; int 0x0C, stack-segment fault
     
     inc di
-    mov ebx, handler_gpf
+    mov rbx, handler_gpf
     call make_entry                 ; int 0x0D, general protection fault
     
     inc di
-    mov ebx, handler_pf
+    mov rbx, handler_pf
     call make_entry                 ; int 0x0E, page fault
     
     add di, 2
-    mov ebx, handler_simple
+    mov rbx, handler_simple
     call make_entry                 ; int 0x10, x87 floating point exception
     
     inc di
-    mov ebx, handler_code
+    mov rbx, handler_code
     call make_entry                 ; int 0x11, alignment check
     
     inc di
-    mov ebx, handler_simple
+    mov rbx, handler_simple
     call make_entry                 ; int 0x12, machine check
     
     inc di
@@ -146,19 +149,19 @@ load_IDT:
     call make_entry                 ; int 0x14, virtualisation exception
     
     mov di, 0x1E
-    mov ebx, handler_code
+    mov rbx, handler_code
     call make_entry                 ; int 0x1E, security exception
     
     add di, 2
-    mov ebx, irq0_handler
+    mov rbx, irq0_handler
     call make_entry
     
     inc di
-    mov ebx, keyboard_isr
+    mov rbx, keyboard_isr
     call make_entry
     
     inc di
-    mov ebx, handler_irq_apic
+    mov rbx, handler_irq_apic
     call make_entry
     
     inc di
@@ -201,7 +204,7 @@ load_IDT:
     call make_entry
 
     mov di, 0xa0
-    mov ebx, handler_irq_pic0
+    mov rbx, handler_irq_pic0
     call make_entry
 
     inc di
@@ -226,7 +229,7 @@ load_IDT:
     call make_entry
 
     inc di
-    mov ebx, handler_irq_pic1
+    mov rbx, handler_irq_pic1
     call make_entry
 
     inc di
@@ -251,7 +254,7 @@ load_IDT:
     call make_entry
 
     mov di, 0x90
-    mov ebx, handler_irq_apic
+    mov rbx, handler_irq_apic
     call make_entry
 
     inc di
@@ -280,13 +283,13 @@ load_IDT:
     
     mov di, 0x80
     mov dl, 11101110b
-    mov ebx, syscall
+    mov rbx, syscall
     call make_entry
     
     lidt [IDT]
     
-    pop edi
-    pop edx
-    pop ecx
-    pop ebx
+    pop rdi
+    pop rdx
+    pop rcx
+    pop rbx
     ret

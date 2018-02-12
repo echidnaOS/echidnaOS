@@ -6,6 +6,11 @@
 #include <paging.h>
 #include <tty.h>
 #include <system.h>
+#include <cio.h>
+
+size_t memcpy(char *dest, const char *source, size_t count) {
+    return kmemcpy(dest, source, count);
+}
 
 size_t kmemcpy(char *dest, const char *source, size_t count) {
     size_t i;

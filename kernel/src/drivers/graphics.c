@@ -41,12 +41,13 @@ void init_graphics(void) {
     /* interrupts are supposed to be OFF */
 
     kprint(KPRN_INFO, "Dumping VGA font...");
+
     dump_vga_font(vga_font);
 
     kprint(KPRN_INFO, "Initialising VBE...");
 
     get_vbe_info(&vbe_info_struct);
-
+BB;
     /* copy the video mode array somewhere else because it might get overwritten */
     for (size_t i = 0; ; i++) {
         vid_modes[i] = vbe_info_struct.vid_modes[i];

@@ -1,4 +1,4 @@
-CC = i386-echidnaos-gcc
+CC = x86_64-echidnaos-gcc
 XXD = xxd
 
 C_FILES = $(shell find src -type f -name '*.c')
@@ -10,6 +10,7 @@ BINS = $(REAL_FILES:.real=.bin)
 INITRAMFS = initramfs
 
 CHARDFLAGS = -std=gnu99 -masm=intel \
+    -mno-sse \
     -nostdlib \
     -ffreestanding \
     -I./include/ \
@@ -34,7 +35,7 @@ initramfs_obj.o: $(INITRAMFS)
 	nasm $< -f bin -o $@
 
 %.o: %.asm
-	nasm $< -f elf32 -o $@
+	nasm $< -f elf64 -o $@
 
 clean:
 	rm -f $(OBJ) $(BINS) echidna.bin

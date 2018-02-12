@@ -12,10 +12,10 @@
 
 /* arch specific values */
 #define PAGE_SIZE               4096
-#define PAGE_ENTRIES            1024
+#define PAGE_ENTRIES            512
 
 
-typedef uint32_t pt_entry_t;
+typedef uint64_t pt_entry_t;
 
 void init_paging(void);
 

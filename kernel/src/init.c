@@ -39,6 +39,7 @@ void kernel_init(void) {
 
     /* disable scheduler */
     ts_enable = 0;
+asm("cli;hlt");
 
     /* initialise ACPI */
     init_acpi();

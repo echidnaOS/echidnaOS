@@ -7,11 +7,14 @@ mov qword [saved_stack], rsp
 ; Save arg for later
 mov dword [arg], ebx
 
-; Save pmode IDT
+; Save lmode IDT
 sidt [lmode_idt]
 
 ; Load real mode IDT
 lidt [real_idt]
+
+; Save lmode GDT
+sgdt [lmode_gdt]
 
 ; save cr3
 mov rax, cr3
@@ -33,10 +36,20 @@ mov ss, ax
 mov fs, ax
 mov gs, ax
 
-; Leave long mode
+; Leave compatibility mode
 mov eax, cr0
 and eax, 01111111111111111111111111111110b
 mov cr0, eax
+
+; leave long mode
+mov ecx, 0xc0000080
+rdmsr
+
+and eax, 0xfffffeff
+wrmsr
+
+xor eax, eax
+mov cr4, eax
 
 ; Load real mode segments
 jmp 0x0000:real_mode
@@ -59,6 +72,19 @@ call 0x8000
 ; load cr3
 mov eax, dword [cr3_reg]
 mov cr3, eax
+
+; prepare long mode
+mov eax, 10100000b
+mov cr4, eax
+
+mov ecx, 0xc0000080
+rdmsr
+
+or eax, 0x00000100
+wrmsr
+
+; load long mode GDT
+lgdt [lmode_gdt]
 
 ; Enter long mode
 mov eax, cr0
@@ -95,6 +121,11 @@ lmode_idt:
 align 4
 real_idt:
     dw 0x3FF
+    dq 0
+
+align 4
+lmode_gdt:
+    dw 0
     dq 0
 
 arg dd 0

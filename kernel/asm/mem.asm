@@ -18,11 +18,22 @@ bits 64
 detect_mem:
     push rbx
     push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
     mov rsi, detect_mem_bin
     mov rcx, detect_mem_size
     mov rbx, mem_size
     call real_routine
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbp
     pop rbx
     mov eax, dword [mem_size]
+    xor rdx, rdx
     ret

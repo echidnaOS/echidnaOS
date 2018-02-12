@@ -6,14 +6,14 @@
 typedef struct {
     uint8_t version_min;
     uint8_t version_maj;
-    char *oem;
+    uint32_t oem;   // is a 32 bit pointer to char
     uint32_t capabilities;
-    uint16_t *vid_modes;
+    uint32_t vid_modes;     // is a 32 bit pointer to uint16_t
     uint16_t vid_mem_blocks;
     uint16_t software_rev;
-    char *vendor;
-    char *prod_name;
-    char *prod_rev;
+    uint32_t vendor;   // is a 32 bit pointer to char
+    uint32_t prod_name;   // is a 32 bit pointer to char
+    uint32_t prod_rev;   // is a 32 bit pointer to char
 } __attribute__((packed)) vbe_info_struct_t;
 
 typedef struct {
@@ -55,7 +55,7 @@ typedef struct {
 } __attribute__((packed)) vbe_mode_info_t;
 
 typedef struct {
-    vbe_mode_info_t *vbe_mode_info;
+    uint32_t vbe_mode_info;      // is a 32 bit pointer to vbe_mode_info_t
     uint16_t mode;
 } get_vbe_t;
 

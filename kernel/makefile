@@ -13,7 +13,7 @@ CHARDFLAGS = -std=gnu99 -masm=intel \
     -mno-sse \
     -nostdlib \
     -ffreestanding \
-    -I./include/ \
+    -I./include/
 
 CLINKFLAGS = -nostdlib \
     -static-libgcc -lgcc \

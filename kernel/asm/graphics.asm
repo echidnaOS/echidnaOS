@@ -36,12 +36,20 @@ get_vbe_info:
     ; void get_vbe_info(vbe_info_struct_t* vbe_info_struct);
     push rbx
     push rbp
+    push r12
+    push r13
+    push r14
+    push r15
 
     mov rbx, rdi
     mov rsi, get_vbe_info_bin
     mov rcx, get_vbe_info_size
     call real_routine
 
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbp
     pop rbx
     ret
@@ -50,12 +58,20 @@ get_edid_info:
     ; void get_edid_info(edid_info_struct_t* edid_info_struct);
     push rbx
     push rbp
+    push r12
+    push r13
+    push r14
+    push r15
 
     mov rbx, rdi
     mov rsi, get_edid_info_bin
     mov rcx, get_edid_info_size
     call real_routine
 
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbp
     pop rbx
     ret
@@ -64,12 +80,20 @@ get_vbe_mode_info:
     ; void get_vbe_mode_info(get_vbe_t* get_vbe);
     push rbx
     push rbp
+    push r12
+    push r13
+    push r14
+    push r15
 
     mov rbx, rdi
     mov rsi, get_vbe_mode_info_bin
     mov rcx, get_vbe_mode_info_size
     call real_routine
 
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbp
     pop rbx
     ret
@@ -78,12 +102,20 @@ set_vbe_mode:
     ; void set_vbe_mode(uint16_t mode);
     push rbx
     push rbp
+    push r12
+    push r13
+    push r14
+    push r15
 
     mov rbx, rdi
     mov rsi, set_vbe_mode_bin
     mov rcx, set_vbe_mode_size
     call real_routine
 
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbp
     pop rbx
     ret
@@ -92,12 +124,20 @@ dump_vga_font:
     ; void dump_vga_font(uint8_t *bitmap);
     push rbx
     push rbp
+    push r12
+    push r13
+    push r14
+    push r15
 
     mov rbx, rdi
     mov rsi, dump_vga_font_bin
     mov rcx, dump_vga_font_size
     call real_routine
 
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbp
     pop rbx
     ret

@@ -39,7 +39,6 @@ void kernel_init(void) {
 
     /* disable scheduler */
     ts_enable = 0;
-asm("cli;hlt");
 
     /* initialise ACPI */
     init_acpi();
@@ -59,6 +58,7 @@ asm("cli;hlt");
     task_init();
 
     kprint(KPRN_INFO, "Initialising drivers...");
+
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
     init_streams();
     init_initramfs();

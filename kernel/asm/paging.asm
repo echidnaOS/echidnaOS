@@ -21,8 +21,9 @@ kernel_pdpt:
     times 512 dq 0
 
 kernel_pml4:
-kernel_pagemap:
     times 512 dq 0
+
+kernel_pagemap dq kernel_pml4
 
 section .text
 

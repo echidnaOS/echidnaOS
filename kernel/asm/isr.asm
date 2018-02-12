@@ -1,3 +1,105 @@
+%macro pusham 0
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+    xor rax, rax
+    mov ax, ds
+    push rax
+    mov ax, es
+    push rax
+    mov ax, fs
+    push rax
+    mov ax, gs
+    push rax
+%endmacro
+
+%macro popam 0
+    pop rax
+    mov gs, ax
+    pop rax
+    mov fs, ax
+    pop rax
+    mov es, ax
+    pop rax
+    mov ds, ax
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+%endmacro
+
+%macro pushas 0
+    push rbx
+    push rcx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+    xor rbx, rbx
+    mov bx, ds
+    push rbx
+    mov bx, es
+    push rbx
+    mov bx, fs
+    push rbx
+    mov bx, gs
+    push rax
+%endmacro
+
+%macro popas 0
+    pop rbx
+    mov gs, bx
+    pop rbx
+    mov fs, bx
+    pop rbx
+    mov es, bx
+    pop rbx
+    mov ds, bx
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rcx
+    pop rbx
+%endmacro
+
 global handler_simple
 global handler_code
 global handler_irq_apic
@@ -79,7 +181,7 @@ section .data
 ts_enable dd 0
 read_stat dd 0
 write_stat dd 0
-interrupted_cr3 dd 0
+interrupted_cr3 dq 0
 
 routine_list:
         dd      task_quit_self          ; 0x00
@@ -140,73 +242,60 @@ routine_list:
 
 section .text
 
-bits 32
+bits 64
 
 handler_simple:
-        iretd
+        iretq
 
 handler_code:
-        add esp, 4
-        iretd
+        add rsp, 8
+        iretq
 
 handler_irq_apic:
         call eoi_wrapper
-        iretd
+        iretq
 
 handler_irq_pic0:
-        push eax
+        push rax
         mov al, 0x20    ; acknowledge interrupt to PIC0
         out 0x20, al
-        pop eax
-        iretd
+        pop rax
+        iretq
 
 handler_irq_pic1:
-        push eax
+        push rax
         mov al, 0x20    ; acknowledge interrupt to both PICs
         out 0xA0, al
         out 0x20, al
-        pop eax
-        iretd
+        pop rax
+        iretq
 
 eoi_wrapper:
-        push eax
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
-        mov eax, cr3        ; save context
-        push dword [interrupted_cr3]
-        mov dword [interrupted_cr3], eax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
+        mov rax, cr3        ; save context
+        push qword [interrupted_cr3]
+        mov qword [interrupted_cr3], rax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
         call eoi
-        mov eax, dword [interrupted_cr3]
-        mov cr3, eax    ; restore context
-        pop dword [interrupted_cr3]
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
-        pop eax
+        mov rax, qword [interrupted_cr3]
+        mov cr3, rax    ; restore context
+        pop qword [interrupted_cr3]
+        popam
         ret
 
 except_handler_setup:
-        mov eax, dword [kernel_pagemap]
-        mov cr3, eax
+        mov rax, qword [kernel_pagemap]
+        mov cr3, rax
         mov ax, 0x10
         mov ds, ax
         mov es, ax
+        mov fs, ax
+        mov gs, ax
+        mov ss, ax
         ret
 
 handler_div0:
@@ -223,575 +312,317 @@ handler_pf:
 
 irq0_handler:
         ; first execute all the time-based routines (tty refresh...)
-        push eax
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
-        mov eax, cr3        ; save context
-        push dword [interrupted_cr3]
-        mov dword [interrupted_cr3], eax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
+        mov rax, cr3        ; save context
+        push qword [interrupted_cr3]
+        mov qword [interrupted_cr3], rax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
         call timer_interrupt
-        mov eax, dword [interrupted_cr3]
-        mov cr3, eax    ; restore context
-        pop dword [interrupted_cr3]
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
-        pop eax
+        call eoi
         ; check whether we want task switches or not
-        push ds
-        push 0x10
-        pop ds
         cmp dword [ts_enable], 0
-        pop ds
         je .ts_abort
-        ; save task status
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
-        call eoi_wrapper
+        ; call task switcher
+        add rsp, 8
         mov ax, 0x10
-        mov ds, ax
-        mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
+        mov ss, ax
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_switch
     .ts_abort:
-        call eoi_wrapper
-        iretd
+        mov rax, qword [interrupted_cr3]
+        mov cr3, rax    ; restore context
+        pop qword [interrupted_cr3]
+        popam
+        iretq
 
 keyboard_isr:
-        push eax
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
-        mov eax, cr3        ; save context
-        push dword [interrupted_cr3]
-        mov dword [interrupted_cr3], eax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
-        xor eax, eax
+        mov rax, cr3        ; save context
+        push qword [interrupted_cr3]
+        mov qword [interrupted_cr3], rax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        xor rax, rax
         in al, 0x60     ; read from keyboard
-        push eax
+        mov rdi, rax
         call keyboard_handler
-        add esp, 4
-        call eoi_wrapper
-        mov eax, dword [interrupted_cr3]
-        mov cr3, eax    ; restore context
-        pop dword [interrupted_cr3]
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
-        pop eax
-        iretd
+        call eoi
+        mov rax, qword [interrupted_cr3]
+        mov cr3, rax    ; restore context
+        pop qword [interrupted_cr3]
+        popam
+        iretq
 
 syscall:
-; ARGS in EAX (call code), ECX, EDX, EDI, ESI
-; return value in EAX/EDX
+; ARGS in RAX (call code), RCX, RDX, RDI, RSI
+; return value in RAX/RDX
         ; special routines check
-        cmp eax, 0x05
+        cmp rax, 0x05
         je fork_isr
-        cmp eax, 0x04
+        cmp rax, 0x04
         je wait_isr
         ; disable task switch, reenable all interrupts
-        push ds
-        push 0x10
-        pop ds
+        push rax
+        push rbx
+        mov ax, ds
+        mov bx, 0x10
+        mov ds, bx
         mov dword [ts_enable], 0
-        pop ds
+        mov ds, ax
+        pop rbx
+        pop rax
         sti
         ; special routines check
-        cmp eax, 0x30
+        cmp rax, 0x30
         je vfs_read_isr
-        cmp eax, 0x31
+        cmp rax, 0x31
         je vfs_write_isr
-        cmp eax, 0x2c
+        cmp rax, 0x2c
         je read_isr
-        cmp eax, 0x2d
+        cmp rax, 0x2d
         je write_isr
-        cmp eax, 0x02
-        je gen_exec_block_isr
         ; end special routines check
-        push ebx
-        push ecx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
-        push fs
-        push gs
+        pushas
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, cr3        ; save context
-        mov dword [interrupted_cr3], ebx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        mov ebx, 4
-        push edx
-        mul ebx
-        pop edx
+        mov rbx, cr3        ; save context
+        mov qword [interrupted_cr3], rbx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        mov rbx, 8
+        push rdx
+        mul rbx
+        pop rdx
         ; push syscall args, and call
-        push esi
-        push edi
-        push edx
-        push ecx
-        call [routine_list+eax]
-        add esp, 16
+        xchg rcx, rdi
+        xchg rdx, rsi
+        call [routine_list+rax]
         ; disable all interrupts, reenable task switch
         cli
-        mov dword [ts_enable], 1
-        mov ebx, dword [interrupted_cr3]
-        mov cr3, ebx    ; restore context
+        mov qword [ts_enable], 1
+        mov rbx, qword [interrupted_cr3]
+        mov cr3, rbx    ; restore context
         ; return
-        pop gs
-        pop fs
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop ecx
-        pop ebx
-        iretd
+        popas
+        iretq
 
 vfs_read_isr:
         ; check if I/O is ready
-        push ebx
-        push ecx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
-        push fs
-        push gs
+        pushas
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, cr3        ; save context
-        mov dword [interrupted_cr3], ebx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        push esi
-        push edi
-        push edx
-        push ecx
+        mov rbx, cr3        ; save context
+        mov qword [interrupted_cr3], rbx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        xchg rcx, rdi
+        xchg rdx, rsi
         call vfs_read
-        add esp, 16
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
-        push ebx
-        mov ebx, dword [interrupted_cr3]
-        mov cr3, ebx    ; restore context
-        pop ebx
+        push rbx
+        mov rbx, qword [interrupted_cr3]
+        mov cr3, rbx    ; restore context
+        pop rbx
         ; done
-        pop gs
-        pop fs
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop ecx
-        pop ebx
-        cmp eax, -5     ; if I/O is not ready
+        popas
+        cmp rax, -5     ; if I/O is not ready
         je .enter_iowait
-        iretd           ; else, just return
+        iretq           ; else, just return
     .enter_iowait:
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
-        push 0      ; VFS read type
-        push esi
-        push edi
-        push edx
-        push ecx
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov r8, 0      ; VFS read type
+        xchg rcx, rdi
+        xchg rdx, rsi
         call enter_iowait_status
-        add esp, 20
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_switch
 
 vfs_write_isr:
         ; check if I/O is ready
-        push ebx
-        push ecx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
-        push fs
-        push gs
+        pushas
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, cr3        ; save context
-        mov dword [interrupted_cr3], ebx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        push esi
-        push edi
-        push edx
-        push ecx
+        mov rbx, cr3        ; save context
+        mov qword [interrupted_cr3], rbx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        xchg rcx, rdi
+        xchg rdx, rsi
         call vfs_write
-        add esp, 16
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
-        push ebx
-        mov ebx, dword [interrupted_cr3]
-        mov cr3, ebx    ; restore context
-        pop ebx
+        push rbx
+        mov rbx, qword [interrupted_cr3]
+        mov cr3, rbx    ; restore context
+        pop rbx
         ; done
-        pop gs
-        pop fs
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop ecx
-        pop ebx
-        cmp eax, -5     ; if I/O is not ready
+        popas
+        cmp rax, -5     ; if I/O is not ready
         je .enter_iowait
-        iretd           ; else, just return
+        iretq           ; else, just return
     .enter_iowait:
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
-        push 1      ; VFS write type
-        push esi
-        push edi
-        push edx
-        push ecx
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov r8, 1      ; VFS write type
+        xchg rcx, rdi
+        xchg rdx, rsi
         call enter_iowait_status
-        add esp, 20
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_switch
 
 read_isr:
         ; check if I/O is ready
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
-        push fs
-        push gs
+        pushas
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, cr3        ; save context
-        mov dword [interrupted_cr3], ebx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        push esi
-        push edi
-        push edx
-        push ecx
+        mov rbx, cr3        ; save context
+        mov qword [interrupted_cr3], rbx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        xchg rcx, rdi
+        xchg rdx, rsi
         call read
-        add esp, 16
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
         cmp dword [read_stat], 1     ; if I/O is not ready
-        push ebx
-        mov ebx, dword [interrupted_cr3]
-        mov cr3, ebx    ; restore context
-        pop ebx
+        push rbx
+        mov rbx, qword [interrupted_cr3]
+        mov cr3, rbx    ; restore context
+        pop rbx
         ; done
-        pop gs
-        pop fs
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
+        popas
         je .enter_iowait
-        iretd           ; else, just return
+        iretq           ; else, just return
     .enter_iowait:
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
+        pusham
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        push eax
-        push 2      ; read type
-        push edi
-        push edx
-        push ecx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        mov r9, rax
+        mov r8, 2      ; read type
+        xchg rcx, rdi
+        xchg rdx, rsi
         call enter_iowait_status1
-        add esp, 20
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_switch
 
 write_isr:
         ; check if I/O is ready
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        push ebp
-        push ds
-        push es
-        push fs
-        push gs
+        pushas
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, cr3        ; save context
-        mov dword [interrupted_cr3], ebx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        push esi
-        push edi
-        push edx
-        push ecx
+        mov rbx, cr3        ; save context
+        mov qword [interrupted_cr3], rbx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        xchg rcx, rdi
+        xchg rdx, rsi
         call write
-        add esp, 16
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
         cmp dword [write_stat], 1     ; if I/O is not ready
-        push ebx
-        mov ebx, dword [interrupted_cr3]
-        mov cr3, ebx    ; restore context
-        pop ebx
+        push rbx
+        mov rbx, qword [interrupted_cr3]
+        mov cr3, rbx    ; restore context
+        pop rbx
         ; done
-        pop gs
-        pop fs
-        pop es
-        pop ds
-        pop ebp
-        pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
+        popas
         je .enter_iowait
-        iretd           ; else, just return
+        iretq           ; else, just return
     .enter_iowait:
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
+        pusham
         mov bx, 0x10
         mov ds, bx
         mov es, bx
         mov fs, bx
         mov gs, bx
-        mov ebx, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, ebx
-        push eax
-        push 3      ; write type
-        push edi
-        push edx
-        push ecx
+        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rbx
+        mov r9, rax
+        mov r8, 3
+        xchg rcx, rdi
+        xchg rdx, rsi
         call enter_iowait_status1
-        add esp, 20
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_switch
-
-gen_exec_block_isr:
-        ; save task status
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
-        mov ax, 0x10
-        mov ds, ax
-        mov es, ax
-        mov fs, ax
-        mov gs, ax
-        mov eax, cr3        ; save context
-        mov dword [interrupted_cr3], eax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
-        push esi
-        push edi
-        push edx
-        push ecx
-        call general_execute_block
-        add esp, 16
-        ; disable all interrupts, reenable task switch
-        cli
-        mov dword [ts_enable], 1
-        ; done
-        cmp eax, -1
-        je .abort
-        call task_switch
-    .abort:
-        mov ebx, dword [interrupted_cr3]
-        mov cr3, ebx    ; restore context
-        pop eax
-        pop ebx
-        pop ecx
-        pop edx
-        pop esi
-        pop edi
-        pop ebp
-        pop ds
-        pop es
-        pop fs
-        pop gs
-        mov eax, -1
-        mov edx, -1
-        iretd
 
 wait_isr:
         ; save task status
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
-        push ecx
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov rdi, rcx
         call swait
-        add esp, 4
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_switch
 
 fork_isr:
         ; save task status
-        push gs
-        push fs
-        push es
-        push ds
-        push ebp
-        push edi
-        push esi
-        push edx
-        push ecx
-        push ebx
-        push eax
+        pusham
         mov ax, 0x10
         mov ds, ax
         mov es, ax
         mov fs, ax
         mov gs, ax
-        mov eax, dword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, eax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov rdi, rsp
+        add rdi, (24 - 1) * 8
         call task_fork

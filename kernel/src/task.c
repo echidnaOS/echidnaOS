@@ -30,7 +30,7 @@ static int idle_cpu = 1;
 void task_spinup(void *, pt_entry_t *);
 static void zombie_eval(int pid);
 
-static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0x1b,0x23,0x23,0x23,0x23,0x23,0x202 };
+static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x23,0x23,0x23,0x23,0x23,0,0x202,0x1b,0 };
 
 static int task_create(task_t new_task) {
     // find an empty entry in the task table

@@ -58,7 +58,6 @@ void kernel_init(void) {
     task_init();
 
     kprint(KPRN_INFO, "Initialising drivers...");
-
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
     init_streams();
     init_initramfs();

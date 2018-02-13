@@ -449,11 +449,11 @@ int vfs_mount(char *mountpoint, char *device, char *filesystem) {
     int i;
     for (i = 0; i < filesystems_ptr; i++)
         if (!kstrcmp(filesystems[i].name, filesystem)) break;
-    
+
     if (((*filesystems[i].mount)(device)) == FAILURE) return FAILURE;
-    
+
     mountpoints = krealloc(mountpoints, sizeof(mountpoint_t) * (mountpoints_ptr+1));
-    
+
     kstrcpy(mountpoints[mountpoints_ptr].mountpoint, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)mountpoint));
     kstrcpy(mountpoints[mountpoints_ptr].device, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)device));
     kstrcpy(mountpoints[mountpoints_ptr].filesystem, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)filesystem));

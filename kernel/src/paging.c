@@ -85,23 +85,22 @@ typedef struct {
     size_t pt_entry;
 } pt_translation_t;
 
+#define PML4_ADDR_SHIFT 39
+#define PDPT_ADDR_SHIFT 30
+#define PD_ADDR_SHIFT 21
+#define PT_ADDR_SHIFT 12
+#define PML4_ADDR_MASK ((size_t)0x1ff << PML4_ADDR_SHIFT)
+#define PDPT_ADDR_MASK ((size_t)0x1ff << PDPT_ADDR_SHIFT)
+#define PD_ADDR_MASK ((size_t)0x1ff << PD_ADDR_SHIFT)
+#define PT_ADDR_MASK ((size_t)0x1ff << PT_ADDR_SHIFT)
+
 static pt_translation_t translate_virt_addr(size_t virt_addr) {
     pt_translation_t pt_translation = {0};
 
-    /* find the virtual page */
-    size_t virt_page = virt_addr / PAGE_SIZE;
-
-    /* find the pml4 entry */
-    pt_translation.pml4_entry = virt_page / PAGE_ENTRIES;
-
-    /* find the pdpt entry */
-    pt_translation.pdpt_entry = virt_page % PAGE_ENTRIES;
-
-    /* find the pd entry */
-    pt_translation.pd_entry = pt_translation.pdpt_entry / PAGE_ENTRIES;
-
-    /* find the pt entry */
-    pt_translation.pt_entry = pt_translation.pdpt_entry % PAGE_ENTRIES;
+    pt_translation.pml4_entry = (virt_addr & PML4_ADDR_MASK) >> PML4_ADDR_SHIFT;
+    pt_translation.pdpt_entry = (virt_addr & PDPT_ADDR_MASK) >> PDPT_ADDR_SHIFT;
+    pt_translation.pd_entry = (virt_addr & PD_ADDR_MASK) >> PD_ADDR_SHIFT;
+    pt_translation.pt_entry = (virt_addr & PT_ADDR_MASK) >> PT_ADDR_SHIFT;
 
     return pt_translation;
 }

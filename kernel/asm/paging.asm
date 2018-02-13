@@ -37,7 +37,7 @@ full_identity_map:
     push rbp
 
     mov rdi, kernel_pt
-    mov rax, 0x07
+    mov rax, 0x03
     mov rcx, 512 * 2048
     .loop:
         stosq
@@ -46,7 +46,7 @@ full_identity_map:
 
     mov rdi, kernel_pd.1
     mov rax, kernel_pt
-    or rax, 0x07
+    or rax, 0x03
     mov rcx, 512 * 4
     .loop1:
         stosq
@@ -55,21 +55,21 @@ full_identity_map:
 
     mov rdi, kernel_pdpt
     mov rax, kernel_pd.1
-    or rax, 0x07
+    or rax, 0x03
     stosq
     mov rax, kernel_pd.2
-    or rax, 0x07
+    or rax, 0x03
     stosq
     mov rax, kernel_pd.3
-    or rax, 0x07
+    or rax, 0x03
     stosq
     mov rax, kernel_pd.4
-    or rax, 0x07
+    or rax, 0x03
     stosq
 
     mov rdi, kernel_pml4
     mov rax, kernel_pdpt
-    or rax, 0x07
+    or rax, 0x03
     stosq
 
     mov rdx, kernel_pml4

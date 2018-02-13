@@ -11,13 +11,14 @@ bits 64
 task_spinup:
     mov qword [new_cr3], rsi
 
-    ; preserve RAX as a scratch register for now
+    ; preserve RAX and RDI as a scratch registers for now
 
+    ;mov rax, qword [rdi+(8*0)]     skip rax
     mov rbx, qword [rdi+(8*1)]
     mov rcx, qword [rdi+(8*2)]
     mov rdx, qword [rdi+(8*3)]
     mov rsi, qword [rdi+(8*4)]
-    mov rdi, qword [rdi+(8*5)]
+    ;mov rdi, qword [rdi+(8*5)]     skip rdi
     mov rbp, qword [rdi+(8*6)]
     mov r8, qword [rdi+(8*7)]
     mov r9, qword [rdi+(8*8)]
@@ -42,11 +43,15 @@ task_spinup:
     push qword [rdi+(8*23)]
 
     push qword [rdi+(8*0)]          ; rax
+    push qword [rdi+(8*5)]          ; rdi
     push qword [rdi+(8*15)]         ; ds
     mov rax, qword [new_cr3]
     mov cr3, rax
     pop rax
     mov ds, ax
+    mov ax, 0x10
+    mov ss, ax
+    pop rdi
     pop rax
 
     iretq

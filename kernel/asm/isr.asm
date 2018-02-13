@@ -26,6 +26,8 @@
 %endmacro
 
 %macro popam 0
+    mov ax, 0x10
+    mov ss, ax
     pop rax
     mov gs, ax
     pop rax
@@ -77,6 +79,8 @@
 %endmacro
 
 %macro popas 0
+    mov bx, 0x10
+    mov ss, bx
     pop rbx
     mov gs, bx
     pop rbx
@@ -245,32 +249,21 @@ section .text
 bits 64
 
 handler_simple:
+        push rax
+        mov ax, 0x10
+        mov ss, ax
+        pop rax
         iretq
 
 handler_code:
         add rsp, 8
+        push rax
+        mov ax, 0x10
+        mov ss, ax
+        pop rax
         iretq
 
 handler_irq_apic:
-        call eoi_wrapper
-        iretq
-
-handler_irq_pic0:
-        push rax
-        mov al, 0x20    ; acknowledge interrupt to PIC0
-        out 0x20, al
-        pop rax
-        iretq
-
-handler_irq_pic1:
-        push rax
-        mov al, 0x20    ; acknowledge interrupt to both PICs
-        out 0xA0, al
-        out 0x20, al
-        pop rax
-        iretq
-
-eoi_wrapper:
         pusham
         mov ax, 0x10
         mov ds, ax
@@ -285,7 +278,26 @@ eoi_wrapper:
         mov cr3, rax    ; restore context
         pop qword [interrupted_cr3]
         popam
-        ret
+        iretq
+
+handler_irq_pic0:
+        push rax
+        mov al, 0x20    ; acknowledge interrupt to PIC0
+        out 0x20, al
+        mov ax, 0x10
+        mov ss, ax
+        pop rax
+        iretq
+
+handler_irq_pic1:
+        push rax
+        mov al, 0x20    ; acknowledge interrupt to both PICs
+        out 0xA0, al
+        out 0x20, al
+        mov ax, 0x10
+        mov ss, ax
+        pop rax
+        iretq
 
 except_handler_setup:
         mov rax, qword [kernel_pagemap]
@@ -300,14 +312,22 @@ except_handler_setup:
 
 handler_div0:
         call except_handler_setup
+        pop rdi
+        pop rsi
         call except_div0
 
 handler_gpf:
         call except_handler_setup
+        pop rdi
+        pop rsi
+        pop rdx
         call except_gen_prot_fault
 
 handler_pf:
         call except_handler_setup
+        pop rdi
+        pop rsi
+        pop rdx
         call except_page_fault
 
 irq0_handler:

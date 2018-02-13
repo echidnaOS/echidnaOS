@@ -26,6 +26,8 @@ IDT:
 
 section .text
 
+bits 64
+
 make_entry:
 ; RBX = address
 ; CX = selector
@@ -112,7 +114,7 @@ load_IDT:
     mov rbx, handler_simple
     call make_entry                 ; int 0x09, coprocessor segment overrun
     
-    add di, 2
+    inc di
     mov rbx, handler_code
     call make_entry                 ; int 0x0A, invalid TSS
     

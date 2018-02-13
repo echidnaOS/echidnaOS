@@ -100,7 +100,7 @@ db 0x00				; Base (high 8 bits)
 dw TSS_end - TSS_begin - 1
 .TSSlow dw 0
 .TSSmid db 0
-db 11101001b
+db 10001001b
 db 00000000b
 .TSShigh db 0
 dd 0                ; res
@@ -126,7 +126,7 @@ startup:
 
     ; build the 8 identity mapped page tables starting at 0x10000
     mov edi, early_pagemap
-    mov eax, 0x07
+    mov eax, 0x03
     mov ecx, 512 * 8
     .loop:
         stosd
@@ -136,35 +136,35 @@ startup:
         loop .loop
     ; build the page directory
     mov edx, edi ; save starting address of page directory
-    mov eax, (early_pagemap + 0x07)
+    mov eax, (early_pagemap + 0x03)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x1007)
+    mov eax, (early_pagemap + 0x1003)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x2007)
+    mov eax, (early_pagemap + 0x2003)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x3007)
+    mov eax, (early_pagemap + 0x3003)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x4007)
+    mov eax, (early_pagemap + 0x4003)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x5007)
+    mov eax, (early_pagemap + 0x5003)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x6007)
+    mov eax, (early_pagemap + 0x6003)
     stosd
     xor eax, eax
     stosd
-    mov eax, (early_pagemap + 0x7007)
+    mov eax, (early_pagemap + 0x7003)
     stosd
     xor eax, eax
     stosd
@@ -172,7 +172,7 @@ startup:
     ; build the pdpt
     mov eax, edx
     mov edx, edi
-    or eax, 0x07
+    or eax, 0x03
     stosd
     xor eax, eax
     stosd
@@ -180,7 +180,7 @@ startup:
     ; build the pml4
     mov eax, edx
     mov edx, edi
-    or eax, 0x07
+    or eax, 0x03
     stosd
     xor eax, eax
     stosd
@@ -221,7 +221,7 @@ startup:
     shr eax, 24
     mov byte [GDT.TSShigh], al
 
-    mov ax, 0x3b        ; load the TSS
+    mov ax, 0x38        ; load the TSS
     ltr ax
 
     jmp kernel_init

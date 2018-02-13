@@ -5,7 +5,7 @@
 #include <tty.h>
 #include <cio.h>
 
-static void generic_exception(uint32_t error_code, uint32_t fault_eip, uint32_t fault_cs, const char *fault_name, const char *extra) {
+static void generic_exception(size_t error_code, size_t fault_eip, size_t fault_cs, const char *fault_name, const char *extra) {
 
     text_putchar('\n', current_tty);
     tty_kputs(fault_name, current_tty);
@@ -32,19 +32,19 @@ static void generic_exception(uint32_t error_code, uint32_t fault_eip, uint32_t 
 
 }
 
-void except_div0(uint32_t fault_eip, uint32_t fault_cs) {
+void except_div0(size_t fault_eip, size_t fault_cs) {
 
     generic_exception(0, fault_eip, fault_cs, "Division By Zero", NULL);
 
 }
 
-void except_gen_prot_fault(uint32_t error_code, uint32_t fault_eip, uint32_t fault_cs) {
+void except_gen_prot_fault(size_t error_code, size_t fault_eip, size_t fault_cs) {
 
     generic_exception(error_code, fault_eip, fault_cs, "General Protection Fault", NULL);
 
 }
 
-void except_page_fault(uint32_t error_code, uint32_t fault_eip, uint32_t fault_cs) {
+void except_page_fault(size_t error_code, size_t fault_eip, size_t fault_cs) {
 
     generic_exception(error_code, fault_eip, fault_cs, "Page Fault", NULL);
 

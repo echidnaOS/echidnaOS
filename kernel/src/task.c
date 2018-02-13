@@ -406,7 +406,7 @@ void task_scheduler(void) {
                 case 0:
                     if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->cpu.rax = (uint32_t)c;
+                        task_table[current_task]->cpu.rax = (uint64_t)c;
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
                         current_task++;
@@ -417,7 +417,7 @@ void task_scheduler(void) {
                     if ((c = vfs_kwrite(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc,
                                         task_table[current_task]->iowait_payload)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->cpu.rax = (uint32_t)c;
+                        task_table[current_task]->cpu.rax = (uint64_t)c;
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
                         current_task++;
@@ -433,7 +433,7 @@ void task_scheduler(void) {
                         current_task++;
                         continue;
                     } else {
-                        task_table[current_task]->cpu.rax = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->cpu.rax = (uint64_t)(task_table[current_task]->iowait_done + done);
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
@@ -446,7 +446,7 @@ void task_scheduler(void) {
                         current_task++;
                         continue;
                     } else {
-                        task_table[current_task]->cpu.rax = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->cpu.rax = (uint64_t)(task_table[current_task]->iowait_done + done);
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
@@ -474,7 +474,7 @@ static void zombie_eval(int pid) {
     int parent = task_table[pid]->parent;
 
     if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
-        task_table[parent]->cpu.rax = pid;
+        task_table[parent]->cpu.rax = (uint64_t)pid;
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
         kfree((void *)task_table[pid]);
         task_table[pid] = EMPTY_PID;

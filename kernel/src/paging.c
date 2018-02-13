@@ -121,7 +121,7 @@ int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags)
         for (size_t i = 0; i < PAGE_SIZE; i++)
             ((char *)pdpt)[i] = 0;
         pml4[pt_t.pml4_entry] = (pt_entry_t)pdpt;
-        pml4[pt_t.pml4_entry] |= (pt_entry_t)flags;
+        pml4[pt_t.pml4_entry] |= (pt_entry_t)0x07;
     }
 
     /* check if the pdpt entry is present */
@@ -133,7 +133,7 @@ int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags)
         for (size_t i = 0; i < PAGE_SIZE; i++)
             ((char *)pd)[i] = 0;
         pdpt[pt_t.pdpt_entry] = (pt_entry_t)pd;
-        pdpt[pt_t.pdpt_entry] |= (pt_entry_t)flags;
+        pdpt[pt_t.pdpt_entry] |= (pt_entry_t)0x07;
     }
 
     /* check if the page table entry is present */
@@ -145,7 +145,7 @@ int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags)
         for (size_t i = 0; i < PAGE_SIZE; i++)
             ((char *)pt)[i] = 0;
         pd[pt_t.pd_entry] = (pt_entry_t)pt;
-        pd[pt_t.pd_entry] |= (pt_entry_t)flags;
+        pd[pt_t.pd_entry] |= (pt_entry_t)0x07;
     }
 
     /* do the mapping */

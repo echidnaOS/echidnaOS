@@ -32,7 +32,7 @@ Make sure you are in the root of the source tree.
 
 Now let's build the cross toolchain:
 ```
-make tools
+./maketools.sh
 ```
 This step will take a while, especially on slower systems.
 

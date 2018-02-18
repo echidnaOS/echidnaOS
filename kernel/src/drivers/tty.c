@@ -348,7 +348,7 @@ void init_tty(void) {
         tty[i].gridbg = kalloc(rows * cols * sizeof(uint32_t));
         tty[i].gridfg = kalloc(rows * cols * sizeof(uint32_t));
         if (!tty[i].grid || !tty[i].gridbg || !tty[i].gridfg)
-            panic("Out of memory while allocating TTYs");
+            panic("Out of memory while allocating TTYs", 0);
         for (size_t j = 0; j < (rows * cols); j++) {
             tty[i].grid[j] = ' ';
             tty[i].gridbg[j] = TTY_DEF_TXT_BG_COL;

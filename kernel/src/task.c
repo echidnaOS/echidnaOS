@@ -13,10 +13,10 @@ task_t **task_table;
 void task_init(void) {
     // allocate the task table
     if ((task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t *))) == 0)
-        panic("unable to allocate task table");
+        panic("unable to allocate task table", 0);
     // create kernel task
     if ((task_table[0] = kalloc(sizeof(task_t))) == 0)
-        panic("unable to allocate kernel task");
+        panic("unable to allocate kernel task", 0);
     kstrcpy(task_table[0]->pwd, "/");
     task_table[0]->status = KRN_STAT_RES_TASK;
     task_table[0]->page_directory = kernel_pagemap;
@@ -30,7 +30,7 @@ static int idle_cpu = 1;
 void task_spinup(void *, pt_entry_t *);
 static void zombie_eval(int pid);
 
-static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x23,0x23,0x23,0x23,0x23,0,0x202,0x1b,0 };
+static const cpu_t default_cpu_status = { 0x23,0x23,0x23,0x23,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x1b,0x202,0,0x23 };
 
 static int task_create(task_t new_task) {
     // find an empty entry in the task table
@@ -451,7 +451,7 @@ void task_scheduler(void) {
                     }
                     break;
                 default:
-                    panic("unrecognised iowait_type");
+                    panic("unrecognised iowait_type", task_table[current_task]->iowait_type);
                 }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;
@@ -463,7 +463,7 @@ void task_scheduler(void) {
                 current_task++;
                 continue;
             default:
-                panic("unrecognised task status");
+                panic("unrecognised task status", task_table[current_task]->status);
         }
 
     }

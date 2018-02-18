@@ -38,7 +38,7 @@ void init_acpi(void) {
             goto rsdp_found;
         }
     }
-    panic("RSDP table not found");
+    panic("RSDP table not found", 0);
 
 rsdp_found:
     kprint(KPRN_INFO, "Found RSDT at %x", rsdp->rsdt_addr);
@@ -52,7 +52,7 @@ rsdp_found:
             goto madt_found;
         }
     }
-    panic("MADT table not found");
+    panic("MADT table not found", 0);
 
 madt_found:
     kprint(KPRN_INFO, "Length: %x", madt->sdt.length);

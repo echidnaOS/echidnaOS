@@ -81,9 +81,9 @@ void kernel_init(void) {
 
     /* mount essential filesystems */
     if (vfs_mount("/", ":://initramfs", "echfs") == -2)
-        panic("Unable to mount initramfs on /");
+        panic("Unable to mount initramfs on /", 0);
     if (vfs_mount("/dev", "devfs", "devfs") == -2)
-        panic("Unable to mount devfs on /dev");
+        panic("Unable to mount devfs on /dev", 0);
     if (vfs_mount("/mnt", "/dev/hda", "echfs") == -2)
         ;
 
@@ -93,17 +93,17 @@ void kernel_init(void) {
     static char *env[] = { (char *)0 };
     static char *argv[] = { "/sys/init", (char *)0 };
     if (kexec("/sys/init", argv, env, "/dev/tty0", "/dev/tty0", "/dev/tty0", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/stty0", "/dev/stty0", "/dev/stty0", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty1", "/dev/tty1", "/dev/tty1", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty2", "/dev/tty2", "/dev/tty2", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty3", "/dev/tty3", "/dev/tty3", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty4", "/dev/tty4", "/dev/tty4", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
 
     /* launch scheduler for the first time */
     DISABLE_INTERRUPTS;

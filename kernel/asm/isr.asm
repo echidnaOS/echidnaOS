@@ -75,7 +75,7 @@
     mov bx, fs
     push rbx
     mov bx, gs
-    push rax
+    push rbx
 %endmacro
 
 %macro popas 0
@@ -188,61 +188,61 @@ write_stat dd 0
 interrupted_cr3 dq 0
 
 routine_list:
-        dd      task_quit_self          ; 0x00
-        dd      general_execute         ; 0x01
-        dd      0 ;general_execute_block; 0x02 - dummy entry
-        dd      execve                  ; 0x03
-        dd      0 ;wait                 ; 0x04
-        dd      0 ;task_fork            ; 0x05 - dummy entry
-        dd      0                       ; 0x06
-        dd      0                       ; 0x07
-        dd      0;ipc_send_packet         ; 0x08
-        dd      0;ipc_read_packet         ; 0x09
-        dd      0;ipc_resolve_name        ; 0x0a
-        dd      0;ipc_payload_sender      ; 0x0b
-        dd      0;ipc_payload_length      ; 0x0c
-        dd      0 ;ipc_await              0x0d - dummy entry
-        dd      0                       ; 0x0e
-        dd      0                       ; 0x0f
-        dd      get_heap_base           ; 0x10
-        dd      get_heap_size           ; 0x11
-        dd      resize_heap             ; 0x12
-        dd      0                       ; 0x13
-        dd      0                       ; 0x14
-        dd      getpid                  ; 0x15
-        dd      signal                  ; 0x16
-        dd      0                       ; 0x17
-        dd      0                       ; 0x18
-        dd      0                       ; 0x19
-        dd      pwd                     ; 0x1a
-        dd      what_stdin              ; 0x1b
-        dd      what_stdout             ; 0x1c
-        dd      what_stderr             ; 0x1d
-        dd      0                       ; 0x1e
-        dd      0                       ; 0x1f
-        dd      0;register_vdev           ; 0x20
-        dd      0;vdev_in_ready           ; 0x21
-        dd      0;vdev_out_ready          ; 0x22
-        dd      0 ;vdev_await           ; 0x23 - dummy entry
-        dd      0                       ; 0x24
-        dd      0                       ; 0x25
-        dd      0                       ; 0x26
-        dd      0                       ; 0x27
-        dd      0                       ; 0x28
-        dd      0                       ; 0x29
-        dd      open                    ; 0x2a
-        dd      close                   ; 0x2b
-        dd      0 ;read                 ; 0x2c - dummy entry
-        dd      0 ;write                ; 0x2d - dummy entry
-        dd      lseek                   ; 0x2e
-        dd      vfs_cd                  ; 0x2f
-        dd      0 ;vfs_read             ; 0x30 - dummy entry
-        dd      0 ;vfs_write            ; 0x31 - dummy entry
-        dd      vfs_list                ; 0x32
-        dd      vfs_get_metadata        ; 0x33
-        dd      vfs_remove              ; 0x34
-        dd      vfs_mkdir               ; 0x35
-        dd      vfs_create              ; 0x36
+        dq      task_quit_self          ; 0x00
+        dq      general_execute         ; 0x01
+        dq      0 ;general_execute_block; 0x02 - dummy entry
+        dq      execve                  ; 0x03
+        dq      0 ;wait                 ; 0x04
+        dq      0 ;task_fork            ; 0x05 - dummy entry
+        dq      0                       ; 0x06
+        dq      0                       ; 0x07
+        dq      0;ipc_send_packet         ; 0x08
+        dq      0;ipc_read_packet         ; 0x09
+        dq      0;ipc_resolve_name        ; 0x0a
+        dq      0;ipc_payload_sender      ; 0x0b
+        dq      0;ipc_payload_length      ; 0x0c
+        dq      0 ;ipc_await              0x0d - dummy entry
+        dq      0                       ; 0x0e
+        dq      0                       ; 0x0f
+        dq      get_heap_base           ; 0x10
+        dq      get_heap_size           ; 0x11
+        dq      resize_heap             ; 0x12
+        dq      0                       ; 0x13
+        dq      0                       ; 0x14
+        dq      getpid                  ; 0x15
+        dq      signal                  ; 0x16
+        dq      0                       ; 0x17
+        dq      0                       ; 0x18
+        dq      0                       ; 0x19
+        dq      pwd                     ; 0x1a
+        dq      what_stdin              ; 0x1b
+        dq      what_stdout             ; 0x1c
+        dq      what_stderr             ; 0x1d
+        dq      0                       ; 0x1e
+        dq      0                       ; 0x1f
+        dq      0;register_vdev           ; 0x20
+        dq      0;vdev_in_ready           ; 0x21
+        dq      0;vdev_out_ready          ; 0x22
+        dq      0 ;vdev_await           ; 0x23 - dummy entry
+        dq      0                       ; 0x24
+        dq      0                       ; 0x25
+        dq      0                       ; 0x26
+        dq      0                       ; 0x27
+        dq      0                       ; 0x28
+        dq      0                       ; 0x29
+        dq      open                    ; 0x2a
+        dq      close                   ; 0x2b
+        dq      0 ;read                 ; 0x2c - dummy entry
+        dq      0 ;write                ; 0x2d - dummy entry
+        dq      lseek                   ; 0x2e
+        dq      vfs_cd                  ; 0x2f
+        dq      0 ;vfs_read             ; 0x30 - dummy entry
+        dq      0 ;vfs_write            ; 0x31 - dummy entry
+        dq      vfs_list                ; 0x32
+        dq      vfs_get_metadata        ; 0x33
+        dq      vfs_remove              ; 0x34
+        dq      vfs_mkdir               ; 0x35
+        dq      vfs_create              ; 0x36
 
 section .text
 
@@ -353,7 +353,6 @@ irq0_handler:
         mov gs, ax
         mov ss, ax
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_switch
     .ts_abort:
         mov rax, qword [interrupted_cr3]
@@ -427,8 +426,14 @@ syscall:
         mul rbx
         pop rdx
         ; push syscall args, and call
-        xchg rcx, rdi
-        xchg rdx, rsi
+        push rcx
+        push rdx
+        push rdi
+        push rsi
+        pop rcx
+        pop rdx
+        pop rsi
+        pop rdi
         call [routine_list+rax]
         ; disable all interrupts, reenable task switch
         cli
@@ -451,8 +456,14 @@ vfs_read_isr:
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        xchg rcx, rdi
-        xchg rdx, rsi
+        push rcx
+        push rdx
+        push rdi
+        push rsi
+        pop rcx
+        pop rdx
+        pop rsi
+        pop rdi
         call vfs_read
         ; disable all interrupts, reenable task switch
         cli
@@ -475,12 +486,15 @@ vfs_read_isr:
         mov gs, ax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
-        mov r8, 0      ; VFS read type
-        xchg rcx, rdi
-        xchg rdx, rsi
+        mov rcx, 0      ; read type
+        push rdx
+        push rdi
+        push rsi
+        pop rdx
+        pop rsi
+        pop rdi
         call enter_iowait_status
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_switch
 
 vfs_write_isr:
@@ -495,8 +509,14 @@ vfs_write_isr:
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        xchg rcx, rdi
-        xchg rdx, rsi
+        push rcx
+        push rdx
+        push rdi
+        push rsi
+        pop rcx
+        pop rdx
+        pop rsi
+        pop rdi
         call vfs_write
         ; disable all interrupts, reenable task switch
         cli
@@ -519,12 +539,15 @@ vfs_write_isr:
         mov gs, ax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
-        mov r8, 1      ; VFS write type
-        xchg rcx, rdi
-        xchg rdx, rsi
+        mov rcx, 1      ; read type
+        push rdx
+        push rdi
+        push rsi
+        pop rdx
+        pop rsi
+        pop rdi
         call enter_iowait_status
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_switch
 
 read_isr:
@@ -539,8 +562,14 @@ read_isr:
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        xchg rcx, rdi
-        xchg rdx, rsi
+        push rcx
+        push rdx
+        push rdi
+        push rsi
+        pop rcx
+        pop rdx
+        pop rsi
+        pop rdi
         call read
         ; disable all interrupts, reenable task switch
         cli
@@ -563,13 +592,16 @@ read_isr:
         mov gs, bx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        mov r9, rax
-        mov r8, 2      ; read type
-        xchg rcx, rdi
-        xchg rdx, rsi
+        mov r8, rax
+        mov rcx, 2      ; read type
+        push rdx
+        push rdi
+        push rsi
+        pop rdx
+        pop rsi
+        pop rdi
         call enter_iowait_status1
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_switch
 
 write_isr:
@@ -584,8 +616,14 @@ write_isr:
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        xchg rcx, rdi
-        xchg rdx, rsi
+        push rcx
+        push rdx
+        push rdi
+        push rsi
+        pop rcx
+        pop rdx
+        pop rsi
+        pop rdi
         call write
         ; disable all interrupts, reenable task switch
         cli
@@ -608,13 +646,16 @@ write_isr:
         mov gs, bx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        mov r9, rax
-        mov r8, 3
-        xchg rcx, rdi
-        xchg rdx, rsi
+        mov r8, rax
+        mov rcx, 3      ; write type
+        push rdx
+        push rdi
+        push rsi
+        pop rdx
+        pop rsi
+        pop rdi
         call enter_iowait_status1
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_switch
 
 wait_isr:
@@ -630,7 +671,6 @@ wait_isr:
         mov rdi, rcx
         call swait
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_switch
 
 fork_isr:
@@ -644,5 +684,4 @@ fork_isr:
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         mov rdi, rsp
-        add rdi, (24 - 1) * 8
         call task_fork

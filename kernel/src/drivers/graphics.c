@@ -118,7 +118,7 @@ retry:
         goto retry;
     }
 
-    panic("VBE: can't set video mode.");
+    panic("VBE: can't set video mode.", 0);
 
 success:
     modeset_done = 1;

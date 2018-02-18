@@ -17,7 +17,8 @@ SECTIONS
 
   initramfs : {
     initramfs = .;
-    initramfs_len = _binary_initramfs_size;
     *(initramfs)
+    initramfs_end = .;
+    initramfs_len = initramfs_end - initramfs;
   }
 }

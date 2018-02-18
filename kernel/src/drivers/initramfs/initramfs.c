@@ -8,11 +8,12 @@
 #define EOF -1
 
 extern unsigned char initramfs[];
-extern unsigned int initramfs_len;
+extern void *initramfs_len;
 
 int initramfs_io_wrapper(uint32_t unused0, uint64_t loc, int type, uint8_t payload) {
-    if (loc >= initramfs_len)
+    if (loc >= (uintptr_t)&initramfs_len) {
         return EOF;
+    }
     if (type == 0) {
         return (int)(initramfs[loc]);
     }
@@ -26,7 +27,7 @@ void init_initramfs(void) {
 
     kprint(KPRN_INFO, "Initialising initramfs driver...");
 
-    kernel_add_device("initramfs", 0, initramfs_len, &initramfs_io_wrapper);
+    kernel_add_device("initramfs", 0, (uintptr_t)&initramfs_len, &initramfs_io_wrapper);
 
     kprint(KPRN_INFO, "Initialised initramfs.");
 

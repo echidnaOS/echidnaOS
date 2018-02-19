@@ -186,8 +186,10 @@ int keyboard_fetch_char(uint8_t which_tty) {
             tty[which_tty].kb_l2_buffer[i] = tty[which_tty].kb_l2_buffer[i + 1];
         if (c == '\n') is_eof = 1;
         return (int)c;
-    } else
+    } else {
         if (tty[which_tty].noblock)
             return 0;
         return IO_NOT_READY;
+    }
+
 }

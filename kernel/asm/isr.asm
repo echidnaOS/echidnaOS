@@ -464,7 +464,9 @@ vfs_read_isr:
         pop rdx
         pop rsi
         pop rdi
+        mov r12, rsi        ; preserve rdx
         call vfs_read
+        mov rdx, r12
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
@@ -486,10 +488,10 @@ vfs_read_isr:
         mov gs, ax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
-        mov rcx, 0      ; read type
+        push rcx
         push rdx
         push rdi
-        push rsi
+        mov rcx, 0      ; vfs read type
         pop rdx
         pop rsi
         pop rdi
@@ -517,7 +519,9 @@ vfs_write_isr:
         pop rdx
         pop rsi
         pop rdi
+        mov r12, rsi        ; preserve rdx
         call vfs_write
+        mov rdx, r12
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
@@ -539,10 +543,10 @@ vfs_write_isr:
         mov gs, ax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
-        mov rcx, 1      ; read type
+        push rcx
         push rdx
         push rdi
-        push rsi
+        mov rcx, 1      ; vfs write type
         pop rdx
         pop rsi
         pop rdi
@@ -570,7 +574,9 @@ read_isr:
         pop rdx
         pop rsi
         pop rdi
+        mov r12, rsi        ; preserve rdx
         call read
+        mov rdx, r12
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
@@ -593,10 +599,10 @@ read_isr:
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         mov r8, rax
-        mov rcx, 2      ; read type
+        push rcx
         push rdx
         push rdi
-        push rsi
+        mov rcx, 2      ; read type
         pop rdx
         pop rsi
         pop rdi
@@ -624,7 +630,9 @@ write_isr:
         pop rdx
         pop rsi
         pop rdi
+        mov r12, rsi        ; preserve rdx
         call write
+        mov rdx, r12
         ; disable all interrupts, reenable task switch
         cli
         mov dword [ts_enable], 1
@@ -647,10 +655,10 @@ write_isr:
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         mov r8, rax
-        mov rcx, 3      ; write type
+        push rcx
         push rdx
         push rdi
-        push rsi
+        mov rcx, 3      ; write type
         pop rdx
         pop rsi
         pop rdi

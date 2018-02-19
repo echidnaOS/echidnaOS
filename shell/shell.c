@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
 
         fgets(input, 256, stdin);
         input[strlen(input) - 1] = 0;
+        puts(input);
         s_argc = get_argc(input);
         get_argv(s_argv, input);
 

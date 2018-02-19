@@ -14,8 +14,9 @@ int tty_io_wrapper(uint32_t tty, uint64_t unused, int type, uint8_t payload) {
     if (type == 1) {
         text_putchar(payload, tty);
         return 0;
-    } else if (type == 0)
+    } else if (type == 0) {
         return keyboard_fetch_char(tty);
+    }
 
 }
 

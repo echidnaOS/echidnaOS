@@ -14,28 +14,28 @@
     push r13
     push r14
     push r15
-    xor rax, rax
-    mov ax, ds
-    push rax
-    mov ax, es
-    push rax
-    mov ax, fs
-    push rax
-    mov ax, gs
-    push rax
+    xor rbx, rbx
+    mov bx, ds
+    push rbx
+    mov bx, es
+    push rbx
+    mov bx, fs
+    push rbx
+    mov bx, gs
+    push rbx
 %endmacro
 
 %macro popam 0
     mov ax, 0x10
-    mov ss, ax
-    pop rax
-    mov gs, ax
-    pop rax
-    mov fs, ax
-    pop rax
-    mov es, ax
-    pop rax
-    mov ds, ax
+    mov ss, bx
+    pop rbx
+    mov gs, bx
+    pop rbx
+    mov fs, bx
+    pop rbx
+    mov es, bx
+    pop rbx
+    mov ds, bx
     pop r15
     pop r14
     pop r13

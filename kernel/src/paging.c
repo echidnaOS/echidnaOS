@@ -282,9 +282,7 @@ pt_entry_t *fork_userspace(pt_entry_t *pd) {
     for (size_t i = KERNEL_BASE; i < KERNEL_TOP; i += PAGE_SIZE)
         map_page(new_pd, i, i, 0b11);
 
-    for (size_t i = TASK_BASE; i; i += PAGE_SIZE) {
-        if (!is_mapped(pd, i))
-            continue;
+    for (size_t i = TASK_BASE; is_mapped(pd, i); i += PAGE_SIZE) {
         size_t phys = get_phys_addr(pd, i);
         size_t new_page = (size_t)kmalloc(1);
         kmemcpy((char *)new_page, (char *)phys, PAGE_SIZE);

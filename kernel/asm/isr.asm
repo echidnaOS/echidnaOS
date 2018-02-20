@@ -23,11 +23,9 @@
     push rbx
     mov bx, gs
     push rbx
-    fxsave [fxstate]
 %endmacro
 
 %macro popam 0
-    fxrstor [fxstate]
     mov ax, 0x10
     mov ss, bx
     pop rbx
@@ -78,11 +76,9 @@
     push rbx
     mov bx, gs
     push rbx
-    fxsave [fxstate]
 %endmacro
 
 %macro popas 0
-    fxrstor [fxstate]
     mov bx, 0x10
     mov ss, bx
     pop rbx
@@ -198,7 +194,7 @@ interrupted_cr3 dq 0
 
 routine_list:
         dq      task_quit_self          ; 0x00
-        dq      general_execute         ; 0x01
+        dq      0;general_execute         ; 0x01
         dq      0 ;general_execute_block; 0x02 - dummy entry
         dq      execve                  ; 0x03
         dq      0 ;wait                 ; 0x04
@@ -362,6 +358,7 @@ irq0_handler:
         mov gs, ax
         mov ss, ax
         mov rdi, rsp
+        fxsave [fxstate]
         call task_switch
     .ts_abort:
         mov rax, qword [interrupted_cr3]
@@ -506,6 +503,7 @@ vfs_read_isr:
         pop rdi
         call enter_iowait_status
         mov rdi, rsp
+        fxsave [fxstate]
         call task_switch
 
 vfs_write_isr:
@@ -561,6 +559,7 @@ vfs_write_isr:
         pop rdi
         call enter_iowait_status
         mov rdi, rsp
+        fxsave [fxstate]
         call task_switch
 
 read_isr:
@@ -617,6 +616,7 @@ read_isr:
         pop rdi
         call enter_iowait_status1
         mov rdi, rsp
+        fxsave [fxstate]
         call task_switch
 
 write_isr:
@@ -673,6 +673,7 @@ write_isr:
         pop rdi
         call enter_iowait_status1
         mov rdi, rsp
+        fxsave [fxstate]
         call task_switch
 
 wait_isr:
@@ -688,6 +689,7 @@ wait_isr:
         mov rdi, rcx
         call swait
         mov rdi, rsp
+        fxsave [fxstate]
         call task_switch
 
 fork_isr:
@@ -701,4 +703,5 @@ fork_isr:
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         mov rdi, rsp
+        fxsave [fxstate]
         call task_fork

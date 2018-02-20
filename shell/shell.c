@@ -71,6 +71,10 @@ int main(int argc, char** argv) {
             printf("pid: %d\n", OS_getpid());
         }
         
+        else if (!strcmp("float", s_argv[0])) {
+            printf("pi: %f\n", 3.14);
+        }
+
         else if (!strcmp("read", s_argv[0])) {
             char buf[6] = {0};
             if (s_argc == 1) continue;

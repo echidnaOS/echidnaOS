@@ -11,18 +11,8 @@ bits 64
 
 task_spinup:
     ; task fxstate in RDX
-    ; copy over to the 16 byte aligned location and restore
-    push rsi
-    push rdi
-    mov rcx, 512
-    mov rsi, rdx
-    mov rdi, fxstate
-    rep movsb
-    pop rdi
-    pop rsi
-
     ; load state
-    fxrstor [fxstate]
+    fxrstor [rdx]
 
     mov qword [new_cr3], rsi
 

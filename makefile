@@ -26,9 +26,6 @@ kernel/initramfs: echidnafs/echfs-utils shell_target
 	echidnafs/echfs-utils kernel/initramfs mkdir docs
 	echidnafs/echfs-utils kernel/initramfs mkdir tmp
 	echidnafs/echfs-utils kernel/initramfs mkdir mnt
-# aa
-	echidnafs/echfs-utils kernel/initramfs import echidnaOS-toolchain/native/lib/gcc/i386-echidnaos/7.1.0/specs home/mint/repos/echidnaOS/echidnaOS-toolchain/native/lib/gcc/i386-echidnaos/specs
-# bb
 	echidnafs/echfs-utils kernel/initramfs import ./shell/sh /sys/init
 	echidnafs/echfs-utils kernel/initramfs import ./LICENSE.md /docs/license
 

@@ -207,6 +207,9 @@ void task_fork(cpu_t *cpu_state) {
 
     task_table[current_task]->cpu = *cpu_state;
 
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = fxstate[i];
+
     task_t new_process = *task_table[current_task];
     /* parent */
     new_process.parent = current_task;
@@ -247,130 +250,6 @@ int swait(int *status) {
     task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
     task_table[current_task]->waitstat = status;
     return 0;
-}
-
-int general_execute_block(task_info_t *task_info) {
-    if (general_execute(task_info) == FAILURE)
-        return -1;
-    task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
-    return 0;
-}
-
-int general_execute(task_info_t *task_info) {
-    // correct the struct pointer for kernel space
-    task_info = (task_info_t *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info);
-    
-    // correct pointers for kernel space
-    char *path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->path);
-    char *pwd = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->pwd);
-    
-    char *ptr_stdin = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdin);
-    char *ptr_stdout = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdout);
-    char *ptr_stderr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stderr);
-    
-    vfs_metadata_t metadata;
-    
-    if (vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2) return FAILURE;
-
-    task_t new_task = {0};
-    new_task.status = KRN_STAT_ACTIVE_TASK;
-    new_task.cpu = default_cpu_status;
-    for (size_t i = 0; i < 512; i++)
-        task_table[current_task]->fxstate[i] = 0;
-    new_task.parent = current_task;    // set parent
-    
-    size_t pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
-    if ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) % PAGE_SIZE) pages++;
-    
-    // load program into memory
-    size_t base = (size_t)kmalloc(pages);
-
-    // use the new VFS stack
-    int tmp_handle = vfs_kopen(path, O_RDWR, 0);
-    vfs_kuread(tmp_handle, (char *)(base + TASK_RESERVED_SPACE), metadata.size);
-    vfs_kclose(tmp_handle);
-
-    // generate the page tables
-    pt_entry_t* pd = new_userspace();
-    // map the process's memory
-    for (size_t i = 0; i < pages; i++)
-        map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
-    new_task.page_directory = pd;
-    
-    // attempt to create task
-    int new_pid = task_create(new_task);
-    
-    if (new_pid == FAILURE) {
-        // fail
-        kfree((void *)base);
-        return FAILURE;
-    }
-    
-    task_table[new_pid]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
-    task_table[new_pid]->cpu.rip = TASK_BASE + TASK_RESERVED_SPACE;
-    
-    task_table[new_pid]->heap_base = TASK_BASE + pages * PAGE_SIZE;
-    task_table[new_pid]->heap_size = 0;
-    
-    kstrcpy(task_table[new_pid]->pwd, pwd);
-
-    // create file handles for std streams
-    // this is a huge hack FIXME
-    int khandle;
-    khandle = vfs_kopen(ptr_stdin, O_RDONLY, 0);
-    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
-    task_table[0]->file_handles[khandle].free = 1;
-    khandle = vfs_kopen(ptr_stdout, O_WRONLY, 0);
-    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
-    task_table[0]->file_handles[khandle].free = 1;
-    khandle = vfs_kopen(ptr_stderr, O_WRONLY, 0);
-    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
-    task_table[0]->file_handles[khandle].free = 1;
-
-    int i;
-
-    *((int *)(base + 0x1000)) = task_info->argc;
-    int argv_limit = 0x4000;
-    char **argv = (char **)(base + 0x1010);
-    char **src_argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->argv);
-
-    /* prepare argv */
-    for (i = 0; src_argv[i]; i++) {
-        kstrcpy( (char *)(base + argv_limit),
-                 (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i]) );
-        argv[i] = (char *)(TASK_BASE + argv_limit);
-        argv_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i])) + 1;
-    }
-    /* argv null ptr as per standard */
-    argv[i] = (char *)0;
-
-    int environ_limit = 0x8000;
-    char **environ = (char **)(base + 0x1020);
-    char **src_environ = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->environ);
-
-    /* prepare environ */
-    for (i = 0; src_environ[i]; i++) {
-        kstrcpy( (char *)(base + environ_limit),
-                 (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_environ[i]) );
-        environ[i] = (char *)(TASK_BASE + environ_limit);
-        environ_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_environ[i])) + 1;
-    }
-    /* environ null ptr as per standard */
-    environ[i] = (char *)0;
-
-    // debug logging
-    /*
-    kputs("\nNew task startup request completed with:");
-    kputs("\npid:         "); kuitoa((uint32_t)new_pid);
-    kputs("\nppid:        "); kuitoa((uint32_t)task_table[new_pid]->parent);
-    kputs("\nbase:        "); kxtoa(base);
-    kputs("\npages:       "); kxtoa(pages);
-    kputs("\npwd:         "); kputs(task_table[new_pid]->pwd);
-    kputs("\nstdin:       "); kputs(task_table[new_pid]->stdin);
-    kputs("\nstdout:      "); kputs(task_table[new_pid]->stdout);
-    kputs("\nstderr:      "); kputs(task_table[new_pid]->stderr);
-    */
-    return new_pid;
 }
 
 void task_switch(cpu_t *cpu_state) {

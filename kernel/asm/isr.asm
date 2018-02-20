@@ -26,7 +26,7 @@
 %endmacro
 
 %macro popam 0
-    mov ax, 0x10
+    mov bx, 0x10
     mov ss, bx
     pop rbx
     mov gs, bx

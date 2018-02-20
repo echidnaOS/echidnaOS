@@ -4,30 +4,21 @@
 #include <task.h>
 #include <tty.h>
 #include <cio.h>
+#include <panic.h>
 
 static void generic_exception(size_t error_code, size_t fault_eip, size_t fault_cs, const char *fault_name, const char *extra) {
 
-    text_putchar('\n', current_tty);
-    tty_kputs(fault_name, current_tty);
-    tty_kputs(" occurred at: ", current_tty);
-    tty_kprn_x(fault_cs, current_tty);
-    text_putchar(':', current_tty);
-    tty_kprn_x(fault_eip, current_tty);
+    kprint(KPRN_ERR, "%s occurred at: %x:%x", fault_name, fault_cs, fault_eip);
 
-    if (extra) {
-        text_putchar('\n', current_tty);
-        tty_kputs(extra, current_tty);
-    }
+    if (extra)
+        kprint(KPRN_ERR, "%s", extra);
 
-    tty_kputs("\nError code: ", current_tty);
-    tty_kprn_ui(error_code, current_tty);
+    kprint(KPRN_ERR, "Error code: %x", error_code);
 
-    if (fault_cs == 0x08) {
-        tty_kputs("\nThe fault happened in kernel space, system will be halted.", current_tty);
-        SYSTEM_HALT;
-    }
+    if (fault_cs == 0x08)
+        panic("Exception occurred in kernel space.", error_code);
 
-    tty_kputs("\nTask terminated.\n", current_tty);
+    kprint(KPRN_INFO, "PID %u terminated.", current_task);
     task_quit(current_task, -1);
 
 }

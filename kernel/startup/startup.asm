@@ -224,4 +224,13 @@ startup:
     mov ax, 0x38        ; load the TSS
     ltr ax
 
-    jmp kernel_init
+    ; enable SSE
+    mov rax, cr0
+    and al, 0xfb
+    or al, 0x02
+    mov cr0, rax
+    mov rax, cr4
+    or ax, 3 << 9
+    mov cr4, rax
+
+    call kernel_init

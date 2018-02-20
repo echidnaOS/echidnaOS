@@ -70,6 +70,7 @@ typedef struct {
     pt_entry_t *page_directory;
 
     cpu_t cpu;
+    uint8_t fxstate[512];
 
     char pwd[2048];
 

@@ -10,7 +10,6 @@ BINS = $(REAL_FILES:.real=.bin)
 INITRAMFS = initramfs
 
 CHARDFLAGS = -std=gnu99 -masm=intel \
-    -mno-sse \
     -mno-red-zone \
     -nostdlib \
     -ffreestanding \

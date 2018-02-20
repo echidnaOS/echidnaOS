@@ -24,5 +24,7 @@ extern uint64_t uptime_sec;
 
 extern int ts_enable;
 
+extern uint8_t fxstate[512];
+
 
 #endif

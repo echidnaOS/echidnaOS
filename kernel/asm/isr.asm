@@ -23,9 +23,11 @@
     push rbx
     mov bx, gs
     push rbx
+    fxsave [fxstate]
 %endmacro
 
 %macro popam 0
+    fxrstor [fxstate]
     mov ax, 0x10
     mov ss, bx
     pop rbx
@@ -76,9 +78,11 @@
     push rbx
     mov bx, gs
     push rbx
+    fxsave [fxstate]
 %endmacro
 
 %macro popas 0
+    fxrstor [fxstate]
     mov bx, 0x10
     mov ss, bx
     pop rbx
@@ -103,6 +107,8 @@
     pop rcx
     pop rbx
 %endmacro
+
+global fxstate
 
 global handler_simple
 global handler_code
@@ -181,6 +187,9 @@ extern swait
 extern timer_interrupt
 
 section .data
+
+align 16
+fxstate: times 512 db 0
 
 ts_enable dd 0
 read_stat dd 0

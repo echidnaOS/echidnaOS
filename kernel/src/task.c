@@ -5,6 +5,7 @@
 #include <task.h>
 #include <cio.h>
 #include <panic.h>
+#include <system.h>
 
 #define FAILURE -1
 
@@ -27,7 +28,7 @@ int current_task = 0;
 
 static int idle_cpu = 1;
 
-void task_spinup(void *, pt_entry_t *);
+void task_spinup(void *, pt_entry_t *, void *);
 static void zombie_eval(int pid);
 
 static const cpu_t default_cpu_status = { 0x23,0x23,0x23,0x23,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x1b,0x202,0,0x23 };
@@ -99,6 +100,8 @@ int execve(char *path, char **argv, char **envp) {
 
     /* reset CPU status */
     task_table[current_task]->cpu = default_cpu_status;
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = 0;
 
     // load program into memory
     size_t base = (size_t)kmalloc(pages);
@@ -272,6 +275,8 @@ int general_execute(task_info_t *task_info) {
     task_t new_task = {0};
     new_task.status = KRN_STAT_ACTIVE_TASK;
     new_task.cpu = default_cpu_status;
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = 0;
     new_task.parent = current_task;    // set parent
     
     size_t pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
@@ -372,6 +377,9 @@ void task_switch(cpu_t *cpu_state) {
 
     task_table[current_task]->cpu = *cpu_state;
 
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = fxstate[i];
+
     current_task++;
     task_scheduler();
 }
@@ -455,7 +463,7 @@ void task_scheduler(void) {
                 }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;
-                task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory);
+                task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory, task_table[current_task]->fxstate);
             case KRN_STAT_ZOMBIE_TASK:
                 zombie_eval(current_task);
             case KRN_STAT_PROCWAIT_TASK:

@@ -172,7 +172,7 @@ int ata_write_byte(uint32_t drive, uint64_t loc, uint8_t payload) {
 }
 
 void init_ata(void) {
-    kputs("\nInitialising ATA device driver...");
+    kprint(KPRN_INFO, "ATA: Initialising ATA device driver...");
     
     int ii = 0;
     int master = 1;
@@ -189,7 +189,7 @@ void init_ata(void) {
         else master = 1;
         kernel_add_device(ata_names[i], i, devices[i].sector_count * 512,
                           &ata_io_wrapper);
-        kputs("\nInitialised "); kputs(ata_names[i]);
+        kprint(KPRN_INFO, "ATA: Initialised %s", ata_names[i]);
     }
 
     return;
@@ -235,15 +235,14 @@ void ata_identify(ata_device* dev) {
     
     if (!port_in_b(dev->command_port)) {
         dev->exists = 0;
-        kputs("\nNo device found!");
+        kprint(KPRN_INFO, "ATA: No device found!");
         return;
     } else {
         int timeout = 0;
         while (port_in_b(dev->command_port) & 0b10000000) {
             if (++timeout == 100000) {
                 dev->exists = 0;
-                kputs("\nATA error: drive detection timed out.");
-                kputs("\nSkipping drive!");
+                kprint(KPRN_WARN, "ATA: drive detection timed out. Skipping drive!");
                 return;
             }
         }
@@ -252,7 +251,7 @@ void ata_identify(ata_device* dev) {
     // check for non-standard ATAPI
     if (port_in_b(dev->lba_mid_port) || port_in_b(dev->lba_hi_port)) {
         dev->exists = 0;
-        kputs("\nNon-standard ATAPI, ignoring.");
+        kprint(KPRN_INFO, "ATA: Non-standard ATAPI, ignoring.");
         return;
     }
     
@@ -260,25 +259,24 @@ void ata_identify(ata_device* dev) {
         uint8_t status = port_in_b(dev->command_port);
         if (status & 0b00000001) {
             dev->exists = 0;
-            kputs("\nError occured!");
+            kprint(KPRN_ERR, "ATA: Error occured!");
             return;
         }
         if (status & 0b00001000) goto success;
     }
     dev->exists = 0;
-    kputs("\nATA error: drive detection timed out.");
-    kputs("\nSkipping drive!");
+    kprint(KPRN_WARN, "ATA: drive detection timed out. Skipping drive!");
     return;
 
 success:
-    kputs("\nStoring IDENTIFY info...");
+    kprint(KPRN_INFO, "ATA: Storing IDENTIFY info...");
     for (int i = 0; i < 256; i++)
         dev->identify[i] = port_in_w(dev->data_port);
     
     dev->sector_count = *((uint64_t*)&dev->identify[100]);
-    kputs("\nSector count: "); kprn_ui(dev->sector_count);
+    kprint(KPRN_INFO, "ATA: Sector count: %u", dev->sector_count);
     
-    kputs("\nDevice successfully identified!");
+    kprint(KPRN_INFO, "ATA: Device successfully identified!");
     
     dev->exists = 1;
     
@@ -305,7 +303,7 @@ int ata_read28(uint32_t disk, uint32_t sector, uint8_t* buffer) {
         status = port_in_b(devices[disk].command_port);
     
     if (status & 0x01) {
-        kputs("\nATA: Error reading sector "); kprn_ui(sector); kputs(" on drive "); kprn_ui(disk);
+        kprint(KPRN_ERR, "ATA: Error reading sector %u on drive %u", sector, disk);
         return FAILURE;
     }
     
@@ -344,7 +342,7 @@ int ata_read48(uint32_t disk, uint64_t sector, uint8_t* buffer) {
         status = port_in_b(devices[disk].command_port);
     
     if (status & 0x01) {
-        kputs("\nATA: Error reading sector "); kprn_ui(sector); kputs(" on drive "); kprn_ui(disk);
+        kprint(KPRN_ERR, "ATA: Error reading sector %u on drive %u", sector, disk);
         return FAILURE;
     }
     
@@ -379,7 +377,7 @@ int ata_write28(uint32_t disk, uint32_t sector, uint8_t* buffer) {
         status = port_in_b(devices[disk].command_port);
     
     if (status & 0x01) {
-        kputs("\nATA: Error writing sector "); kprn_ui(sector); kputs(" on drive "); kprn_ui(disk);
+        kprint(KPRN_ERR, "ATA: Error writing sector %u on drive %u", sector, disk);
         return FAILURE;
     }
         
@@ -420,7 +418,7 @@ int ata_write48(uint32_t disk, uint64_t sector, uint8_t* buffer) {
         status = port_in_b(devices[disk].command_port);
     
     if (status & 0x01) {
-        kputs("\nATA: Error writing sector "); kprn_ui(sector); kputs(" on drive "); kprn_ui(disk);
+        kprint(KPRN_ERR, "ATA: Error writing sector %u on drive %u", sector, disk);
         return FAILURE;
     }
         
@@ -453,7 +451,7 @@ int ata_flush(uint32_t disk) {
         status = port_in_b(devices[disk].command_port);
     
     if (status & 0x01) {
-        kputs("\nATA: Error occured while flushing cache.");
+        kprint(KPRN_ERR, "ATA: Error occured while flushing cache.");
         return FAILURE;
     }
     
@@ -477,7 +475,7 @@ int ata_flush_ext(uint32_t disk) {
         status = port_in_b(devices[disk].command_port);
     
     if (status & 0x01) {
-        kputs("\nATA: Error occured while flushing cache.");
+        kprint(KPRN_ERR, "ATA: Error occured while flushing cache.");
         return FAILURE;
     }
     

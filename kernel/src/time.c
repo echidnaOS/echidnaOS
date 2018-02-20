@@ -8,9 +8,8 @@ uint64_t uptime_sec = 0;
 
 void timer_interrupt(void) {
 
-    if (!(uptime_raw % KRNL_PIT_FREQ))
+    if (!(++uptime_raw % KRNL_PIT_FREQ))
         uptime_sec++;
-    uptime_raw++;
 
     if (tty_needs_refresh != -1) {
         if (!(uptime_raw % TTY_REDRAW_LIMIT)) {

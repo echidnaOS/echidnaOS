@@ -80,6 +80,12 @@ add ebx, dword [.buffer_pushing]
 mov dl, byte [.current_drive]
 mov ecx, BYTES_PER_BLOCK / 512
 call read_sectors
+; print '.'
+pusha
+mov ah, 0x0e
+mov al, '.'
+int 0x10
+popa
 ; fetch next block
 mov eax, dword [.cur_block]
 mov ebx, 8

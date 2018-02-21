@@ -12,15 +12,18 @@
 task_t **task_table;
 
 void task_init(void) {
+    kprint(KPRN_INFO, "Task: Initialising task table...");
     // allocate the task table
     if ((task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t *))) == 0)
         panic("unable to allocate task table", 0);
+    kprint(KPRN_INFO, "Task: Creating PID 0...");
     // create kernel task
     if ((task_table[0] = kalloc(sizeof(task_t))) == 0)
         panic("unable to allocate kernel task", 0);
     kstrcpy(task_table[0]->pwd, "/");
     task_table[0]->status = KRN_STAT_RES_TASK;
     task_table[0]->page_directory = kernel_pagemap;
+    kprint(KPRN_INFO, "Task: Init done.");
     return;
 }
 

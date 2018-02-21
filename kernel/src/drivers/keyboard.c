@@ -48,12 +48,14 @@ static const char ascii_nomod[] = {
 };
 
 void keyboard_init(void) {
+    kprint(KPRN_INFO, "Keyboard: Keyboard init...");
     // reset keyboard LEDs
     /*
     port_out_b(0x60, 0xED);
     while (port_in_b(0x64) & 0x02);
     port_out_b(0x60, led_status);
     */
+    kprint(KPRN_INFO, "Keyboard: Keyboard init done.");
     return;
 }
 

@@ -38,6 +38,7 @@ void kernel_init(void) {
     set_pit_freq(KRNL_PIT_FREQ);
 
     /* disable scheduler */
+    kprint(KPRN_INFO, "INIT: ts_enable = 0;");
     ts_enable = 0;
 
     /* initialise ACPI */
@@ -47,6 +48,7 @@ void kernel_init(void) {
     init_apic();
 
     /* enable interrupts for the first time */
+    kprint(KPRN_INFO, "INIT: ENABLE INTERRUPTS");
     ENABLE_INTERRUPTS;
 
     /****** END OF EARLY BOOTSTRAP ******/
@@ -57,7 +59,7 @@ void kernel_init(void) {
     /* initialise scheduler */
     task_init();
 
-    kprint(KPRN_INFO, "Initialising drivers...");
+    kprint(KPRN_INFO, "INIT: Initialising drivers...");
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
     init_streams();
     init_initramfs();
@@ -71,7 +73,7 @@ void kernel_init(void) {
 
     /******* END OF DRIVER INITIALISATION CALLS *******/
 
-    kprint(KPRN_INFO, "Initialising file systems...");
+    kprint(KPRN_INFO, "INIT: Initialising file systems...");
     /******* FILE SYSTEM INSTALLATION CALLS *******/
     install_devfs();
     install_echfs();
@@ -87,7 +89,7 @@ void kernel_init(void) {
     if (vfs_mount("/mnt", "/dev/hda", "echfs") == -2)
         ;
 
-    kprint(KPRN_INFO, "Kernel initialisation complete, starting init...");
+    kprint(KPRN_INFO, "INIT: Kernel initialisation complete, starting init...");
 
     /* launch PID 0 */
     static char *env[] = { (char *)0 };
@@ -106,8 +108,11 @@ void kernel_init(void) {
         panic("Unable to start /sys/init", 0);
 
     /* launch scheduler for the first time */
+    kprint(KPRN_INFO, "INIT: DISABLE INTERRUPTS");
     DISABLE_INTERRUPTS;
+    kprint(KPRN_INFO, "INIT: ts_enable = 1;");
     ts_enable = 1;
+    kprint(KPRN_INFO, "INIT: Calling scheduler...");
     task_scheduler();
 
 }

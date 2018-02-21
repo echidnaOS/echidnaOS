@@ -117,7 +117,7 @@ int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags)
 
     /* check if the pml4 entry is present */
     if (pml4[pt_t.pml4_entry] & 1) {
-        pdpt = (pt_entry_t *)(pml4[pt_t.pml4_entry] & 0xfffff000);
+        pdpt = (pt_entry_t *)(pml4[pt_t.pml4_entry] & 0xfffffffffffff000);
     } else {
         pdpt = kmalloc(1);    /* allocate one page */
         /* zero out the page */
@@ -129,7 +129,7 @@ int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags)
 
     /* check if the pdpt entry is present */
     if (pdpt[pt_t.pdpt_entry] & 1) {
-        pd = (pt_entry_t *)(pdpt[pt_t.pdpt_entry] & 0xfffff000);
+        pd = (pt_entry_t *)(pdpt[pt_t.pdpt_entry] & 0xfffffffffffff000);
     } else {
         pd = kmalloc(1);    /* allocate one page */
         /* zero out the page */
@@ -141,7 +141,7 @@ int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags)
 
     /* check if the page table entry is present */
     if (pd[pt_t.pd_entry] & 1) {
-        pt = (pt_entry_t *)(pd[pt_t.pd_entry] & 0xfffff000);
+        pt = (pt_entry_t *)(pd[pt_t.pd_entry] & 0xfffffffffffff000);
     } else {
         pt = kmalloc(1);    /* allocate one page */
         /* zero out the page */
@@ -166,21 +166,21 @@ int unmap_page(pt_entry_t *pml4, size_t virt_addr) {
 
     /* check if the pml4 entry is present */
     if (pml4[pt_t.pml4_entry] & 1) {
-        pdpt = (pt_entry_t *)(pml4[pt_t.pml4_entry] & 0xfffff000);
+        pdpt = (pt_entry_t *)(pml4[pt_t.pml4_entry] & 0xfffffffffffff000);
     } else {
         return -1;
     }
 
     /* check if the pdpt entry is present */
     if (pdpt[pt_t.pdpt_entry] & 1) {
-        pd = (pt_entry_t *)(pdpt[pt_t.pdpt_entry] & 0xfffff000);
+        pd = (pt_entry_t *)(pdpt[pt_t.pdpt_entry] & 0xfffffffffffff000);
     } else {
         return -1;
     }
 
     /* check if the pd entry is present */
     if (pd[pt_t.pd_entry] & 1) {
-        pt = (pt_entry_t *)(pd[pt_t.pd_entry] & 0xfffff000);
+        pt = (pt_entry_t *)(pd[pt_t.pd_entry] & 0xfffffffffffff000);
     } else {
         return -1;
     }
@@ -250,25 +250,36 @@ pt_entry_t *new_userspace(void) {
     return new_pd;
 }
 
-int destroy_userspace(pt_entry_t *pd) {
+int destroy_userspace(pt_entry_t *pml4) {
     /* this function destroys a page table and frees all used pages */
     /* including the task's text and data pages */
 
-    for (size_t i = TASK_BASE; i; i += PAGE_SIZE) {
-        if (!is_mapped(pd, i))
-            continue;
-        kmfree((char *)get_phys_addr(pd, i), 1);
-    }
+    pt_entry_t *pdpt;
+    pt_entry_t *pd;
+
+    for (size_t i = TASK_BASE; is_mapped(pml4, i); i += PAGE_SIZE)
+        kmfree((char *)get_phys_addr(pml4, i), 1);
 
     /* free the page tables */
 
-   /* for (int i = 0; i < PAGE_ENTRIES; i++) {
-        if (pd[i] & 1) {
-            pt_entry_t *pt = (pt_entry_t *)(pd[i] & 0xfffffffffffff000);
-            kmfree(pt, 1);
+    for (size_t i = 0; i < PAGE_ENTRIES; i++) {
+        if (pml4[i] & 1) {
+            pdpt = (pt_entry_t *)(pml4[i] & 0xfffffffffffff000);
+            for (size_t i = 0; i < PAGE_ENTRIES; i++) {
+                if (pdpt[i] & 1) {
+                    pd = (pt_entry_t *)(pdpt[i] & 0xfffffffffffff000);
+                    for (size_t i = 0; i < PAGE_ENTRIES; i++) {
+                        if (pd[i] & 1) {
+                            kmfree((pt_entry_t *)(pd[i] & 0xfffffffffffff000), 1);
+                        }
+                    }
+                    kmfree(pd, 1);
+                }
+            }
+            kmfree(pdpt, 1);
         }
     }
-    kmfree(pd, 1); */
+    kmfree(pml4, 1);
 
     return 0;
 }

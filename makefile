@@ -41,3 +41,10 @@ echidnaOS-toolchain:
 
 tools: echidnaOS-toolchain
 	cd echidnaOS-toolchain && ./maketoolchain.sh
+
+iso:
+	mkdir -p isodir/boot/grub
+	cp kernel/echidna.bin isodir/boot/echidna.bin
+	cp boot/grub.cfg isodir/boot/grub/grub.cfg
+	grub-mkrescue -o echidna.iso isodir
+	rm -rf isodir

@@ -1,5 +1,5 @@
 CC = x86_64-echidnaos-gcc
-XXD = xxd
+OBJCOPY = x86_64-echidnaos-objcopy
 
 C_FILES = $(shell find src -type f -name '*.c')
 H_FILES = $(shell find . -type f -name '*.h')
@@ -23,11 +23,10 @@ CLINKFLAGS = -nostdlib \
 CFLAGS = -Wall -O2
 
 echidna.bin: initramfs_obj.o $(BINS) $(OBJ) $(H_FILES)
-	$(CC) $(OBJ) initramfs_obj.o $(CLINKFLAGS) -o echidna.bin
+	$(CC) $(OBJ) initramfs_obj.o $(CLINKFLAGS) -o $@
 
 initramfs_obj.o: $(INITRAMFS)
-	$(XXD) -i $(INITRAMFS) > initramfs.c
-	$(CC) $(CHARDFLAGS) $(CFLAGS) -c initramfs.c -o initramfs_obj.o
+	$(OBJCOPY) -B i8086 -v -I binary -O elf64-x86-64 --rename-section .data=.initramfs $(INITRAMFS) $@
 
 %.o: %.c
 	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@

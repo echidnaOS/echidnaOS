@@ -6,6 +6,7 @@
 /echidnaOS-toolchain/
 
 /echidna.img
+/echidna.iso
 /initramfs.img
 /echidnafs/echfs-utils
 /kernel/**/*.o

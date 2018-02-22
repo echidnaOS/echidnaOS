@@ -1,8 +1,36 @@
 OUTPUT_FORMAT(binary)
-ENTRY(kernel_init)
+ENTRY(_start)
 
 SECTIONS
 {
-  .text 0x100000 : { *(.startup) *(.text) }
-  .data : { *(.rodata) *(.data) *(.bss) *(COMMON) }
+    . = 1M;
+
+    .text ALIGN(4K) :
+    {
+        sections_text = .;
+        *(.multiboot)
+        *(.startup)
+        *(.text)
+        sections_text_end = .;
+    }
+
+    .data ALIGN(4K) :
+    {
+        sections_data = .;
+        *(.data)
+        *(.rodata)
+        initramfs = .;
+        *(.initramfs)
+        initramfs_end = .;
+        initramfs_len = initramfs_end - initramfs;
+        sections_data_end = .;
+    }
+
+    .bss ALIGN(4K) :
+    {
+        sections_bss = .;
+        *(COMMON)
+        *(.bss)
+        sections_bss_end = .;
+    }
 }

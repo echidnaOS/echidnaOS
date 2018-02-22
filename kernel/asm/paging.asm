@@ -1,27 +1,29 @@
 global full_identity_map
 global kernel_pagemap
 
-section .data
+section .bss
 
 align 4096
 kernel_pt:
-    times (512 * 8) * 2048 db 0
+    resb (512 * 8) * 2048
 
 kernel_pd:
     .1:
-    times 512 dq 0
+    resq 512
     .2:
-    times 512 dq 0
+    resq 512
     .3:
-    times 512 dq 0
+    resq 512
     .4:
-    times 512 dq 0
+    resq 512
 
 kernel_pdpt:
-    times 512 dq 0
+    resq 512
 
 kernel_pml4:
-    times 512 dq 0
+    resq 512
+
+section .data
 
 kernel_pagemap dq kernel_pml4
 

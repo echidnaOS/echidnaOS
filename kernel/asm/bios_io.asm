@@ -10,6 +10,8 @@ bios_print_end:
 
 section .text
 
+bits 64
+
 bios_print:
     ; void bios_print(const char *msg);
     push rbx

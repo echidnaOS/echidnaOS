@@ -4,16 +4,19 @@
 ; long mode, then it should call 'kernel_init'.
 
 extern kernel_init
+global startup
 
-section .data
+section .bss
 
 align 4096
 early_pagemap:
-    times (512 * (8 + 1 + 1 + 1)) dq 0
+    resd (512 * (8 + 1 + 1 + 1))
     ; 8 page tables (16 M)
     ; 1 page directory
     ; 1 pdpt
     ; 1 pml4
+
+section .data
 
 align 16
 GDT:

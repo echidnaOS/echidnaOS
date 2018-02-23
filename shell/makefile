@@ -1,5 +1,5 @@
 export PATH := ../echidnaOS-toolchain/toolchain/bin:$(PATH)
-CC = i386-echidnaos-gcc
+CC = x86_64-echidnaos-gcc
 PREFIX = 
 
 C_FILES = shell.c

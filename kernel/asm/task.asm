@@ -1,42 +1,62 @@
 global task_spinup
+extern fxstate
 
 section .data
 
-    new_cr3     dd  0
+    new_cr3     dq  0
 
 section .text
 
-bits 32
+bits 64
 
 task_spinup:
+    ; task fxstate in RDX
+    ; load state
+    fxrstor [rdx]
 
-    mov ebx, dword [esp+4]
-    mov eax, dword [esp+8]
-    mov dword [new_cr3], eax
-    mov eax, dword [ebx]
-    mov ecx, dword [ebx+8]
-    mov edx, dword [ebx+12]
-    mov esi, dword [ebx+16]
-    mov edi, dword [ebx+20]
-    mov ebp, dword [ebx+24]
+    mov qword [new_cr3], rsi
 
-    push dword [ebx+56]
-    push dword [ebx+28]
-    push dword [ebx+60]
-    push dword [ebx+36]
-    push dword [ebx+32]
+    ; preserve RAX and RDI as a scratch registers for now
 
-    push dword [ebx+44]
-    pop es
-    push dword [ebx+48]
-    pop fs
-    push dword [ebx+52]
-    pop gs
-    push dword [ebx+40]
-    pop ds
-    push dword [ebx+4]
-    mov ebx, dword [new_cr3]
-    mov cr3, ebx
-    pop ebx
+    ;mov rax, qword [rdi+(8*18)]     skip rax
+    mov rbx, qword [rdi+(8*17)]
+    mov rcx, qword [rdi+(8*16)]
+    mov rdx, qword [rdi+(8*15)]
+    mov rsi, qword [rdi+(8*14)]
+    ;mov rdi, qword [rdi+(8*13)]     skip rdi
+    mov rbp, qword [rdi+(8*12)]
+    mov r8, qword [rdi+(8*11)]
+    mov r9, qword [rdi+(8*10)]
+    mov r10, qword [rdi+(8*9)]
+    mov r11, qword [rdi+(8*8)]
+    mov r12, qword [rdi+(8*7)]
+    mov r13, qword [rdi+(8*6)]
+    mov r14, qword [rdi+(8*5)]
+    mov r15, qword [rdi+(8*4)]
 
-    iretd
+    mov rax, qword [rdi+(8*2)]
+    mov es, ax
+    mov rax, qword [rdi+(8*1)]
+    mov fs, ax
+    mov rax, qword [rdi+(8*0)]
+    mov gs, ax
+
+    push qword [rdi+(8*23)]
+    push qword [rdi+(8*22)]
+    push qword [rdi+(8*21)]
+    push qword [rdi+(8*20)]
+    push qword [rdi+(8*19)]
+
+    push qword [rdi+(8*18)]          ; rax
+    push qword [rdi+(8*13)]          ; rdi
+    push qword [rdi+(8*3)]         ; ds
+    mov rax, qword [new_cr3]
+    mov cr3, rax
+    pop rax
+    mov ds, ax
+    mov ax, 0x10
+    mov ss, ax
+    pop rdi
+    pop rax
+
+    iretq

@@ -3,7 +3,7 @@
 
 
 
-void panic(const char *msg);
+void panic(const char *msg, int code);
 
 
 

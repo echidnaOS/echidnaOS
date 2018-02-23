@@ -48,12 +48,14 @@ static const char ascii_nomod[] = {
 };
 
 void keyboard_init(void) {
+    kprint(KPRN_INFO, "Keyboard: Keyboard init...");
     // reset keyboard LEDs
     /*
     port_out_b(0x60, 0xED);
     while (port_in_b(0x64) & 0x02);
     port_out_b(0x60, led_status);
     */
+    kprint(KPRN_INFO, "Keyboard: Keyboard init done.");
     return;
 }
 
@@ -186,8 +188,10 @@ int keyboard_fetch_char(uint8_t which_tty) {
             tty[which_tty].kb_l2_buffer[i] = tty[which_tty].kb_l2_buffer[i + 1];
         if (c == '\n') is_eof = 1;
         return (int)c;
-    } else
+    } else {
         if (tty[which_tty].noblock)
             return 0;
         return IO_NOT_READY;
+    }
+
 }

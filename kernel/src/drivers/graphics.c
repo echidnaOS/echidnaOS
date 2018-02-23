@@ -41,26 +41,26 @@ void init_graphics(void) {
     /* interrupts are supposed to be OFF */
 
     kprint(KPRN_INFO, "Dumping VGA font...");
+
     dump_vga_font(vga_font);
 
     kprint(KPRN_INFO, "Initialising VBE...");
 
     get_vbe_info(&vbe_info_struct);
-
     /* copy the video mode array somewhere else because it might get overwritten */
     for (size_t i = 0; ; i++) {
-        vid_modes[i] = vbe_info_struct.vid_modes[i];
-        if (vbe_info_struct.vid_modes[i+1] == 0xffff) {
+        vid_modes[i] = ((uint16_t *)vbe_info_struct.vid_modes)[i];
+        if (((uint16_t *)vbe_info_struct.vid_modes)[i+1] == 0xffff) {
             vid_modes[i+1] = 0xffff;
             break;
         }
     }
 
     kprint(KPRN_INFO, "Version: %u.%u", vbe_info_struct.version_maj, vbe_info_struct.version_min);
-    kprint(KPRN_INFO, "OEM: %s", vbe_info_struct.oem);
-    kprint(KPRN_INFO, "Graphics vendor: %s", vbe_info_struct.vendor);
-    kprint(KPRN_INFO, "Product name: %s", vbe_info_struct.prod_name);
-    kprint(KPRN_INFO, "Product revision: %s", vbe_info_struct.prod_rev);
+    kprint(KPRN_INFO, "OEM: %s", (char *)vbe_info_struct.oem);
+    kprint(KPRN_INFO, "Graphics vendor: %s", (char *)vbe_info_struct.vendor);
+    kprint(KPRN_INFO, "Product name: %s", (char *)vbe_info_struct.prod_name);
+    kprint(KPRN_INFO, "Product revision: %s", (char *)vbe_info_struct.prod_rev);
 
     kprint(KPRN_INFO, "Calling EDID...");
 
@@ -73,15 +73,15 @@ void init_graphics(void) {
 
     kprint(KPRN_INFO, "EDID recommended res: %ux%u", edid_width, edid_height);
 
-    if (!edid_width || !edid_height) {
+    //if (!edid_width || !edid_height) {
         kprint(KPRN_WARN, "EDID returned 0, defaulting to 1024x768");
         edid_width = 1024;
         edid_height = 768;
-    }
+    //}
 
 retry:
     /* try to set the mode */
-    get_vbe.vbe_mode_info = &vbe_mode_info;
+    get_vbe.vbe_mode_info = (uint32_t)&vbe_mode_info;
     for (size_t i = 0; vid_modes[i] != 0xffff; i++) {
         get_vbe.mode = vid_modes[i];
         get_vbe_mode_info(&get_vbe);
@@ -118,7 +118,7 @@ retry:
         goto retry;
     }
 
-    panic("VBE: can't set video mode.");
+    panic("VBE: can't set video mode.", 0);
 
 success:
     modeset_done = 1;

@@ -17,9 +17,7 @@ void kernel_init(void) {
     /* interrupts disabled */
 
     /* build descriptor tables */
-    load_GDT();
     load_IDT();
-    load_TSS();
 
     /* detect memory */
     memory_size = detect_mem();
@@ -40,6 +38,7 @@ void kernel_init(void) {
     set_pit_freq(KRNL_PIT_FREQ);
 
     /* disable scheduler */
+    kprint(KPRN_INFO, "INIT: ts_enable = 0;");
     ts_enable = 0;
 
     /* initialise ACPI */
@@ -49,6 +48,7 @@ void kernel_init(void) {
     init_apic();
 
     /* enable interrupts for the first time */
+    kprint(KPRN_INFO, "INIT: ENABLE INTERRUPTS");
     ENABLE_INTERRUPTS;
 
     /****** END OF EARLY BOOTSTRAP ******/
@@ -59,7 +59,7 @@ void kernel_init(void) {
     /* initialise scheduler */
     task_init();
 
-    kprint(KPRN_INFO, "Initialising drivers...");
+    kprint(KPRN_INFO, "INIT: Initialising drivers...");
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
     init_streams();
     init_initramfs();
@@ -73,7 +73,7 @@ void kernel_init(void) {
 
     /******* END OF DRIVER INITIALISATION CALLS *******/
 
-    kprint(KPRN_INFO, "Initialising file systems...");
+    kprint(KPRN_INFO, "INIT: Initialising file systems...");
     /******* FILE SYSTEM INSTALLATION CALLS *******/
     install_devfs();
     install_echfs();
@@ -83,33 +83,36 @@ void kernel_init(void) {
 
     /* mount essential filesystems */
     if (vfs_mount("/", ":://initramfs", "echfs") == -2)
-        panic("Unable to mount initramfs on /");
+        panic("Unable to mount initramfs on /", 0);
     if (vfs_mount("/dev", "devfs", "devfs") == -2)
-        panic("Unable to mount devfs on /dev");
+        panic("Unable to mount devfs on /dev", 0);
     if (vfs_mount("/mnt", "/dev/hda", "echfs") == -2)
         ;
 
-    kprint(KPRN_INFO, "Kernel initialisation complete, starting init...");
+    kprint(KPRN_INFO, "INIT: Kernel initialisation complete, starting init...");
 
     /* launch PID 0 */
     static char *env[] = { (char *)0 };
     static char *argv[] = { "/sys/init", (char *)0 };
     if (kexec("/sys/init", argv, env, "/dev/tty0", "/dev/tty0", "/dev/tty0", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/stty0", "/dev/stty0", "/dev/stty0", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty1", "/dev/tty1", "/dev/tty1", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty2", "/dev/tty2", "/dev/tty2", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty3", "/dev/tty3", "/dev/tty3", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty4", "/dev/tty4", "/dev/tty4", "/") == -1)
-        panic("Unable to start /sys/init");
+        panic("Unable to start /sys/init", 0);
 
     /* launch scheduler for the first time */
+    kprint(KPRN_INFO, "INIT: DISABLE INTERRUPTS");
     DISABLE_INTERRUPTS;
+    kprint(KPRN_INFO, "INIT: ts_enable = 1;");
     ts_enable = 1;
+    kprint(KPRN_INFO, "INIT: Calling scheduler...");
     task_scheduler();
 
 }

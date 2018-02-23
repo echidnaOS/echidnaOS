@@ -26,16 +26,16 @@ mov eax, 12
 call disk_read_dword
 mov ebx, 8
 mul ebx
-mov ebx, 512
+mov ebx, BYTES_PER_BLOCK
 xor edx, edx
 div ebx
 test edx, edx
 jz .noincr
 inc eax
 .noincr:
-mov ebx, 512
+mov ebx, BYTES_PER_BLOCK
 mul ebx
-add eax, dword [.fat_start]
+add eax, (16 * BYTES_PER_BLOCK) ; fat start
 mov dword [.directory_start], eax
 
 .entry_test:
@@ -80,11 +80,17 @@ add ebx, dword [.buffer_pushing]
 mov dl, byte [.current_drive]
 mov ecx, BYTES_PER_BLOCK / 512
 call read_sectors
+; print '.'
+pusha
+mov ah, 0x0e
+mov al, '.'
+int 0x10
+popa
 ; fetch next block
 mov eax, dword [.cur_block]
 mov ebx, 8
 mul ebx
-add eax, dword [.fat_start]
+add eax, (16 * BYTES_PER_BLOCK) ; fat start
 mov dl, byte [.current_drive]
 call disk_read_dword
 cmp eax, 0xffffffff
@@ -112,7 +118,6 @@ ret
 
 .buffer_pushing         dd 0
 .target_buffer          dd 0
-.fat_start              dd (16 * BYTES_PER_BLOCK)
 .directory_start        dd 0
 .cur_block              dd 0
 .current_drive          db 0

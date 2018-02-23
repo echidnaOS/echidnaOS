@@ -1,6 +1,5 @@
-CC = i386-echidnaos-gcc
-OBJCOPY = i386-echidnaos-objcopy
-XXD = xxd
+CC = x86_64-echidnaos-gcc
+OBJCOPY = x86_64-echidnaos-objcopy
 
 C_FILES = $(shell find src -type f -name '*.c')
 H_FILES = $(shell find . -type f -name '*.h')
@@ -11,21 +10,23 @@ BINS = $(REAL_FILES:.real=.bin)
 INITRAMFS = initramfs
 
 CHARDFLAGS = -std=gnu99 -masm=intel \
+    -mno-sse \
+    -mno-red-zone \
     -nostdlib \
     -ffreestanding \
-    -I./include/ \
+    -I./include/
 
 CLINKFLAGS = -nostdlib \
     -static-libgcc -lgcc \
     -T ./linker.ld
 
-CFLAGS = -O2
+CFLAGS = -Wall -O2
 
 echidna.bin: initramfs_obj.o $(BINS) $(OBJ) $(H_FILES)
 	$(CC) $(OBJ) initramfs_obj.o $(CLINKFLAGS) -o $@
 
 initramfs_obj.o: $(INITRAMFS)
-	$(OBJCOPY) -B i8086 -v -I binary -O elf32-i386 --rename-section .data=initramfs $(INITRAMFS) $@
+	$(OBJCOPY) -B i8086 -v -I binary -O elf64-x86-64 --rename-section .data=.initramfs $(INITRAMFS) $@
 
 %.o: %.c
 	$(CC) $(CHARDFLAGS) $(CFLAGS) -c $< -o $@
@@ -34,7 +35,7 @@ initramfs_obj.o: $(INITRAMFS)
 	nasm $< -f bin -o $@
 
 %.o: %.asm
-	nasm $< -f elf32 -o $@
+	nasm $< -f elf64 -o $@
 
 clean:
 	rm -f $(OBJ) $(BINS) echidna.bin

@@ -13,20 +13,27 @@ mem_size        dd  0
 
 section .text
 
-bits 32
+bits 64
 
 detect_mem:
-    push ebx
-    push esi
-    push edi
-    push ebp
-    mov esi, detect_mem_bin
-    mov ecx, detect_mem_size
-    mov ebx, mem_size
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov rsi, detect_mem_bin
+    mov rcx, detect_mem_size
+    mov rbx, mem_size
     call real_routine
-    pop ebp
-    pop edi
-    pop esi
-    pop ebx
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
     mov eax, dword [mem_size]
+    xor rdx, rdx
     ret

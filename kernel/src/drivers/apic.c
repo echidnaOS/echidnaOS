@@ -127,15 +127,20 @@ void lapic_disable(void) {
 }
 
 void init_apic(void) {
+    kprint(KPRN_INFO, "APIC: Installing interrupt source overrides...");
     install_redirs();
+    kprint(KPRN_INFO, "APIC: Installing NMIs...");
     install_nmis();
     /* mask all PIC IRQs */
+    kprint(KPRN_INFO, "APIC: Masking and remapping the legacy PICs...");
     set_PIC0_mask(0b11111111);
     set_PIC1_mask(0b11111111);
     /* remap PIC where it doesn't bother us */
     map_PIC(0xa0, 0xa8);
     /* enable lapic */
+    kprint(KPRN_INFO, "APIC: Enabling local APIC...");
     lapic_enable();
+    kprint(KPRN_INFO, "APIC: Done.");
     return;
 }
 

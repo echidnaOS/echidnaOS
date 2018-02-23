@@ -18,7 +18,7 @@ clean:
 	$(MAKE) clean -C kernel
 
 kernel/initramfs: echidnafs/echfs-utils shell_target
-	dd bs=32768 count=256 if=/dev/zero of=kernel/initramfs
+	dd bs=32768 count=128 if=/dev/zero of=kernel/initramfs
 	echidnafs/echfs-utils kernel/initramfs format 32768
 	echidnafs/echfs-utils kernel/initramfs mkdir dev
 	echidnafs/echfs-utils kernel/initramfs mkdir bin
@@ -26,9 +26,6 @@ kernel/initramfs: echidnafs/echfs-utils shell_target
 	echidnafs/echfs-utils kernel/initramfs mkdir docs
 	echidnafs/echfs-utils kernel/initramfs mkdir tmp
 	echidnafs/echfs-utils kernel/initramfs mkdir mnt
-# aa
-	echidnafs/echfs-utils kernel/initramfs import echidnaOS-toolchain/native/lib/gcc/i386-echidnaos/7.1.0/specs home/mint/repos/echidnaOS/echidnaOS-toolchain/native/lib/gcc/i386-echidnaos/specs
-# bb
 	echidnafs/echfs-utils kernel/initramfs import ./shell/sh /sys/init
 	echidnafs/echfs-utils kernel/initramfs import ./LICENSE.md /docs/license
 
@@ -44,3 +41,10 @@ echidnaOS-toolchain:
 
 tools: echidnaOS-toolchain
 	cd echidnaOS-toolchain && ./maketoolchain.sh
+
+iso: kernel_target
+	mkdir -p isodir/boot/grub
+	cp kernel/echidna.bin isodir/boot/echidna.bin
+	cp boot/grub.cfg isodir/boot/grub/grub.cfg
+	grub-mkrescue -o echidna.iso isodir
+	rm -rf isodir

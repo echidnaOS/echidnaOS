@@ -5,21 +5,25 @@
 #include <task.h>
 #include <cio.h>
 #include <panic.h>
+#include <system.h>
 
 #define FAILURE -1
 
 task_t **task_table;
 
 void task_init(void) {
+    kprint(KPRN_INFO, "Task: Initialising task table...");
     // allocate the task table
     if ((task_table = kalloc(KRNL_MAX_TASKS * sizeof(task_t *))) == 0)
-        panic("unable to allocate task table");
+        panic("unable to allocate task table", 0);
+    kprint(KPRN_INFO, "Task: Creating PID 0...");
     // create kernel task
     if ((task_table[0] = kalloc(sizeof(task_t))) == 0)
-        panic("unable to allocate kernel task");
+        panic("unable to allocate kernel task", 0);
     kstrcpy(task_table[0]->pwd, "/");
     task_table[0]->status = KRN_STAT_RES_TASK;
     task_table[0]->page_directory = kernel_pagemap;
+    kprint(KPRN_INFO, "Task: Init done.");
     return;
 }
 
@@ -27,10 +31,10 @@ int current_task = 0;
 
 static int idle_cpu = 1;
 
-void task_spinup(void *, pt_entry_t *);
+void task_spinup(void *, pt_entry_t *, void *);
 static void zombie_eval(int pid);
 
-static const cpu_t default_cpu_status = { 0,0,0,0,0,0,0,0,0,0x1b,0x23,0x23,0x23,0x23,0x23,0x202 };
+static const cpu_t default_cpu_status = { 0x23,0x23,0x23,0x23,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x1b,0x202,0,0x23 };
 
 static int task_create(task_t new_task) {
     // find an empty entry in the task table
@@ -99,6 +103,8 @@ int execve(char *path, char **argv, char **envp) {
 
     /* reset CPU status */
     task_table[current_task]->cpu = default_cpu_status;
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = 0;
 
     // load program into memory
     size_t base = (size_t)kmalloc(pages);
@@ -115,8 +121,8 @@ int execve(char *path, char **argv, char **envp) {
         map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
     task_table[current_task]->page_directory = pd;
 
-    task_table[current_task]->cpu.esp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
-    task_table[current_task]->cpu.eip = TASK_BASE + TASK_RESERVED_SPACE;
+    task_table[current_task]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
+    task_table[current_task]->cpu.rip = TASK_BASE + TASK_RESERVED_SPACE;
 
     task_table[current_task]->heap_base = TASK_BASE + pages * PAGE_SIZE;
     task_table[current_task]->heap_size = 0;
@@ -198,26 +204,14 @@ int kexec(  char *path, char **argv, char **envp,
     }
 }
 
-void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
+void task_fork(cpu_t *cpu_state) {
 
     // forks the current task in a Unix-like way
 
-    task_table[current_task]->cpu.eax = eax;
-    task_table[current_task]->cpu.ebx = ebx;
-    task_table[current_task]->cpu.ecx = ecx;
-    task_table[current_task]->cpu.edx = edx;
-    task_table[current_task]->cpu.esi = esi;
-    task_table[current_task]->cpu.edi = edi;
-    task_table[current_task]->cpu.ebp = ebp;
-    task_table[current_task]->cpu.esp = esp;
-    task_table[current_task]->cpu.eip = eip;
-    task_table[current_task]->cpu.cs = cs;
-    task_table[current_task]->cpu.ds = ds;
-    task_table[current_task]->cpu.es = es;
-    task_table[current_task]->cpu.fs = fs;
-    task_table[current_task]->cpu.gs = gs;
-    task_table[current_task]->cpu.ss = ss;
-    task_table[current_task]->cpu.eflags = eflags;
+    task_table[current_task]->cpu = *cpu_state;
+
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = fxstate[i];
 
     task_t new_process = *task_table[current_task];
     /* parent */
@@ -247,10 +241,10 @@ void task_fork(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t 
     int new_pid = task_create(new_process);
 
     // return the PID to the forking process
-    task_table[current_task]->cpu.eax = (uint32_t)new_pid;
+    task_table[current_task]->cpu.rax = (uint32_t)new_pid;
 
     // return 0 in the child process
-    task_table[new_pid]->cpu.eax = 0;
+    task_table[new_pid]->cpu.rax = 0;
 
     task_scheduler();
 }
@@ -261,146 +255,12 @@ int swait(int *status) {
     return 0;
 }
 
-int general_execute_block(task_info_t *task_info) {
-    if (general_execute(task_info) == FAILURE)
-        return -1;
-    task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
-    return 0;
-}
+void task_switch(cpu_t *cpu_state) {
 
-int general_execute(task_info_t *task_info) {
-    // correct the struct pointer for kernel space
-    task_info = (task_info_t *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info);
-    
-    // correct pointers for kernel space
-    char *path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->path);
-    char *pwd = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->pwd);
-    
-    char *ptr_stdin = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdin);
-    char *ptr_stdout = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stdout);
-    char *ptr_stderr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->stderr);
-    
-    vfs_metadata_t metadata;
-    
-    if (vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2) return FAILURE;
+    task_table[current_task]->cpu = *cpu_state;
 
-    task_t new_task = {0};
-    new_task.status = KRN_STAT_ACTIVE_TASK;
-    new_task.cpu = default_cpu_status;
-    new_task.parent = current_task;    // set parent
-    
-    size_t pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
-    if ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) % PAGE_SIZE) pages++;
-    
-    // load program into memory
-    size_t base = (size_t)kmalloc(pages);
-
-    // use the new VFS stack
-    int tmp_handle = vfs_kopen(path, O_RDWR, 0);
-    vfs_kuread(tmp_handle, (char *)(base + TASK_RESERVED_SPACE), metadata.size);
-    vfs_kclose(tmp_handle);
-
-    // generate the page tables
-    pt_entry_t* pd = new_userspace();
-    // map the process's memory
-    for (size_t i = 0; i < pages; i++)
-        map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
-    new_task.page_directory = pd;
-    
-    // attempt to create task
-    int new_pid = task_create(new_task);
-    
-    if (new_pid == FAILURE) {
-        // fail
-        kfree((void *)base);
-        return FAILURE;
-    }
-    
-    task_table[new_pid]->cpu.esp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
-    task_table[new_pid]->cpu.eip = TASK_BASE + TASK_RESERVED_SPACE;
-    
-    task_table[new_pid]->heap_base = TASK_BASE + pages * PAGE_SIZE;
-    task_table[new_pid]->heap_size = 0;
-    
-    kstrcpy(task_table[new_pid]->pwd, pwd);
-
-    // create file handles for std streams
-    // this is a huge hack FIXME
-    int khandle;
-    khandle = vfs_kopen(ptr_stdin, O_RDONLY, 0);
-    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
-    task_table[0]->file_handles[khandle].free = 1;
-    khandle = vfs_kopen(ptr_stdout, O_WRONLY, 0);
-    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
-    task_table[0]->file_handles[khandle].free = 1;
-    khandle = vfs_kopen(ptr_stderr, O_WRONLY, 0);
-    create_file_handle(new_pid, task_table[0]->file_handles[khandle]);
-    task_table[0]->file_handles[khandle].free = 1;
-
-    int i;
-
-    *((int *)(base + 0x1000)) = task_info->argc;
-    int argv_limit = 0x4000;
-    char **argv = (char **)(base + 0x1010);
-    char **src_argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->argv);
-
-    /* prepare argv */
-    for (i = 0; src_argv[i]; i++) {
-        kstrcpy( (char *)(base + argv_limit),
-                 (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i]) );
-        argv[i] = (char *)(TASK_BASE + argv_limit);
-        argv_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_argv[i])) + 1;
-    }
-    /* argv null ptr as per standard */
-    argv[i] = (char *)0;
-
-    int environ_limit = 0x8000;
-    char **environ = (char **)(base + 0x1020);
-    char **src_environ = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)task_info->environ);
-
-    /* prepare environ */
-    for (i = 0; src_environ[i]; i++) {
-        kstrcpy( (char *)(base + environ_limit),
-                 (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_environ[i]) );
-        environ[i] = (char *)(TASK_BASE + environ_limit);
-        environ_limit += kstrlen((char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)src_environ[i])) + 1;
-    }
-    /* environ null ptr as per standard */
-    environ[i] = (char *)0;
-
-    // debug logging
-    /*
-    kputs("\nNew task startup request completed with:");
-    kputs("\npid:         "); kuitoa((uint32_t)new_pid);
-    kputs("\nppid:        "); kuitoa((uint32_t)task_table[new_pid]->parent);
-    kputs("\nbase:        "); kxtoa(base);
-    kputs("\npages:       "); kxtoa(pages);
-    kputs("\npwd:         "); kputs(task_table[new_pid]->pwd);
-    kputs("\nstdin:       "); kputs(task_table[new_pid]->stdin);
-    kputs("\nstdout:      "); kputs(task_table[new_pid]->stdout);
-    kputs("\nstderr:      "); kputs(task_table[new_pid]->stderr);
-    */
-    return new_pid;
-}
-
-void task_switch(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs, uint32_t eip, uint32_t cs, uint32_t eflags, uint32_t esp, uint32_t ss) {
-
-    task_table[current_task]->cpu.eax = eax;
-    task_table[current_task]->cpu.ebx = ebx;
-    task_table[current_task]->cpu.ecx = ecx;
-    task_table[current_task]->cpu.edx = edx;
-    task_table[current_task]->cpu.esi = esi;
-    task_table[current_task]->cpu.edi = edi;
-    task_table[current_task]->cpu.ebp = ebp;
-    task_table[current_task]->cpu.esp = esp;
-    task_table[current_task]->cpu.eip = eip;
-    task_table[current_task]->cpu.cs = cs;
-    task_table[current_task]->cpu.ds = ds;
-    task_table[current_task]->cpu.es = es;
-    task_table[current_task]->cpu.fs = fs;
-    task_table[current_task]->cpu.gs = gs;
-    task_table[current_task]->cpu.ss = ss;
-    task_table[current_task]->cpu.eflags = eflags;
+    for (size_t i = 0; i < 512; i++)
+        task_table[current_task]->fxstate[i] = fxstate[i];
 
     current_task++;
     task_scheduler();
@@ -436,7 +296,7 @@ void task_scheduler(void) {
                 case 0:
                     if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->cpu.eax = (uint32_t)c;
+                        task_table[current_task]->cpu.rax = (uint64_t)c;
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
                         current_task++;
@@ -447,7 +307,7 @@ void task_scheduler(void) {
                     if ((c = vfs_kwrite(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc,
                                         task_table[current_task]->iowait_payload)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->cpu.eax = (uint32_t)c;
+                        task_table[current_task]->cpu.rax = (uint64_t)c;
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
                         current_task++;
@@ -463,7 +323,7 @@ void task_scheduler(void) {
                         current_task++;
                         continue;
                     } else {
-                        task_table[current_task]->cpu.eax = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->cpu.rax = (uint64_t)(task_table[current_task]->iowait_done + done);
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
@@ -476,16 +336,16 @@ void task_scheduler(void) {
                         current_task++;
                         continue;
                     } else {
-                        task_table[current_task]->cpu.eax = (uint32_t)(task_table[current_task]->iowait_done + done);
+                        task_table[current_task]->cpu.rax = (uint64_t)(task_table[current_task]->iowait_done + done);
                         task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
                 default:
-                    panic("unrecognised iowait_type");
+                    panic("unrecognised iowait_type", task_table[current_task]->iowait_type);
                 }
             case KRN_STAT_ACTIVE_TASK:
                 idle_cpu = 0;
-                task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory);
+                task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory, task_table[current_task]->fxstate);
             case KRN_STAT_ZOMBIE_TASK:
                 zombie_eval(current_task);
             case KRN_STAT_PROCWAIT_TASK:
@@ -493,7 +353,7 @@ void task_scheduler(void) {
                 current_task++;
                 continue;
             default:
-                panic("unrecognised task status");
+                panic("unrecognised task status", task_table[current_task]->status);
         }
 
     }
@@ -504,7 +364,7 @@ static void zombie_eval(int pid) {
     int parent = task_table[pid]->parent;
 
     if (task_table[parent]->status == KRN_STAT_PROCWAIT_TASK) {
-        task_table[parent]->cpu.eax = pid;
+        task_table[parent]->cpu.rax = (uint64_t)pid;
         task_table[parent]->status = KRN_STAT_ACTIVE_TASK;
         kfree((void *)task_table[pid]);
         task_table[pid] = EMPTY_PID;

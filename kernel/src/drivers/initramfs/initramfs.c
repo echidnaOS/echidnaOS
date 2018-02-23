@@ -11,8 +11,9 @@ extern unsigned char initramfs[];
 extern void *initramfs_len;
 
 int initramfs_io_wrapper(uint32_t unused0, uint64_t loc, int type, uint8_t payload) {
-    if (loc >= (uintptr_t)&initramfs_len)
+    if (loc >= (uintptr_t)&initramfs_len) {
         return EOF;
+    }
     if (type == 0) {
         return (int)(initramfs[loc]);
     }

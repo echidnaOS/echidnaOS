@@ -26,10 +26,10 @@ void init_acpi(void) {
 
     /* look for the "RSD PTR " signature from 0x80000 to 0xa0000 */
                                            /* 0xf0000 to 0x100000 */
-    for (size_t i = 0x80000; i < 0x100000; i++) {
-        if (i == 0xa0000 - 4) {
+    for (size_t i = 0x80000; i < 0x100000; i += 16) {
+        if (i == 0xa0000) {
             /* skip video mem and mapped hardware */
-            i = 0xeffff;
+            i = 0xe0000 - 16;
             continue;
         }
         if (!kstrncmp((char *)i, "RSD PTR ", 8)) {

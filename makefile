@@ -40,7 +40,7 @@ echidnaOS-toolchain:
 	git clone https://github.com/echidnaOS/echidnaOS-toolchain.git
 
 tools: echidnaOS-toolchain
-	cd echidnaOS-toolchain && ./maketoolchain.sh
+	cd echidnaOS-toolchain && ./maketoolchain64.sh
 
 iso: kernel_target
 	mkdir -p isodir/boot/grub

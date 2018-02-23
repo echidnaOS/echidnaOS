@@ -24,10 +24,10 @@ mov rax, cr3
 mov dword [cr3_reg], eax
 
 ; Load 16-bit segments
-jmp far [ptr16]
+jmp far dword [ptr16]
 
 ptr16:
-dq pmode16
+dd pmode16
 dw 0x28
 
 pmode16:

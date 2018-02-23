@@ -104,36 +104,72 @@
     pop rbx
 %endmacro
 
+; misc global references
 global fxstate
-
-global handler_simple
-global handler_code
-global handler_irq_apic
-global handler_irq_pic0
-global handler_irq_pic1
-global handler_div0
-global handler_gpf
-global handler_pf
-global irq0_handler
-global keyboard_isr
-global syscall
-
 global ts_enable
 global read_stat
 global write_stat
 
-extern keyboard_handler
-extern task_switch
+; IDT hooks
+; ... CPU exceptions
+global handler_irq_apic
+global handler_irq_pic0
+global handler_irq_pic1
+global handler_div0
+global handler_debug
+global handler_nmi
+global handler_breakpoint
+global handler_overflow
+global handler_bound_range_exceeded
+global handler_invalid_opcode
+global handler_device_not_available
+global handler_double_fault
+global handler_coprocessor_segment_overrun
+global handler_invalid_tss
+global handler_segment_not_present
+global handler_stack_segment_fault
+global handler_gpf
+global handler_pf
+global handler_x87_exception
+global handler_alignment_check
+global handler_machine_check
+global handler_simd_exception
+global handler_virtualisation_exception
+global handler_security_exception
+; ... misc
+global irq0_handler
+global keyboard_isr
+global syscall
+
+; CPU exception handlers
 extern except_div0
+extern except_debug
+extern except_nmi
+extern except_breakpoint
+extern except_overflow
+extern except_bound_range_exceeded
+extern except_invalid_opcode
+extern except_device_not_available
+extern except_double_fault
+extern except_coprocessor_segment_overrun
+extern except_invalid_tss
+extern except_segment_not_present
+extern except_stack_segment_fault
 extern except_gen_prot_fault
 extern except_page_fault
+extern except_x87_exception
+extern except_alignment_check
+extern except_machine_check
+extern except_simd_exception
+extern except_virtualisation_exception
+extern except_security_exception
 
-extern set_PIC0_mask
-extern get_PIC0_mask
-
+; misc external references
 extern kernel_pagemap
-
 extern eoi
+extern timer_interrupt
+extern keyboard_handler
+extern task_switch
 
 ; API calls
 extern open
@@ -145,42 +181,19 @@ extern getpid
 extern signal
 extern task_fork
 extern task_quit_self
-extern alloc
-extern free
-extern realloc
-extern enter_iowait_status
 extern enter_iowait_status1
-extern enter_ipcwait_status
-extern enter_vdevwait_status
 extern pwd
-extern what_stdin
-extern what_stdout
-extern what_stderr
-extern ipc_send_packet
-extern ipc_read_packet
-extern ipc_resolve_name
-extern ipc_payload_sender
-extern ipc_payload_length
 extern vfs_cd
-extern vfs_read
-extern vfs_write
 extern vfs_remove
 extern vfs_mkdir
 extern vfs_create
 extern vfs_list
 extern vfs_get_metadata
-extern general_execute
-extern general_execute_block
 extern execve
-extern register_vdev
-extern vdev_in_ready
-extern vdev_out_ready
 extern get_heap_base
 extern get_heap_size
 extern resize_heap
 extern swait
-
-extern timer_interrupt
 
 section .data
 
@@ -194,19 +207,19 @@ interrupted_cr3 dq 0
 
 routine_list:
         dq      task_quit_self          ; 0x00
-        dq      0;general_execute         ; 0x01
-        dq      0 ;general_execute_block; 0x02 - dummy entry
+        dq      0                       ; 0x01
+        dq      0                       ; 0x02
         dq      execve                  ; 0x03
-        dq      0 ;wait                 ; 0x04
-        dq      0 ;task_fork            ; 0x05 - dummy entry
+        dq      0                       ; 0x04 - wait
+        dq      0                       ; 0x05 - fork
         dq      0                       ; 0x06
         dq      0                       ; 0x07
-        dq      0;ipc_send_packet         ; 0x08
-        dq      0;ipc_read_packet         ; 0x09
-        dq      0;ipc_resolve_name        ; 0x0a
-        dq      0;ipc_payload_sender      ; 0x0b
-        dq      0;ipc_payload_length      ; 0x0c
-        dq      0 ;ipc_await              0x0d - dummy entry
+        dq      0                       ; 0x08
+        dq      0                       ; 0x09
+        dq      0                       ; 0x0a
+        dq      0                       ; 0x0b
+        dq      0                       ; 0x0c
+        dq      0                       ; 0x0d
         dq      0                       ; 0x0e
         dq      0                       ; 0x0f
         dq      get_heap_base           ; 0x10
@@ -220,15 +233,15 @@ routine_list:
         dq      0                       ; 0x18
         dq      0                       ; 0x19
         dq      pwd                     ; 0x1a
-        dq      what_stdin              ; 0x1b
-        dq      what_stdout             ; 0x1c
-        dq      what_stderr             ; 0x1d
+        dq      0                       ; 0x1b
+        dq      0                       ; 0x1c
+        dq      0                       ; 0x1d
         dq      0                       ; 0x1e
         dq      0                       ; 0x1f
-        dq      0;register_vdev           ; 0x20
-        dq      0;vdev_in_ready           ; 0x21
-        dq      0;vdev_out_ready          ; 0x22
-        dq      0 ;vdev_await           ; 0x23 - dummy entry
+        dq      0                       ; 0x20
+        dq      0                       ; 0x21
+        dq      0                       ; 0x22
+        dq      0                       ; 0x23
         dq      0                       ; 0x24
         dq      0                       ; 0x25
         dq      0                       ; 0x26
@@ -237,12 +250,12 @@ routine_list:
         dq      0                       ; 0x29
         dq      open                    ; 0x2a
         dq      close                   ; 0x2b
-        dq      0 ;read                 ; 0x2c - dummy entry
-        dq      0 ;write                ; 0x2d - dummy entry
+        dq      0                       ; 0x2c - read
+        dq      0                       ; 0x2d - write
         dq      lseek                   ; 0x2e
         dq      vfs_cd                  ; 0x2f
-        dq      0 ;vfs_read             ; 0x30 - dummy entry
-        dq      0 ;vfs_write            ; 0x31 - dummy entry
+        dq      0                       ; 0x30
+        dq      0                       ; 0x31
         dq      vfs_list                ; 0x32
         dq      vfs_get_metadata        ; 0x33
         dq      vfs_remove              ; 0x34
@@ -252,21 +265,6 @@ routine_list:
 section .text
 
 bits 64
-
-handler_simple:
-        push rax
-        mov ax, 0x10
-        mov ss, ax
-        pop rax
-        iretq
-
-handler_code:
-        add rsp, 8
-        push rax
-        mov ax, 0x10
-        mov ss, ax
-        pop rax
-        iretq
 
 handler_irq_apic:
         pusham
@@ -321,6 +319,81 @@ handler_div0:
         pop rsi
         call except_div0
 
+handler_debug:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_debug
+
+handler_nmi:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_nmi
+
+handler_breakpoint:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_breakpoint
+
+handler_overflow:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_overflow
+
+handler_bound_range_exceeded:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_bound_range_exceeded
+
+handler_invalid_opcode:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_invalid_opcode
+
+handler_device_not_available:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_device_not_available
+
+handler_double_fault:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_double_fault
+
+handler_coprocessor_segment_overrun:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_coprocessor_segment_overrun
+
+handler_invalid_tss:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        pop rdx
+        call except_invalid_tss
+
+handler_segment_not_present:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        pop rdx
+        call except_segment_not_present
+
+handler_stack_segment_fault:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        pop rdx
+        call except_stack_segment_fault
+
 handler_gpf:
         call except_handler_setup
         pop rdi
@@ -334,6 +407,43 @@ handler_pf:
         pop rsi
         pop rdx
         call except_page_fault
+
+handler_x87_exception:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_x87_exception
+
+handler_alignment_check:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        pop rdx
+        call except_alignment_check
+
+handler_machine_check:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_machine_check
+
+handler_simd_exception:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_simd_exception
+
+handler_virtualisation_exception:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_virtualisation_exception
+
+handler_security_exception:
+        call except_handler_setup
+        pop rdi
+        pop rsi
+        call except_security_exception
 
 irq0_handler:
         ; first execute all the time-based routines (tty refresh...)
@@ -408,10 +518,6 @@ syscall:
         pop rax
         sti
         ; special routines check
-        cmp rax, 0x30
-        je vfs_read_isr
-        cmp rax, 0x31
-        je vfs_write_isr
         cmp rax, 0x2c
         je read_isr
         cmp rax, 0x2d
@@ -449,118 +555,6 @@ syscall:
         ; return
         popas
         iretq
-
-vfs_read_isr:
-        ; check if I/O is ready
-        pushas
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
-        mov fs, bx
-        mov gs, bx
-        mov rbx, cr3        ; save context
-        mov qword [interrupted_cr3], rbx
-        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rbx
-        push rcx
-        push rdx
-        push rdi
-        push rsi
-        pop rcx
-        pop rdx
-        pop rsi
-        pop rdi
-        mov r12, rsi        ; preserve rdx
-        call vfs_read
-        mov rdx, r12
-        ; disable all interrupts, reenable task switch
-        cli
-        mov dword [ts_enable], 1
-        push rbx
-        mov rbx, qword [interrupted_cr3]
-        mov cr3, rbx    ; restore context
-        pop rbx
-        ; done
-        popas
-        cmp rax, -5     ; if I/O is not ready
-        je .enter_iowait
-        iretq           ; else, just return
-    .enter_iowait:
-        pusham
-        mov ax, 0x10
-        mov ds, ax
-        mov es, ax
-        mov fs, ax
-        mov gs, ax
-        mov rax, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rax
-        push rcx
-        push rdx
-        push rdi
-        mov rcx, 0      ; vfs read type
-        pop rdx
-        pop rsi
-        pop rdi
-        call enter_iowait_status
-        mov rdi, rsp
-        fxsave [fxstate]
-        call task_switch
-
-vfs_write_isr:
-        ; check if I/O is ready
-        pushas
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
-        mov fs, bx
-        mov gs, bx
-        mov rbx, cr3        ; save context
-        mov qword [interrupted_cr3], rbx
-        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rbx
-        push rcx
-        push rdx
-        push rdi
-        push rsi
-        pop rcx
-        pop rdx
-        pop rsi
-        pop rdi
-        mov r12, rsi        ; preserve rdx
-        call vfs_write
-        mov rdx, r12
-        ; disable all interrupts, reenable task switch
-        cli
-        mov dword [ts_enable], 1
-        push rbx
-        mov rbx, qword [interrupted_cr3]
-        mov cr3, rbx    ; restore context
-        pop rbx
-        ; done
-        popas
-        cmp rax, -5     ; if I/O is not ready
-        je .enter_iowait
-        iretq           ; else, just return
-    .enter_iowait:
-        pusham
-        mov ax, 0x10
-        mov ds, ax
-        mov es, ax
-        mov fs, ax
-        mov gs, ax
-        mov rax, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rax
-        push rcx
-        push rdx
-        push rdi
-        mov rcx, 1      ; vfs write type
-        pop rdx
-        pop rsi
-        pop rdi
-        call enter_iowait_status
-        mov rdi, rsp
-        fxsave [fxstate]
-        call task_switch
 
 read_isr:
         ; check if I/O is ready

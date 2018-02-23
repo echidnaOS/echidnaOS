@@ -6,8 +6,26 @@ extern handler_irq_apic
 extern handler_irq_pic0
 extern handler_irq_pic1
 extern handler_div0
+extern handler_debug
+extern handler_nmi
+extern handler_breakpoint
+extern handler_overflow
+extern handler_bound_range_exceeded
+extern handler_invalid_opcode
+extern handler_device_not_available
+extern handler_double_fault
+extern handler_coprocessor_segment_overrun
+extern handler_invalid_tss
+extern handler_segment_not_present
+extern handler_stack_segment_fault
 extern handler_gpf
 extern handler_pf
+extern handler_x87_exception
+extern handler_alignment_check
+extern handler_machine_check
+extern handler_simd_exception
+extern handler_virtualisation_exception
+extern handler_security_exception
 extern irq0_handler
 extern keyboard_isr
 extern syscall
@@ -85,43 +103,51 @@ load_IDT:
     call make_entry                 ; int 0x00, divide by 0
 
     inc di
-    mov rbx, handler_simple
+    mov rbx, handler_debug
     call make_entry                 ; int 0x01, debug
     
     inc di
+    mov rbx, handler_nmi
     call make_entry                 ; int 0x02, NMI
     
     inc di
+    mov rbx, handler_breakpoint
     call make_entry                 ; int 0x03, breakpoint
     
     inc di
+    mov rbx, handler_overflow
     call make_entry                 ; int 0x04, overflow
     
     inc di
+    mov rbx, handler_bound_range_exceeded
     call make_entry                 ; int 0x05, bound range exceeded
     
     inc di
+    mov rbx, handler_invalid_opcode
     call make_entry                 ; int 0x06, invalid opcode
     
     inc di
+    mov rbx, handler_device_not_available
     call make_entry                 ; int 0x07, device not available
     
     inc di
-    mov rbx, handler_code
+    mov rbx, handler_double_fault
     call make_entry                 ; int 0x08, double fault
     
     inc di
-    mov rbx, handler_simple
+    mov rbx, handler_coprocessor_segment_overrun
     call make_entry                 ; int 0x09, coprocessor segment overrun
     
     inc di
-    mov rbx, handler_code
+    mov rbx, handler_invalid_tss
     call make_entry                 ; int 0x0A, invalid TSS
     
     inc di
+    mov rbx, handler_segment_not_present
     call make_entry                 ; int 0x0B, segment not present
     
     inc di
+    mov rbx, handler_stack_segment_fault
     call make_entry                 ; int 0x0C, stack-segment fault
     
     inc di
@@ -133,25 +159,27 @@ load_IDT:
     call make_entry                 ; int 0x0E, page fault
     
     add di, 2
-    mov rbx, handler_simple
+    mov rbx, handler_x87_exception
     call make_entry                 ; int 0x10, x87 floating point exception
     
     inc di
-    mov rbx, handler_code
+    mov rbx, handler_alignment_check
     call make_entry                 ; int 0x11, alignment check
     
     inc di
-    mov rbx, handler_simple
+    mov rbx, handler_machine_check
     call make_entry                 ; int 0x12, machine check
     
     inc di
+    mov rbx, handler_simd_exception
     call make_entry                 ; int 0x13, SIMD floating point exception
     
     inc di
+    mov rbx, handler_virtualisation_exception
     call make_entry                 ; int 0x14, virtualisation exception
     
     mov di, 0x1E
-    mov rbx, handler_code
+    mov rbx, handler_security_exception
     call make_entry                 ; int 0x1E, security exception
     
     add di, 2

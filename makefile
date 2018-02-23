@@ -42,7 +42,7 @@ echidnaOS-toolchain:
 tools: echidnaOS-toolchain
 	cd echidnaOS-toolchain && ./maketoolchain.sh
 
-iso:
+iso: kernel_target
 	mkdir -p isodir/boot/grub
 	cp kernel/echidna.bin isodir/boot/echidna.bin
 	cp boot/grub.cfg isodir/boot/grub/grub.cfg

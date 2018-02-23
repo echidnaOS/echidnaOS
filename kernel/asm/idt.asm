@@ -174,11 +174,11 @@ load_IDT:
     mov rbx, handler_simd_exception
     call make_entry                 ; int 0x13, SIMD floating point exception
     
-    inc di
+    mov di, 0x1d
     mov rbx, handler_virtualisation_exception
     call make_entry                 ; int 0x14, virtualisation exception
     
-    mov di, 0x1E
+    inc di
     mov rbx, handler_security_exception
     call make_entry                 ; int 0x1E, security exception
     

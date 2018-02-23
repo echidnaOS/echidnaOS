@@ -73,11 +73,11 @@ void init_graphics(void) {
 
     kprint(KPRN_INFO, "EDID recommended res: %ux%u", edid_width, edid_height);
 
-    if (!edid_width || !edid_height) {
+    //if (!edid_width || !edid_height) {
         kprint(KPRN_WARN, "EDID returned 0, defaulting to 1024x768");
         edid_width = 1024;
         edid_height = 768;
-    }
+    //}
 
 retry:
     /* try to set the mode */

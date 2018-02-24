@@ -15,21 +15,19 @@ bits 64
 %define PAGE_SIZE           4096
 
 prepare_smp_trampoline:
-    ; entry point in rdi, GDT in rsi, page table in rdx
-    ; stack pointer in ecx, cpu number in r8
+    ; entry point in rdi, page table in rsi
+    ; stack pointer in rdx, cpu number in rcx
     push rdi
     push rsi
     push rcx
 
-    ; Clear AP flag
+    ; prepare variables
     mov byte [0x510], 0
-
-    ; copy entry point
     mov qword [0x520], rdi
-    mov qword [0x530], rsi
-    mov qword [0x540], rdx
-    mov qword [0x550], rcx
-    mov qword [0x560], r8
+    mov qword [0x540], rsi
+    mov qword [0x550], rdx
+    mov qword [0x560], rcx
+    a32 o32 sgdt [0x580]
 
     ; Copy trampoline blob to 0x1000
     mov rsi, smp_trampoline

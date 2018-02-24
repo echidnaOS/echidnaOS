@@ -5,7 +5,6 @@
 
 extern kernel_init
 global startup
-global GDT
 
 section .bss
 

@@ -17,12 +17,9 @@ mov fs, ax
 mov gs, ax
 mov ss, ax
 
-jmp $
-
 mov esp, dword [0x550]
 
-mov ebx, dword [0x530]
-lgdt [ebx]
+lgdt [0x580]
 
 mov edx, dword [0x540]
 mov cr3, edx

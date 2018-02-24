@@ -11,7 +11,7 @@
 void ap_kernel_entry(int cpu_number) {
     /* APs jump here after initialisation */
 
-    //kprint(KPRN_INFO, "SMP: Started up AP #%u", cpu_number);
+    kprint(KPRN_INFO, "SMP: Started up AP #%u", cpu_number);
     for (;;);
 
     return;
@@ -35,15 +35,14 @@ void init_aps(void) {
     return;
 }
 
-void *prepare_smp_trampoline(void *, void *, pt_entry_t *, uint8_t *, int);
+void *prepare_smp_trampoline(void *, pt_entry_t *, uint8_t *, int);
 int check_ap_flag(void);
-extern void *GDT;
 
 static int start_ap(uint8_t target_apic_id, int cpu_number) {
     /* allocate a new stack for the CPU */
     uint8_t *cpu_stack = kalloc(CPU_STACK_SIZE);
 
-    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, &GDT, kernel_pagemap, cpu_stack + CPU_STACK_SIZE - 0x10, cpu_number);
+    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, cpu_stack + CPU_STACK_SIZE - 0x10, cpu_number);
 
     /* Send the INIT IPI */
     lapic_write(APICREG_ICR1, ((uint32_t)target_apic_id) << 24);

@@ -3,8 +3,8 @@
 #include <klib.h>
 #include <tty.h>
 
-uint64_t uptime_raw = 0;
-uint64_t uptime_sec = 0;
+volatile uint64_t uptime_raw = 0;
+volatile uint64_t uptime_sec = 0;
 
 void timer_interrupt(void) {
 

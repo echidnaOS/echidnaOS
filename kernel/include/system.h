@@ -16,11 +16,12 @@ extern size_t memory_size;
 size_t detect_mem(void);
 
 void set_pit_freq(uint32_t frequency);
+void sleep(uint64_t time);
 
 void load_IDT(void);
 
-extern uint64_t uptime_raw;
-extern uint64_t uptime_sec;
+extern volatile uint64_t uptime_raw;
+extern volatile uint64_t uptime_sec;
 
 extern int ts_enable;
 

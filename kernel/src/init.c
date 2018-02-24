@@ -10,6 +10,7 @@
 #include <system.h>
 #include <panic.h>
 #include <graphics.h>
+#include <smp.h>
 
 size_t memory_size;
 
@@ -52,6 +53,8 @@ void kernel_init(void) {
     ENABLE_INTERRUPTS;
 
     /****** END OF EARLY BOOTSTRAP ******/
+
+    init_aps();
 
     /* initialise keyboard driver */
     keyboard_init();

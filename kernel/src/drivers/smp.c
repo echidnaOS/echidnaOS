@@ -8,11 +8,14 @@
 
 #define CPU_STACK_SIZE 4096
 
-void ap_kernel_entry(int cpu_number) {
+void ap_kernel_entry(void) {
     /* APs jump here after initialisation */
 
-    kprint(KPRN_INFO, "SMP: Started up AP #%u", cpu_number);
-    for (;;);
+    kprint(KPRN_INFO, "SMP: Started up AP #%u", get_cpu_number());
+    kprint(KPRN_INFO, "SMP: AP #%u kernel stack top: %x", get_cpu_number(), get_cpu_kernel_stack());
+    for (;;) {
+        asm volatile ("cli; hlt");
+    }
 
     return;
 }
@@ -40,9 +43,17 @@ int check_ap_flag(void);
 
 static int start_ap(uint8_t target_apic_id, int cpu_number) {
     /* allocate a new stack for the CPU */
-    uint8_t *cpu_stack = kalloc(CPU_STACK_SIZE);
+    uint8_t *kernel_stack = kalloc(CPU_STACK_SIZE);
+    kernel_stack += CPU_STACK_SIZE - 0x10;
 
-    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, cpu_stack + CPU_STACK_SIZE - 0x10, cpu_number);
+    /* create CPU local struct */
+    cpu_local_t *cpu_local = kalloc(sizeof(cpu_local_t));
+    cpu_local->cpu_number = cpu_number;
+    cpu_local->kernel_stack = kernel_stack;
+    cpu_local->current_task = 0;
+    cpu_local->cpu_idle = 0;
+
+    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, kernel_stack, cpu_local);
 
     /* Send the INIT IPI */
     lapic_write(APICREG_ICR1, ((uint32_t)target_apic_id) << 24);

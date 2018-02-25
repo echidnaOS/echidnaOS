@@ -4,6 +4,15 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef struct {
+    int cpu_number;
+    uint8_t *kernel_stack;
+    int current_task;
+    int cpu_idle;
+} cpu_local_t;
+
+int get_cpu_number(void);
+int get_cpu_kernel_stack(void);
 
 void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset);
 void set_PIC0_mask(uint8_t mask);

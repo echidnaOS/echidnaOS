@@ -20,6 +20,7 @@ mov ss, ax
 mov esp, dword [0x550]
 
 lgdt [0x580]
+lidt [0x590]
 
 mov edx, dword [0x540]
 mov cr3, edx
@@ -56,7 +57,11 @@ mov rax, cr4
 or ax, 3 << 9
 mov cr4, rax
 
+; Load FS with the CPU local struct base address
+mov rcx, 0xc0000100
+mov rax, qword [0x560]
+wrmsr
+
 ; jump to entry point
 mov rbx, qword [0x520]
-mov rdi, qword [0x560]
 call rbx

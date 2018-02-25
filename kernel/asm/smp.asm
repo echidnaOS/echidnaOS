@@ -1,5 +1,11 @@
 global prepare_smp_trampoline
 global check_ap_flag
+global get_cpu_number
+global get_cpu_kernel_stack
+global get_current_task
+global set_current_task
+global get_cpu_idle
+global set_cpu_idle
 
 section .data
 
@@ -28,6 +34,7 @@ prepare_smp_trampoline:
     mov qword [0x550], rdx
     mov qword [0x560], rcx
     a32 o32 sgdt [0x580]
+    a32 o32 sidt [0x590]
 
     ; Copy trampoline blob to 0x1000
     mov rsi, smp_trampoline
@@ -44,4 +51,28 @@ prepare_smp_trampoline:
 check_ap_flag:
     xor rax, rax
     mov al, byte [0x510]
+    ret
+
+get_cpu_number:
+    mov rax, qword [fs:0000]
+    ret
+
+get_cpu_kernel_stack:
+    mov rax, qword [fs:0008]
+    ret
+
+get_current_task:
+    mov rax, qword [fs:0016]
+    ret
+
+set_current_task:
+    mov qword [fs:0016], rdi
+    ret
+
+get_cpu_idle:
+    mov rax, qword [fs:0024]
+    ret
+
+set_cpu_idle:
+    mov qword [fs:0024], rdi
     ret

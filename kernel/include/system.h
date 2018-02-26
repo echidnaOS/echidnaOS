@@ -20,6 +20,7 @@ void set_PIC1_mask(uint8_t mask);
 uint8_t get_PIC0_mask(void);
 uint8_t get_PIC1_mask(void);
 
+void get_e820(void *);
 
 extern size_t memory_size;
 size_t detect_mem(void);

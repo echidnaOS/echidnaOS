@@ -10,10 +10,46 @@
 #define BITMAP_FULL ((0x100000000 / PAGE_SIZE) / 32)
 #define BITMAP_BASE (MEMORY_BASE / PAGE_SIZE)
 
+typedef struct {
+    uint64_t base;
+    uint64_t length;
+    uint32_t type;
+    uint32_t unused;
+} __attribute__((packed)) e820_entry_t;
+
+e820_entry_t e820_map[256];
+
+static const char *e820_type(uint32_t type) {
+    switch (type) {
+        case 1:
+            return "Usable RAM";
+        case 2:
+            return "Reserved";
+        case 3:
+            return "ACPI reclaimable";
+        case 4:
+            return "ACPI NVS";
+        case 5:
+            return "Bad memory";
+        default:
+            return "???";
+    }
+}
+
 static uint32_t mem_bitmap[BITMAP_FULL] = {0};
 
 void init_paging(void) {
     full_identity_map();
+
+    /* get e820 memory map */
+    get_e820(e820_map);
+
+    /* print out memory map */
+    for (size_t i = 0; e820_map[i].type; i++)
+        kprint(KPRN_INFO, "e820: [%X -> %X] : %X  <%s>", e820_map[i].base,
+                                              e820_map[i].base + e820_map[i].length,
+                                              e820_map[i].length,
+                                              e820_type(e820_map[i].type));
 
     for (size_t i = 0; i < BITMAP_FULL; i++)
         mem_bitmap[i] = 0;

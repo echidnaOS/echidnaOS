@@ -304,8 +304,14 @@ void kprint(int type, const char *fmt, ...) {
             case 'u':
                 kprn_ui((uint64_t)va_arg(args, unsigned int));
                 break;
+            case 'U':
+                kprn_ui((uint64_t)va_arg(args, uint64_t));
+                break;
             case 'x':
                 kprn_x((uint64_t)va_arg(args, unsigned int));
+                break;
+            case 'X':
+                kprn_x((uint64_t)va_arg(args, uint64_t));
                 break;
             case 'c':
                 c = (char)va_arg(args, int);

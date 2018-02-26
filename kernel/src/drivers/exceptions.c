@@ -5,6 +5,7 @@
 #include <tty.h>
 #include <cio.h>
 #include <panic.h>
+#include <system.h>
 
 static void generic_exception(size_t error_code, size_t fault_rip, size_t fault_cs, const char *fault_name, const char *extra) {
 
@@ -17,6 +18,8 @@ static void generic_exception(size_t error_code, size_t fault_rip, size_t fault_
 
     if (fault_cs == 0x08)
         panic("Exception occurred in kernel space.", error_code);
+
+    kprint(KPRN_INFO, "Exception on CPU #%u", get_cpu_number());
 
     kprint(KPRN_INFO, "PID %u terminated.", current_task);
     task_quit(current_task, -1);
@@ -71,9 +74,9 @@ void except_device_not_available(size_t fault_rip, size_t fault_cs) {
 
 }
 
-void except_double_fault(size_t fault_rip, size_t fault_cs) {
+void except_double_fault(size_t error_code, size_t fault_rip, size_t fault_cs) {
 
-    generic_exception(0, fault_rip, fault_cs, "Double fault", NULL);
+    panic("Double fault", error_code);
 
 }
 

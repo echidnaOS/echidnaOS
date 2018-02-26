@@ -17,6 +17,14 @@ size_t memory_size;
 void kernel_init(void) {
     /* interrupts disabled */
 
+    /* mask all PIC IRQs */
+    kprint(KPRN_INFO, "PIC: Masking and remapping the legacy PICs...");
+    set_PIC0_mask(0b11111111);
+    set_PIC1_mask(0b11111111);
+    /* remap PIC where it doesn't bother us */
+    map_PIC(0xa0, 0xa8);
+    kprint(KPRN_INFO, "PIC: PIC 0 and 1 disabled.");
+
     /* build descriptor tables */
     load_IDT();
 

@@ -362,14 +362,10 @@ handler_device_not_available:
         call except_device_not_available
 
 handler_double_fault:
-        push rax
-        mov ax, 0x10
-        mov ss, ax
-        pop rax
-        iretq
         call except_handler_setup
         pop rdi
         pop rsi
+        pop rdx
         call except_double_fault
 
 handler_coprocessor_segment_overrun:

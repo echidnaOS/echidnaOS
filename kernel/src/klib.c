@@ -257,7 +257,7 @@ void kprint(int type, const char *fmt, ...) {
     va_start(args, fmt);
 
     /* print timestamp */
-    kputs("["); kprn_ui(uptime_sec); kputs(":");
+    kputs("["); kprn_ui(uptime_sec); kputs(".");
     kprn_ui(uptime_raw); kputs("] ");
 
     switch (type) {

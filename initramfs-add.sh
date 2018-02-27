@@ -8,5 +8,5 @@ for i in "$@" ; do
     echidnafs/echfs-utils kernel/initramfs import $i $i
 done
 make -C kernel
-echidnafs/echfs-utils echidna.img format
+echidnafs/echfs-utils echidna.img format 32768
 echidnafs/echfs-utils echidna.img import kernel/echidna.bin echidna.bin

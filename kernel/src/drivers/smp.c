@@ -13,8 +13,12 @@ void ap_kernel_entry(void) {
 
     kprint(KPRN_INFO, "SMP: Started up AP #%u", get_cpu_number());
     kprint(KPRN_INFO, "SMP: AP #%u kernel stack top: %x", get_cpu_number(), get_cpu_kernel_stack());
+
+    /* enable lapic */
+    lapic_enable();
+
     for (;;) {
-        asm volatile ("cli; hlt");
+        asm volatile ("sti; hlt");
     }
 
     return;

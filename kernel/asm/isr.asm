@@ -187,7 +187,6 @@ fxstate: times 512 db 0
 ts_enable dd 0
 read_stat dd 0
 write_stat dd 0
-interrupted_cr3 dq 0
 
 routine_list:
         dq      task_quit_self          ; 0x00
@@ -256,14 +255,12 @@ handler_irq_apic:
         mov ds, ax
         mov es, ax
         mov rax, cr3        ; save context
-        push qword [interrupted_cr3]
-        mov qword [interrupted_cr3], rax
+        push rax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         call eoi
-        mov rax, qword [interrupted_cr3]
+        pop rax
         mov cr3, rax    ; restore context
-        pop qword [interrupted_cr3]
         popam
         iretq
 
@@ -433,17 +430,10 @@ extern kprint
 
 local_irq0_handler:
         call eoi
-        call get_cpu_number
-        mov rdi, 0
-        mov rsi, .msg
-        mov rdx, rax
-        call kprint
-        mov rax, qword [interrupted_cr3]
+        pop rax
         mov cr3, rax    ; restore context
-        pop qword [interrupted_cr3]
         popam
         iretq
-    .msg db "IRQ0 on CPU %U", 0
 
 irq0_handler:
         ; first execute all the time-based routines (tty refresh...)
@@ -452,8 +442,7 @@ irq0_handler:
         mov ds, ax
         mov es, ax
         mov rax, cr3        ; save context
-        push qword [interrupted_cr3]
-        mov qword [interrupted_cr3], rax
+        push rax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         call get_cpu_number
@@ -472,9 +461,8 @@ irq0_handler:
         fxsave [fxstate]
         call task_switch
     .ts_abort:
-        mov rax, qword [interrupted_cr3]
+        pop rax
         mov cr3, rax    ; restore context
-        pop qword [interrupted_cr3]
         popam
         iretq
 
@@ -484,8 +472,7 @@ keyboard_isr:
         mov ds, ax
         mov es, ax
         mov rax, cr3        ; save context
-        push qword [interrupted_cr3]
-        mov qword [interrupted_cr3], rax
+        push rax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         xor rax, rax
@@ -493,9 +480,8 @@ keyboard_isr:
         mov rdi, rax
         call keyboard_handler
         call eoi
-        mov rax, qword [interrupted_cr3]
+        pop rax
         mov cr3, rax    ; restore context
-        pop qword [interrupted_cr3]
         popam
         iretq
 
@@ -529,7 +515,7 @@ syscall:
         mov ds, bx
         mov es, bx
         mov rbx, cr3        ; save context
-        mov qword [interrupted_cr3], rbx
+        push rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         mov rbx, 8
@@ -549,7 +535,7 @@ syscall:
         ; disable all interrupts, reenable task switch
         cli
         mov qword [ts_enable], 1
-        mov rbx, qword [interrupted_cr3]
+        pop rbx
         mov cr3, rbx    ; restore context
         ; return
         popas
@@ -561,8 +547,7 @@ read_isr:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov rbx, cr3        ; save context
-        mov qword [interrupted_cr3], rbx
+        mov r13, cr3        ; save context
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         push rcx
@@ -580,21 +565,17 @@ read_isr:
         cli
         mov dword [ts_enable], 1
         cmp dword [read_stat], 1     ; if I/O is not ready
-        push rbx
-        mov rbx, qword [interrupted_cr3]
-        mov cr3, rbx    ; restore context
-        pop rbx
+        je .enter_iowait
+        mov cr3, r13    ; restore context
         ; done
         popas
-        je .enter_iowait
         iretq           ; else, just return
     .enter_iowait:
+        popas
         pusham
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rbx
         mov r8, rax
         push rcx
         push rdx
@@ -614,8 +595,7 @@ write_isr:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov rbx, cr3        ; save context
-        mov qword [interrupted_cr3], rbx
+        mov r13, cr3        ; save context
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         push rcx
@@ -633,21 +613,17 @@ write_isr:
         cli
         mov dword [ts_enable], 1
         cmp dword [write_stat], 1     ; if I/O is not ready
-        push rbx
-        mov rbx, qword [interrupted_cr3]
-        mov cr3, rbx    ; restore context
-        pop rbx
+        je .enter_iowait
+        mov cr3, r13    ; restore context
         ; done
         popas
-        je .enter_iowait
         iretq           ; else, just return
     .enter_iowait:
+        popas
         pusham
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rbx
         mov r8, rax
         push rcx
         push rdx

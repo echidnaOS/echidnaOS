@@ -20,6 +20,25 @@ void ap_kernel_entry(void) {
     return;
 }
 
+void init_cpu0_local(void *);
+
+void init_cpu0(void) {
+    /* allocate a new stack for CPU 0 */
+    uint8_t *kernel_stack = kalloc(CPU_STACK_SIZE);
+    kernel_stack += CPU_STACK_SIZE - 0x10;
+
+    /* create CPU 0 local struct */
+    cpu_local_t *cpu_local = kalloc(sizeof(cpu_local_t));
+    cpu_local->cpu_number = 0;
+    cpu_local->kernel_stack = kernel_stack;
+    cpu_local->current_task = 0;
+    cpu_local->cpu_idle = 0;
+
+    init_cpu0_local(cpu_local);
+
+    return;
+}
+
 static int start_ap(uint8_t, int);
 
 void init_aps(void) {

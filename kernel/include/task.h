@@ -32,8 +32,6 @@
 /* x86_64 cpu struct */
 typedef struct {
 
-    uint64_t gs;
-    uint64_t fs;
     uint64_t es;
     uint64_t ds;
     uint64_t r15;

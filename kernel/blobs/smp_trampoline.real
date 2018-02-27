@@ -44,9 +44,10 @@ bits 64
 mov ax, 0x10
 mov ds, ax
 mov es, ax
+mov ss, ax
+mov ax, 0x23
 mov fs, ax
 mov gs, ax
-mov ss, ax
 
 ; enable SSE
 mov rax, cr0
@@ -60,6 +61,7 @@ mov cr4, rax
 ; Load FS with the CPU local struct base address
 mov rcx, 0xc0000100
 mov rax, qword [0x560]
+xor rdx, rdx
 wrmsr
 
 ; jump to entry point

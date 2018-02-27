@@ -19,19 +19,11 @@
     push rbx
     mov bx, es
     push rbx
-    mov bx, fs
-    push rbx
-    mov bx, gs
-    push rbx
 %endmacro
 
 %macro popam 0
     mov bx, 0x10
     mov ss, bx
-    pop rbx
-    mov gs, bx
-    pop rbx
-    mov fs, bx
     pop rbx
     mov es, bx
     pop rbx
@@ -72,19 +64,11 @@
     push rbx
     mov bx, es
     push rbx
-    mov bx, fs
-    push rbx
-    mov bx, gs
-    push rbx
 %endmacro
 
 %macro popas 0
     mov bx, 0x10
     mov ss, bx
-    pop rbx
-    mov gs, bx
-    pop rbx
-    mov fs, bx
     pop rbx
     mov es, bx
     pop rbx
@@ -308,8 +292,6 @@ except_handler_setup:
         mov ax, 0x10
         mov ds, ax
         mov es, ax
-        mov fs, ax
-        mov gs, ax
         mov ss, ax
         ret
 
@@ -446,6 +428,23 @@ handler_security_exception:
         pop rsi
         call except_security_exception
 
+extern get_cpu_number
+extern kprint
+
+local_irq0_handler:
+        call eoi
+        call get_cpu_number
+        mov rdi, 0
+        mov rsi, .msg
+        mov rdx, rax
+        call kprint
+        mov rax, qword [interrupted_cr3]
+        mov cr3, rax    ; restore context
+        pop qword [interrupted_cr3]
+        popam
+        iretq
+    .msg db "IRQ0 on CPU %U", 0
+
 irq0_handler:
         ; first execute all the time-based routines (tty refresh...)
         pusham
@@ -457,6 +456,9 @@ irq0_handler:
         mov qword [interrupted_cr3], rax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
+        call get_cpu_number
+        test rax, rax
+        jnz local_irq0_handler
         call timer_interrupt
         call eoi
         ; check whether we want task switches or not
@@ -465,8 +467,6 @@ irq0_handler:
         ; call task switcher
         add rsp, 8
         mov ax, 0x10
-        mov fs, ax
-        mov gs, ax
         mov ss, ax
         mov rdi, rsp
         fxsave [fxstate]
@@ -528,8 +528,6 @@ syscall:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov fs, bx
-        mov gs, bx
         mov rbx, cr3        ; save context
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
@@ -563,8 +561,6 @@ read_isr:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov fs, bx
-        mov gs, bx
         mov rbx, cr3        ; save context
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
@@ -597,8 +593,6 @@ read_isr:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov fs, bx
-        mov gs, bx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         mov r8, rax
@@ -620,8 +614,6 @@ write_isr:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov fs, bx
-        mov gs, bx
         mov rbx, cr3        ; save context
         mov qword [interrupted_cr3], rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
@@ -654,8 +646,6 @@ write_isr:
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov fs, bx
-        mov gs, bx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
         mov r8, rax
@@ -677,8 +667,6 @@ wait_isr:
         mov ax, 0x10
         mov ds, ax
         mov es, ax
-        mov fs, ax
-        mov gs, ax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         mov rdi, rcx
@@ -693,8 +681,6 @@ fork_isr:
         mov ax, 0x10
         mov ds, ax
         mov es, ax
-        mov fs, ax
-        mov gs, ax
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         mov rdi, rsp

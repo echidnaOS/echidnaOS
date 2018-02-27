@@ -11,6 +11,7 @@
 void init_tty(void);
 void init_acpi(void);
 void init_apic(void);
+void init_cpu0(void);
 
 // driver inits
 

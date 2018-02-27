@@ -1,4 +1,5 @@
 global prepare_smp_trampoline
+global init_cpu0_local
 global check_ap_flag
 global get_cpu_number
 global get_cpu_kernel_stack
@@ -51,6 +52,23 @@ prepare_smp_trampoline:
 check_ap_flag:
     xor rax, rax
     mov al, byte [0x510]
+    ret
+
+init_cpu0_local:
+    ; Load FS with the CPU local struct base address
+    push rax
+    push rcx
+    push rdx
+    mov ax, 0x23
+    mov fs, ax
+    mov gs, ax
+    mov rcx, 0xc0000100
+    mov rax, rdi
+    xor rdx, rdx
+    wrmsr
+    pop rdx
+    pop rcx
+    pop rax
     ret
 
 get_cpu_number:

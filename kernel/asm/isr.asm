@@ -158,8 +158,6 @@ extern task_switch
 ; API calls
 extern open
 extern close
-extern read
-extern write
 extern lseek
 extern getpid
 extern signal
@@ -493,6 +491,10 @@ syscall:
         je fork_isr
         cmp rax, 0x04
         je wait_isr
+        cmp rax, 0x2c
+        je read_isr
+        cmp rax, 0x2d
+        je write_isr
         ; disable task switch, reenable all interrupts
         push rax
         push rbx
@@ -504,11 +506,6 @@ syscall:
         pop rbx
         pop rax
         sti
-        ; special routines check
-        cmp rax, 0x2c
-        je read_isr
-        cmp rax, 0x2d
-        je write_isr
         ; end special routines check
         pushas
         mov bx, 0x10
@@ -542,41 +539,13 @@ syscall:
         iretq
 
 read_isr:
-        ; check if I/O is ready
-        pushas
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
-        mov r13, cr3        ; save context
-        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rbx
-        push rcx
-        push rdx
-        push rdi
-        push rsi
-        pop rcx
-        pop rdx
-        pop rsi
-        pop rdi
-        mov r12, rsi        ; preserve rdx
-        call read
-        mov rdx, r12
-        ; disable all interrupts, reenable task switch
-        cli
-        mov dword [ts_enable], 1
-        cmp dword [read_stat], 1     ; if I/O is not ready
-        je .enter_iowait
-        mov cr3, r13    ; restore context
-        ; done
-        popas
-        iretq           ; else, just return
-    .enter_iowait:
-        popas
         pusham
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
-        mov r8, rax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov r8, 0
         push rcx
         push rdx
         push rdi
@@ -590,41 +559,13 @@ read_isr:
         call task_switch
 
 write_isr:
-        ; check if I/O is ready
-        pushas
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
-        mov r13, cr3        ; save context
-        mov rbx, qword [kernel_pagemap]   ; context swap to kernel
-        mov cr3, rbx
-        push rcx
-        push rdx
-        push rdi
-        push rsi
-        pop rcx
-        pop rdx
-        pop rsi
-        pop rdi
-        mov r12, rsi        ; preserve rdx
-        call write
-        mov rdx, r12
-        ; disable all interrupts, reenable task switch
-        cli
-        mov dword [ts_enable], 1
-        cmp dword [write_stat], 1     ; if I/O is not ready
-        je .enter_iowait
-        mov cr3, r13    ; restore context
-        ; done
-        popas
-        iretq           ; else, just return
-    .enter_iowait:
-        popas
         pusham
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
-        mov r8, rax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov r8, 0
         push rcx
         push rdx
         push rdi

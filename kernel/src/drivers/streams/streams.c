@@ -3,13 +3,14 @@
 #include <task.h>
 #include <dev.h>
 #include <vfs.h>
+#include <system.h>
 
 #define EOF -1
 
 int stdin_io_wrapper(uint32_t unused, uint64_t loc, int type, uint8_t payload) {
     if (type == 0) {
-        int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[0].mountpoint);
-        (*filesystems[filesystem].uread)(task_table[current_task]->file_handles[0].internal_handle, &payload, 1);
+        int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[0].mountpoint);
+        (*filesystems[filesystem].uread)(task_table[get_current_task()]->file_handles[0].internal_handle, &payload, 1);
         return payload;
     } else if (type == 1)
         return 0;
@@ -19,8 +20,8 @@ int stdout_io_wrapper(uint32_t unused, uint64_t loc, int type, uint8_t payload) 
     if (type == 0)
         return 0;
     else if (type == 1) {
-        int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[1].mountpoint);
-        (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles[1].internal_handle, &payload, 1);
+        int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[1].mountpoint);
+        (*filesystems[filesystem].uwrite)(task_table[get_current_task()]->file_handles[1].internal_handle, &payload, 1);
         return 0;
     }
 }
@@ -29,8 +30,8 @@ int stderr_io_wrapper(uint32_t unused, uint64_t loc, int type, uint8_t payload) 
     if (type == 0)
         return 0;
     else if (type == 1) {
-        int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[2].mountpoint);
-        (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles[2].internal_handle, &payload, 1);
+        int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[2].mountpoint);
+        (*filesystems[filesystem].uwrite)(task_table[get_current_task()]->file_handles[2].internal_handle, &payload, 1);
         return 0;
     }
 }

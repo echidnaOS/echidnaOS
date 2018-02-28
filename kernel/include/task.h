@@ -67,6 +67,7 @@ typedef struct {
 
     pt_entry_t *page_directory;
 
+    int cpu_number;
     cpu_t cpu;
     uint8_t fxstate[512] __attribute__((aligned(16)));
 
@@ -97,26 +98,9 @@ typedef struct {
 
 } task_t;
 
-typedef struct {
-    char *path;
-    char *stdin;
-    char *stdout;
-    char *stderr;
-    char *pwd;
-    char *unused0;
-    char *unused1;
-    int argc;
-    char **argv;
-    char **environ;
-} task_info_t;
-
 extern task_t **task_table;
-extern int current_task;
-extern int ts_enable;
 
 void task_init(void);
-int general_execute(task_info_t *);
-int general_execute_block(task_info_t *);
 void task_scheduler(void);
 void task_quit(int, int64_t);
 

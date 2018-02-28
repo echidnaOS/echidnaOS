@@ -5,8 +5,10 @@ global get_cpu_number
 global get_cpu_kernel_stack
 global get_current_task
 global set_current_task
-global get_cpu_idle
-global set_cpu_idle
+global get_idle_cpu
+global set_idle_cpu
+global get_ts_enable
+global set_ts_enable
 
 section .data
 
@@ -87,10 +89,18 @@ set_current_task:
     mov qword [fs:0016], rdi
     ret
 
-get_cpu_idle:
+get_idle_cpu:
     mov rax, qword [fs:0024]
     ret
 
-set_cpu_idle:
+set_idle_cpu:
     mov qword [fs:0024], rdi
+    ret
+
+get_ts_enable:
+    mov rax, qword [fs:0032]
+    ret
+
+set_ts_enable:
+    mov qword [fs:0032], rdi
     ret

@@ -21,8 +21,8 @@ static void generic_exception(size_t error_code, size_t fault_rip, size_t fault_
 
     kprint(KPRN_INFO, "Exception on CPU #%u", get_cpu_number());
 
-    kprint(KPRN_INFO, "PID %u terminated.", current_task);
-    task_quit(current_task, -1);
+    kprint(KPRN_INFO, "PID %u terminated.", get_current_task());
+    task_quit(get_current_task(), -1);
 
 }
 

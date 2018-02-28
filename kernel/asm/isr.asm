@@ -90,7 +90,6 @@
 
 ; misc global references
 global fxstate
-global ts_enable
 global read_stat
 global write_stat
 
@@ -182,7 +181,6 @@ section .data
 align 16
 fxstate: times 512 db 0
 
-ts_enable dd 0
 read_stat dd 0
 write_stat dd 0
 
@@ -449,7 +447,7 @@ irq0_handler:
         call timer_interrupt
         call eoi
         ; check whether we want task switches or not
-        cmp dword [ts_enable], 0
+        cmp dword [fs:0032], 0
         je .ts_abort
         ; call task switcher
         add rsp, 8
@@ -495,26 +493,17 @@ syscall:
         je read_isr
         cmp rax, 0x2d
         je write_isr
-        ; disable task switch, reenable all interrupts
-        push rax
-        push rbx
-        mov ax, ds
-        mov bx, 0x10
-        mov ds, bx
-        mov dword [ts_enable], 0
-        mov ds, ax
-        pop rbx
-        pop rax
-        sti
-        ; end special routines check
+        ; "conventional" syscall
         pushas
-        mov bx, 0x10
-        mov ds, bx
-        mov es, bx
         mov rbx, cr3        ; save context
         push rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
+        mov dword [fs:0032], 0
+        sti
+        mov bx, 0x10
+        mov ds, bx
+        mov es, bx
         mov rbx, 8
         push rdx
         mul rbx
@@ -531,7 +520,7 @@ syscall:
         call [routine_list+rax]
         ; disable all interrupts, reenable task switch
         cli
-        mov qword [ts_enable], 1
+        mov qword [fs:0032], 1
         pop rbx
         mov cr3, rbx    ; restore context
         ; return

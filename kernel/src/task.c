@@ -27,10 +27,6 @@ void task_init(void) {
     return;
 }
 
-int current_task = 0;
-
-static int idle_cpu = 1;
-
 void task_spinup(void *, pt_entry_t *, void *);
 static void zombie_eval(int pid);
 
@@ -66,9 +62,9 @@ int execve(char *path, char **argv, char **envp) {
     char *tmp_argv[256];
     char *tmp_envp[256];
 
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
-    argv = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)argv);
-    envp = (char **)get_phys_addr(task_table[current_task]->page_directory, (size_t)envp);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
+    argv = (char **)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)argv);
+    envp = (char **)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)envp);
 
     vfs_metadata_t metadata;
     if (vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2) return FAILURE;
@@ -80,7 +76,7 @@ int execve(char *path, char **argv, char **envp) {
     for (i = 0; i < 256; i++) {
         if (!argv[i])
             break;
-        char *tmp_ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)argv[i]);
+        char *tmp_ptr = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)argv[i]);
         tmp_argv[i] = kalloc(kstrlen(tmp_ptr) + 1);
         kstrcpy(tmp_argv[i], tmp_ptr);
     }
@@ -91,20 +87,20 @@ int execve(char *path, char **argv, char **envp) {
     for (i = 0; i < 256; i++) {
         if (!envp[i])
             break;
-        char *tmp_ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)envp[i]);
+        char *tmp_ptr = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)envp[i]);
         tmp_envp[i] = kalloc(kstrlen(tmp_ptr) + 1);
         kstrcpy(tmp_envp[i], tmp_ptr);
     }
     tmp_envp[i] = 0;
 
     /* now destroy old userspace for the process */
-    if (task_table[current_task]->page_directory != kernel_pagemap)
-        destroy_userspace(task_table[current_task]->page_directory);
+    if (task_table[get_current_task()]->page_directory != kernel_pagemap)
+        destroy_userspace(task_table[get_current_task()]->page_directory);
 
     /* reset CPU status */
-    task_table[current_task]->cpu = default_cpu_status;
+    task_table[get_current_task()]->cpu = default_cpu_status;
     for (size_t i = 0; i < 512; i++)
-        task_table[current_task]->fxstate[i] = 0;
+        task_table[get_current_task()]->fxstate[i] = 0;
 
     // load program into memory
     size_t base = (size_t)kmalloc(pages);
@@ -119,13 +115,13 @@ int execve(char *path, char **argv, char **envp) {
     // map the process's memory
     for (size_t i = 0; i < pages; i++)
         map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
-    task_table[current_task]->page_directory = pd;
+    task_table[get_current_task()]->page_directory = pd;
 
-    task_table[current_task]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
-    task_table[current_task]->cpu.rip = TASK_BASE + TASK_RESERVED_SPACE;
+    task_table[get_current_task()]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
+    task_table[get_current_task()]->cpu.rip = TASK_BASE + TASK_RESERVED_SPACE;
 
-    task_table[current_task]->heap_base = TASK_BASE + pages * PAGE_SIZE;
-    task_table[current_task]->heap_size = 0;
+    task_table[get_current_task()]->heap_base = TASK_BASE + pages * PAGE_SIZE;
+    task_table[get_current_task()]->heap_size = 0;
 
     *((int *)(base + 0x1000)) = argc;
     int argv_limit = 0x4000;
@@ -158,7 +154,7 @@ int execve(char *path, char **argv, char **envp) {
         return 0;
 
     DISABLE_INTERRUPTS;
-    ts_enable = 1;
+    set_ts_enable(1);
     task_scheduler();
 }
 
@@ -189,17 +185,17 @@ int kexec(  char *path, char **argv, char **envp,
 
     kstrcpy(task_table[new_pid]->pwd, pwd);
 
-    current_task = new_pid;
+    set_current_task(new_pid);
 
     do_not_schedule = 1;
     if (execve(path, argv, envp) == FAILURE) {
         do_not_schedule = 0;
         task_table[new_pid] = EMPTY_PID;
-        current_task = 0;
+        set_current_task(0);
         return FAILURE;
     } else {
         do_not_schedule = 0;
-        current_task = 0;
+        set_current_task(0);
         return 0;
     }
 }
@@ -208,32 +204,32 @@ void task_fork(cpu_t *cpu_state) {
 
     // forks the current task in a Unix-like way
 
-    task_table[current_task]->cpu = *cpu_state;
+    task_table[get_current_task()]->cpu = *cpu_state;
 
     for (size_t i = 0; i < 512; i++)
-        task_table[current_task]->fxstate[i] = fxstate[i];
+        task_table[get_current_task()]->fxstate[i] = fxstate[i];
 
-    task_t new_process = *task_table[current_task];
+    task_t new_process = *task_table[get_current_task()];
     /* parent */
-    new_process.parent = current_task;
+    new_process.parent = get_current_task();
     // generate the page tables
     new_process.page_directory = fork_userspace(new_process.page_directory);
 
     // allocate memory for the new VFS's file descriptors
-    if (!(new_process.file_handles = kalloc(task_table[current_task]->file_handles_ptr * sizeof(file_handle_t)))) {
+    if (!(new_process.file_handles = kalloc(task_table[get_current_task()]->file_handles_ptr * sizeof(file_handle_t)))) {
         // fail
     }
 
     // clone new VFS descriptors
-    for (int i = 0; i < task_table[current_task]->file_handles_ptr; i++) {
+    for (int i = 0; i < task_table[get_current_task()]->file_handles_ptr; i++) {
         file_handle_t new_handle = {0};
-        if (task_table[current_task]->file_handles[i].free) {
+        if (task_table[get_current_task()]->file_handles[i].free) {
             new_process.file_handles[i].free = 1;
             continue;
         }
-        new_handle.mountpoint = task_table[current_task]->file_handles[i].mountpoint;
+        new_handle.mountpoint = task_table[get_current_task()]->file_handles[i].mountpoint;
         int filesystem = vfs_translate_fs(new_handle.mountpoint);
-        new_handle.internal_handle = (*filesystems[filesystem].fork)(task_table[current_task]->file_handles[i].internal_handle);
+        new_handle.internal_handle = (*filesystems[filesystem].fork)(task_table[get_current_task()]->file_handles[i].internal_handle);
         new_process.file_handles[i] = new_handle;
     }
 
@@ -241,7 +237,7 @@ void task_fork(cpu_t *cpu_state) {
     int new_pid = task_create(new_process);
 
     // return the PID to the forking process
-    task_table[current_task]->cpu.rax = (uint32_t)new_pid;
+    task_table[get_current_task()]->cpu.rax = (uint32_t)new_pid;
 
     // return 0 in the child process
     task_table[new_pid]->cpu.rax = 0;
@@ -250,19 +246,19 @@ void task_fork(cpu_t *cpu_state) {
 }
 
 int swait(int *status) {
-    task_table[current_task]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
-    task_table[current_task]->waitstat = status;
+    task_table[get_current_task()]->status = KRN_STAT_PROCWAIT_TASK;  // start waiting for the child process
+    task_table[get_current_task()]->waitstat = status;
     return 0;
 }
 
 void task_switch(cpu_t *cpu_state) {
 
-    task_table[current_task]->cpu = *cpu_state;
+    task_table[get_current_task()]->cpu = *cpu_state;
 
     for (size_t i = 0; i < 512; i++)
-        task_table[current_task]->fxstate[i] = fxstate[i];
+        task_table[get_current_task()]->fxstate[i] = fxstate[i];
 
-    current_task++;
+    set_current_task(get_current_task() + 1);
     task_scheduler();
 }
 
@@ -273,87 +269,87 @@ void task_scheduler(void) {
     int c;
 
     for (;;) {
-        if (!task_table[current_task]) {
-            current_task = 0;
-            if (idle_cpu) {
+        if (!task_table[get_current_task()]) {
+            set_current_task(0);
+            if (get_idle_cpu()) {
                 /* if no process took CPU time, wait for the next */
                 /* context switch idling */
                 ENTER_IDLE;
             }
-            idle_cpu = 1;
+            set_idle_cpu(1);
             continue;
         }
         
-        if (task_table[current_task] == EMPTY_PID) {
-            current_task++;
+        if (task_table[get_current_task()] == EMPTY_PID) {
+            set_current_task(get_current_task() + 1);
             continue;
         }
         
-        switch (task_table[current_task]->status) {
+        switch (task_table[get_current_task()]->status) {
             case KRN_STAT_IOWAIT_TASK:
-                switch (task_table[current_task]->iowait_type) {
+                switch (task_table[get_current_task()]->iowait_type) {
                 int done;
                 case 0:
-                    if ((c = vfs_kread(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc)) != IO_NOT_READY) {
+                    if ((c = vfs_kread(task_table[get_current_task()]->iowait_dev, task_table[get_current_task()]->iowait_loc)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->cpu.rax = (uint64_t)c;
-                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                        task_table[get_current_task()]->cpu.rax = (uint64_t)c;
+                        task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
-                        current_task++;
+                        set_current_task(get_current_task() + 1);
                         continue;
                     }
                     break;
                 case 1:
-                    if ((c = vfs_kwrite(task_table[current_task]->iowait_dev, task_table[current_task]->iowait_loc,
-                                        task_table[current_task]->iowait_payload)) != IO_NOT_READY) {
+                    if ((c = vfs_kwrite(task_table[get_current_task()]->iowait_dev, task_table[get_current_task()]->iowait_loc,
+                                        task_table[get_current_task()]->iowait_payload)) != IO_NOT_READY) {
                         // embed the result in EAX and continue
-                        task_table[current_task]->cpu.rax = (uint64_t)c;
-                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                        task_table[get_current_task()]->cpu.rax = (uint64_t)c;
+                        task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
                     } else {
-                        current_task++;
+                        set_current_task(get_current_task() + 1);
                         continue;
                     }
                     break;
                 case 2:
-                    done = read(    task_table[current_task]->iowait_handle,
-                                    (char *)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
-                                    task_table[current_task]->iowait_len - task_table[current_task]->iowait_done);
+                    done = read(    task_table[get_current_task()]->iowait_handle,
+                                    (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
+                                    task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
                     if (read_stat) {
-                        task_table[current_task]->iowait_done += done;
-                        current_task++;
+                        task_table[get_current_task()]->iowait_done += done;
+                        set_current_task(get_current_task() + 1);
                         continue;
                     } else {
-                        task_table[current_task]->cpu.rax = (uint64_t)(task_table[current_task]->iowait_done + done);
-                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                        task_table[get_current_task()]->cpu.rax = (uint64_t)(task_table[get_current_task()]->iowait_done + done);
+                        task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
                 case 3:
-                    done = write(    task_table[current_task]->iowait_handle,
-                                    (char *)(task_table[current_task]->iowait_ptr + task_table[current_task]->iowait_done),
-                                    task_table[current_task]->iowait_len - task_table[current_task]->iowait_done);
+                    done = write(    task_table[get_current_task()]->iowait_handle,
+                                    (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
+                                    task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
                     if (write_stat) {
-                        task_table[current_task]->iowait_done += done;
-                        current_task++;
+                        task_table[get_current_task()]->iowait_done += done;
+                        set_current_task(get_current_task() + 1);
                         continue;
                     } else {
-                        task_table[current_task]->cpu.rax = (uint64_t)(task_table[current_task]->iowait_done + done);
-                        task_table[current_task]->status = KRN_STAT_ACTIVE_TASK;
+                        task_table[get_current_task()]->cpu.rax = (uint64_t)(task_table[get_current_task()]->iowait_done + done);
+                        task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
                     }
                     break;
                 default:
-                    panic("unrecognised iowait_type", task_table[current_task]->iowait_type);
+                    panic("unrecognised iowait_type", task_table[get_current_task()]->iowait_type);
                 }
             case KRN_STAT_ACTIVE_TASK:
-                idle_cpu = 0;
-                task_spinup((void *)(&(task_table[current_task]->cpu)), task_table[current_task]->page_directory, task_table[current_task]->fxstate);
+                set_idle_cpu(0);
+                task_spinup((void *)(&(task_table[get_current_task()]->cpu)), task_table[get_current_task()]->page_directory, task_table[get_current_task()]->fxstate);
             case KRN_STAT_ZOMBIE_TASK:
-                zombie_eval(current_task);
+                zombie_eval(get_current_task());
             case KRN_STAT_PROCWAIT_TASK:
             case KRN_STAT_RES_TASK:
-                current_task++;
+                set_current_task(get_current_task() + 1);
                 continue;
             default:
-                panic("unrecognised task status", task_table[current_task]->status);
+                panic("unrecognised task status", task_table[get_current_task()]->status);
         }
 
     }
@@ -374,7 +370,7 @@ static void zombie_eval(int pid) {
 }
 
 void task_quit_self(int64_t return_value) {
-    task_quit(current_task, return_value);
+    task_quit(get_current_task(), return_value);
 }
 
 void task_quit(int pid, int64_t return_value) {
@@ -383,6 +379,6 @@ void task_quit(int pid, int64_t return_value) {
     kfree((void *)task_table[pid]->file_handles);
     destroy_userspace(task_table[pid]->page_directory);
     DISABLE_INTERRUPTS;
-    ts_enable = 1;
+    set_ts_enable(1);
     task_scheduler();
 }

@@ -4,6 +4,7 @@
 #include <acpi.h>
 #include <system.h>
 #include <klib.h>
+#include <apic.h>
 
 /** contains pieces of code from https://nemez.net/osdev, credits to Nemes **/
 
@@ -120,10 +121,6 @@ void install_nmis(void) {
 
 void lapic_enable(void) {
     lapic_write(0xf0, lapic_read(0xf0) | 0x1FF);
-}
-
-void lapic_disable(void) {
-    lapic_write(0xf0, lapic_read(0xf0) & 0b11111111111111111111111011111111);
 }
 
 void init_apic(void) {

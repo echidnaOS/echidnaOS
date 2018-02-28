@@ -5,6 +5,7 @@
 #include <task.h>
 #include <vfs.h>
 #include <dev.h>
+#include <system.h>
 
 #define FAILURE -2
 #define SUCCESS 0
@@ -66,12 +67,12 @@ void vfs_get_absolute_path(char *path_ptr, char *path) {
     char *orig_ptr = path_ptr;
     
     if (!*path) {
-        kstrcpy(path_ptr, task_table[current_task]->pwd);
+        kstrcpy(path_ptr, task_table[get_current_task()]->pwd);
         return;
     }
     
     if (*path != '/') {
-        kstrcpy(path_ptr, task_table[current_task]->pwd);
+        kstrcpy(path_ptr, task_table[get_current_task()]->pwd);
         path_ptr += kstrlen(path_ptr);
     } else {
         *path_ptr = '/';
@@ -128,7 +129,7 @@ term:
 }
 
 int vfs_cd(char *path) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     char absolute_path[2048];
     
     vfs_metadata_t metadata;
@@ -138,13 +139,13 @@ int vfs_cd(char *path) {
     if (vfs_kget_metadata(absolute_path, &metadata, DIRECTORY_TYPE) == FAILURE)
         return FAILURE;
 
-    kstrcpy(task_table[current_task]->pwd, absolute_path);
+    kstrcpy(task_table[get_current_task()]->pwd, absolute_path);
 
     return SUCCESS;
 }
 
 int vfs_read(char *path, uint64_t loc) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     return vfs_kread(path, loc);
 }
 
@@ -174,7 +175,7 @@ int vfs_kread(char *path, uint64_t loc) {
 }
 
 int vfs_remove(char *path) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     return vfs_kremove(path);
 }
 
@@ -195,7 +196,7 @@ int vfs_kremove(char *path) {
 }
 
 int vfs_mkdir(char *path, uint16_t perms) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     return vfs_kmkdir(path, perms);
 }
 
@@ -220,7 +221,7 @@ int vfs_kmkdir(char *path, uint16_t perms) {
 }
 
 int vfs_create(char *path, uint16_t perms) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     return vfs_kcreate(path, perms);
 }
 
@@ -245,7 +246,7 @@ int vfs_kcreate(char *path, uint16_t perms) {
 }
 
 int vfs_write(char *path, uint64_t loc, uint8_t val) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     return vfs_kwrite(path, loc, val);
 }
 
@@ -275,7 +276,7 @@ int vfs_kwrite(char *path, uint64_t loc, uint8_t val) {
 }
 
 int vfs_open(char *path, int flags, int mode) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
 
     char *local_path;
     char absolute_path[2048];
@@ -304,7 +305,7 @@ int vfs_open(char *path, int flags, int mode) {
     handle.mountpoint = mountpoint;
     handle.internal_handle = internal_handle;
 
-    return create_file_handle(current_task, handle);
+    return create_file_handle(get_current_task(), handle);
 }
 
 int vfs_kopen(char *path, int flags, int mode) {
@@ -341,12 +342,12 @@ int vfs_kopen(char *path, int flags, int mode) {
 extern int read_stat;
 
 int vfs_uread(int handle, char *ptr, int len) {
-    ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)ptr);
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[handle].mountpoint);
+    ptr = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)ptr);
+    int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[handle].mountpoint);
     if (len <= MAX_SIMULTANOUS_VFS_ACCESS)
-        return (*filesystems[filesystem].uread)(task_table[current_task]->file_handles[handle].internal_handle, ptr, len);
+        return (*filesystems[filesystem].uread)(task_table[get_current_task()]->file_handles[handle].internal_handle, ptr, len);
     else {
-        int ret = (*filesystems[filesystem].uread)(task_table[current_task]->file_handles[handle].internal_handle, ptr, MAX_SIMULTANOUS_VFS_ACCESS);
+        int ret = (*filesystems[filesystem].uread)(task_table[get_current_task()]->file_handles[handle].internal_handle, ptr, MAX_SIMULTANOUS_VFS_ACCESS);
         read_stat = 1;
         return ret;
     }
@@ -360,12 +361,12 @@ int vfs_kuread(int handle, char *ptr, int len) {
 extern int write_stat;
 
 int vfs_uwrite(int handle, char *ptr, int len) {
-    ptr = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)ptr);
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[handle].mountpoint);
+    ptr = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)ptr);
+    int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[handle].mountpoint);
     if (len <= MAX_SIMULTANOUS_VFS_ACCESS)
-        return (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles[handle].internal_handle, ptr, len);
+        return (*filesystems[filesystem].uwrite)(task_table[get_current_task()]->file_handles[handle].internal_handle, ptr, len);
     else {
-        int ret = (*filesystems[filesystem].uwrite)(task_table[current_task]->file_handles[handle].internal_handle, ptr, MAX_SIMULTANOUS_VFS_ACCESS);
+        int ret = (*filesystems[filesystem].uwrite)(task_table[get_current_task()]->file_handles[handle].internal_handle, ptr, MAX_SIMULTANOUS_VFS_ACCESS);
         write_stat = 1;
         return ret;
     }
@@ -377,8 +378,8 @@ int vfs_kuwrite(int handle, char *ptr, int len) {
 }
 
 int vfs_seek(int handle, int offset, int type) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[handle].mountpoint);
-    return (*filesystems[filesystem].seek)(task_table[current_task]->file_handles[handle].internal_handle, offset, type);
+    int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[handle].mountpoint);
+    return (*filesystems[filesystem].seek)(task_table[get_current_task()]->file_handles[handle].internal_handle, offset, type);
 }
 
 int vfs_kseek(int handle, int offset, int type) {
@@ -409,9 +410,9 @@ int vfs_kfork(int handle) {
 int vfs_list(char *path, vfs_metadata_t* metadata, uint32_t entry) {
     char *local_path;
     char absolute_path[2048];
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
     
-    metadata = (vfs_metadata_t*)get_phys_addr(task_table[current_task]->page_directory, (size_t)metadata);
+    metadata = (vfs_metadata_t*)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)metadata);
     
     vfs_get_absolute_path(absolute_path, path);
 
@@ -425,8 +426,8 @@ int vfs_list(char *path, vfs_metadata_t* metadata, uint32_t entry) {
 }
 
 int vfs_get_metadata(char *path, vfs_metadata_t *metadata, int type) {
-    path = (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)path);
-    metadata = (vfs_metadata_t *)get_phys_addr(task_table[current_task]->page_directory, (size_t)metadata);
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
+    metadata = (vfs_metadata_t *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)metadata);
     return vfs_kget_metadata(path, metadata, type);
 }
 
@@ -454,9 +455,9 @@ int vfs_mount(char *mountpoint, char *device, char *filesystem) {
 
     mountpoints = krealloc(mountpoints, sizeof(mountpoint_t) * (mountpoints_ptr+1));
 
-    kstrcpy(mountpoints[mountpoints_ptr].mountpoint, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)mountpoint));
-    kstrcpy(mountpoints[mountpoints_ptr].device, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)device));
-    kstrcpy(mountpoints[mountpoints_ptr].filesystem, (char *)get_phys_addr(task_table[current_task]->page_directory, (size_t)filesystem));
+    kstrcpy(mountpoints[mountpoints_ptr].mountpoint, (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)mountpoint));
+    kstrcpy(mountpoints[mountpoints_ptr].device, (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)device));
+    kstrcpy(mountpoints[mountpoints_ptr].filesystem, (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)filesystem));
 
     kprint(KPRN_INFO, "Mounted `%s' on `%s' FS: `%s'",
         mountpoints[mountpoints_ptr].device,
@@ -468,21 +469,21 @@ int vfs_mount(char *mountpoint, char *device, char *filesystem) {
 }
 
 int vfs_close(int handle) {
-    int filesystem = vfs_translate_fs(task_table[current_task]->file_handles[handle].mountpoint);
-    int ret = (*filesystems[filesystem].close)(task_table[current_task]->file_handles[handle].internal_handle);
+    int filesystem = vfs_translate_fs(task_table[get_current_task()]->file_handles[handle].mountpoint);
+    int ret = (*filesystems[filesystem].close)(task_table[get_current_task()]->file_handles[handle].internal_handle);
     if (ret == -1)
         return -1;
 
     if (handle < 0)
         return -1;
         
-    if (handle >= task_table[current_task]->file_handles_ptr)
+    if (handle >= task_table[get_current_task()]->file_handles_ptr)
         return -1;
     
-    if (task_table[current_task]->file_handles[handle].free)
+    if (task_table[get_current_task()]->file_handles[handle].free)
         return -1;
     
-    task_table[current_task]->file_handles[handle].free = 1;
+    task_table[get_current_task()]->file_handles[handle].free = 1;
     
     return 0;
 }

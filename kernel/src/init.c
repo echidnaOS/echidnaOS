@@ -48,7 +48,7 @@ void kernel_init(void) {
 
     /* disable scheduler */
     kprint(KPRN_INFO, "INIT: ts_enable = 0;");
-    ts_enable = 0;
+    set_ts_enable(0);
 
     /* initialise ACPI */
     init_acpi();
@@ -125,7 +125,7 @@ void kernel_init(void) {
     kprint(KPRN_INFO, "INIT: DISABLE INTERRUPTS");
     DISABLE_INTERRUPTS;
     kprint(KPRN_INFO, "INIT: ts_enable = 1;");
-    ts_enable = 1;
+    set_ts_enable(1);
     kprint(KPRN_INFO, "INIT: Calling scheduler...");
     task_scheduler();
 

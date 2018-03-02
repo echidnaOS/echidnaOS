@@ -404,10 +404,30 @@ handler_machine_check:
         call except_machine_check
 
 handler_simd_exception:
+        sub rsp, 8
+        stmxcsr [rsp]
+        test dword [rsp], 1 << 1
+        jnz .mask_exceptions
+        test dword [rsp], 1 << 3
+        jnz .mask_exceptions
+        test dword [rsp], 1 << 4
+        jnz .mask_exceptions
+        test dword [rsp], 1 << 5
+        jnz .mask_exceptions
         call except_handler_setup
+        pop rdx
+        and rdx, 0xffffffff
         pop rdi
         pop rsi
         call except_simd_exception
+      .mask_exceptions:
+        ; mask dumb SIMD exceptions
+        or dword [rsp], 1 << 8 | 1 << 10 | 1 << 11 | 1 << 12
+        ; clear dumb flags
+        and dword [rsp], ~(1 << 1 | 1 << 3 | 1 << 4 | 1 << 5)
+        ldmxcsr [rsp]
+        add rsp, 8
+        iretq
 
 handler_virtualisation_exception:
         call except_handler_setup

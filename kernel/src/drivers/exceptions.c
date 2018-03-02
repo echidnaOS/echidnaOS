@@ -134,9 +134,9 @@ void except_machine_check(size_t fault_rip, size_t fault_cs) {
 
 }
 
-void except_simd_exception(size_t fault_rip, size_t fault_cs) {
+void except_simd_exception(size_t fault_rip, size_t fault_cs, size_t error_code) {
 
-    generic_exception(0, fault_rip, fault_cs, "SIMD exception", NULL);
+    generic_exception(error_code, fault_rip, fault_cs, "SIMD exception", NULL);
 
 }
 

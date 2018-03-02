@@ -74,6 +74,13 @@ int main(int argc, char** argv) {
         else if (!strcmp("float", s_argv[0])) {
             printf("pi: %f\n", 3.14);
         }
+        
+        else if (!strcmp("mstress", s_argv[0])) {
+            void *ptr;
+            while (ptr = malloc(0x10000))
+                printf("ptr = %p\n", ptr);
+            printf("out of memory\n");
+        }
 
         else if (!strcmp("read", s_argv[0])) {
             char buf[6] = {0};

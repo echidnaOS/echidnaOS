@@ -36,7 +36,7 @@ static const char *e820_type(uint32_t type) {
     }
 }
 
-static uint32_t mem_bitmap[BITMAP_FULL] = {0};
+static volatile uint32_t mem_bitmap[BITMAP_FULL] = {0};
 
 void init_paging(void) {
     full_identity_map();
@@ -71,9 +71,9 @@ static void wr_bitmap(size_t i, int val) {
     val &= 1;
 
     if (val)
-        mem_bitmap[entry] |= ((uint32_t)val << offset);
+        mem_bitmap[entry] |= (1 << offset);
     else
-        mem_bitmap[entry] &= ~((uint32_t)val << offset);
+        mem_bitmap[entry] &= ~(1 << offset);
 
     return;
 }

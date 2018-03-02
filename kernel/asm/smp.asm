@@ -10,11 +10,20 @@ global set_idle_cpu
 global get_ts_enable
 global set_ts_enable
 
+extern kalloc
+extern load_tss
+
 section .data
 
 %define smp_trampoline_size  smp_trampoline_end - smp_trampoline
 smp_trampoline:              incbin "blobs/smp_trampoline.bin"
 smp_trampoline_end:
+
+align 16
+TSS: dd 0
+     .esp dd 0
+     times 24 dd 0
+     .end:
 
 section .text
 
@@ -29,6 +38,27 @@ prepare_smp_trampoline:
     push rdi
     push rsi
     push rcx
+    push rdx
+
+    ; prepare TSS
+    mov dword [TSS.esp], edx
+    mov rdi, TSS.end - TSS
+    call kalloc
+    mov rdi, rax
+    mov rsi, TSS
+    mov rcx, TSS.end - TSS
+    rep movsb
+    mov rdi, rax
+    call load_tss
+
+    pop rdx
+    pop rcx
+    pop rsi
+    pop rdi
+    push rdi
+    push rsi
+    push rcx
+    push rdx
 
     ; prepare variables
     mov byte [0x510], 0
@@ -45,6 +75,7 @@ prepare_smp_trampoline:
     mov rcx, smp_trampoline_size
     rep movsb
 
+    pop rdx
     pop rcx
     pop rsi
     pop rdi

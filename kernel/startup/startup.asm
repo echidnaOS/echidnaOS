@@ -5,12 +5,13 @@
 
 extern kernel_init
 global startup
+global load_tss
 
 section .bss
 
 align 4096
 early_pagemap:
-    resd (512 * (8 + 1 + 1 + 1))
+    resq (512 * (8 + 1 + 1 + 1))
     ; 8 page tables (16 M)
     ; 1 page directory
     ; 1 pdpt
@@ -103,8 +104,8 @@ db 0x00				; Base (high 8 bits)
 dw TSS_end - TSS_begin - 1
 .TSSlow dw 0
 .TSSmid db 0
-db 10001001b
-db 00000000b
+.TSSflags1 db 10001001b
+.TSSflags2 db 00000000b
 .TSShigh db 0
 dd 0                ; res
 dd 0
@@ -157,6 +158,24 @@ clearscreen:
     rep stosw
     popa
     ret
+
+load_tss:
+    bits 64
+    ; addr in RDI
+    mov eax, edi
+    mov word [GDT.TSSlow], ax
+    mov eax, edi
+    and eax, 0xff0000
+    shr eax, 16
+    mov byte [GDT.TSSmid], al
+    mov eax, edi
+    and eax, 0xff000000
+    shr eax, 24
+    mov byte [GDT.TSShigh], al
+    mov byte [GDT.TSSflags1], 10001001b
+    mov byte [GDT.TSSflags2], 0
+    ret
+    bits 32
 
 startup:
     ; check if long mode is present

@@ -416,7 +416,7 @@ handler_simd_exception:
         jnz .mask_exceptions
         call except_handler_setup
         pop rdx
-        and rdx, 0xffffffff
+        mov edx, edx
         pop rdi
         pop rsi
         call except_simd_exception

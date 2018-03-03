@@ -21,19 +21,6 @@ int pid;
 
 extern char **environ;
 
-task_info_t prog_info = {
-    prog_path,
-    prog_stdin,
-    prog_stdout,
-    prog_stderr,
-    prog_pwd,
-    0,
-    0,
-    0,
-    0,
-    0
-};
-
 int no_block = 0;
 
 // built in shell
@@ -191,13 +178,13 @@ int main(int argc, char** argv) {
             }
         }
         
-        else if (!strcmp("beep", s_argv[0])) {
+        /*else if (!strcmp("beep", s_argv[0])) {
             if (s_argc == 1) continue;
             OS_vfs_write("/dev/pcspk", 0, atoi(s_argv[1]));
-        }
+        }*/
         
-        else if (!strcmp("rdspk", s_argv[0]))
-            printf("%d\n", OS_vfs_read("/dev/pcspk", 0));
+        /*else if (!strcmp("rdspk", s_argv[0]))
+            printf("%d\n", OS_vfs_read("/dev/pcspk", 0));*/
         
         else if (!strcmp("exit", s_argv[0])) return 0;
         

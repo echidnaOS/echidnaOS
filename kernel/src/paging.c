@@ -68,8 +68,6 @@ static void wr_bitmap(size_t i, int val) {
     size_t entry = i / 32;
     size_t offset = i % 32;
 
-    val &= 1;
-
     if (val)
         mem_bitmap[entry] |= (1 << offset);
     else
@@ -142,6 +140,20 @@ static pt_translation_t translate_virt_addr(size_t virt_addr) {
     pt_translation.pt_entry = (virt_addr & PT_ADDR_MASK) >> PT_ADDR_SHIFT;
 
     return pt_translation;
+}
+
+static size_t translate_phys_addr(size_t pml4_entry,
+                                  size_t pdpt_entry,
+                                  size_t pd_entry,
+                                  size_t pt_entry) {
+    size_t virt_addr = 0;
+
+    virt_addr |= pml4_entry << PML4_ADDR_SHIFT;
+    virt_addr |= pdpt_entry << PDPT_ADDR_SHIFT;
+    virt_addr |= pd_entry << PD_ADDR_SHIFT;
+    virt_addr |= pt_entry << PT_ADDR_SHIFT;
+
+    return virt_addr;
 }
 
 int map_page(pt_entry_t *pml4, size_t virt_addr, size_t phys_addr, size_t flags) {
@@ -292,11 +304,9 @@ int destroy_userspace(pt_entry_t *pml4) {
 
     pt_entry_t *pdpt;
     pt_entry_t *pd;
+    pt_entry_t *pt;
 
-    for (size_t i = TASK_BASE; is_mapped(pml4, i); i += PAGE_SIZE)
-        kmfree((char *)get_phys_addr(pml4, i), 1);
-
-    /* free the page tables */
+    /* cool and hip meme */
 
     for (size_t i = 0; i < PAGE_ENTRIES; i++) {
         if (pml4[i] & 1) {
@@ -306,7 +316,12 @@ int destroy_userspace(pt_entry_t *pml4) {
                     pd = (pt_entry_t *)(pdpt[i] & 0xfffffffffffff000);
                     for (size_t i = 0; i < PAGE_ENTRIES; i++) {
                         if (pd[i] & 1) {
-                            kmfree((pt_entry_t *)(pd[i] & 0xfffffffffffff000), 1);
+                            pt = (pt_entry_t *)(pd[i] & 0xfffffffffffff000);
+                            for (size_t i = 0; i < PAGE_ENTRIES; i++) {
+                                if (pt[i] & 1)
+                                    kmfree((pt_entry_t *)(pt[i] & 0xfffffffffffff000), 1);
+                            }
+                            kmfree(pt, 1);
                         }
                     }
                     kmfree(pd, 1);
@@ -320,24 +335,49 @@ int destroy_userspace(pt_entry_t *pml4) {
     return 0;
 }
 
-pt_entry_t *fork_userspace(pt_entry_t *pd) {
+pt_entry_t *fork_userspace(pt_entry_t *pml4) {
     /* allocate the new page directory */
 
-    pt_entry_t *new_pd = kmalloc(1);    /* allocate one page */
+    pt_entry_t *pdpt;
+    pt_entry_t *pd;
+    pt_entry_t *pt;
+
+    pt_entry_t *new_pml4 = kmalloc(1);    /* allocate one page */
     /* zero out the page */
     for (size_t i = 0; i < PAGE_SIZE; i++)
-        ((char *)new_pd)[i] = 0;
+        ((char *)new_pml4)[i] = 0;
 
     /* identity map the kernel (1 MiB - 16 MiB) */
     for (size_t i = KERNEL_BASE; i < KERNEL_TOP; i += PAGE_SIZE)
-        map_page(new_pd, i, i, 0b11);
+        map_page(new_pml4, i, i, 0b11);
 
-    for (size_t i = TASK_BASE; is_mapped(pd, i); i += PAGE_SIZE) {
-        size_t phys = get_phys_addr(pd, i);
-        size_t new_page = (size_t)kmalloc(1);
-        kmemcpy((char *)new_page, (char *)phys, PAGE_SIZE);
-        map_page(new_pd, i, new_page, 0x07);
+    /* cool and hip meme */
+
+    for (size_t i = 0; i < PAGE_ENTRIES; i++) {
+        if (pml4[i] & 1) {
+            pdpt = (pt_entry_t *)(pml4[i] & 0xfffffffffffff000);
+            for (size_t j = 0; j < PAGE_ENTRIES; j++) {
+                if (pdpt[j] & 1) {
+                    pd = (pt_entry_t *)(pdpt[j] & 0xfffffffffffff000);
+                    for (size_t k = 0; k < PAGE_ENTRIES; k++) {
+                        if (pd[k] & 1) {
+                            pt = (pt_entry_t *)(pd[k] & 0xfffffffffffff000);
+                            for (size_t l = 0; l < PAGE_ENTRIES; l++) {
+                                if (pt[l] & 1) {
+                                    if (translate_phys_addr(i, j, k, l) < 0x1000000)
+                                        goto ignore;
+                                    size_t new_page = (size_t)kmalloc(1);
+                                    kmemcpy((char *)new_page, (char *)(pt[l] & 0xfffffffffffff000), PAGE_SIZE);
+                                    map_page(new_pml4, translate_phys_addr(i, j, k, l), new_page, 0x07);
+                                }
+                                ignore: ;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    return new_pd;
+    return new_pml4;
 }

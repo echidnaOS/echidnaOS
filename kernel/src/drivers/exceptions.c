@@ -112,6 +112,12 @@ void except_gen_prot_fault(size_t error_code, size_t fault_rip, size_t fault_cs)
 
 void except_page_fault(size_t error_code, size_t fault_rip, size_t fault_cs) {
 
+    uint64_t cr2;
+    asm volatile (
+        "mov %0, cr2;"
+        : "=r" (cr2)
+    );
+    kprint(KPRN_ERR, "cr2: %X", cr2);
     generic_exception(error_code, fault_rip, fault_cs, "Page fault", NULL);
 
 }

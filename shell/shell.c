@@ -46,9 +46,13 @@ int main(int argc, char** argv) {
         get_argv(s_argv, input);
 
         if (!strcmp("heap", s_argv[0])) {
-            printf("heap base: %d\n"
-                   "heap size: %d\n", OS_get_heap_base(), OS_get_heap_size());
-            OS_resize_heap(0x10000);
+            for (;;) {
+                printf("heap base: %llu\n"
+                       "heap size: %llu\n", OS_get_heap_base(), OS_get_heap_size());
+                size_t sz = OS_get_heap_size();
+                OS_resize_heap(OS_get_heap_size() + 0x10000);
+                *((char *)(OS_get_heap_base() + sz)) = 0x00;
+            }
         }
 
         else if (!strcmp("col", s_argv[0]))

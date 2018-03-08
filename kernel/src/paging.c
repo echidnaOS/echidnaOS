@@ -6,8 +6,8 @@
 #include <task.h>
 #include <klib.h>
 
-#define BITMAP_MAX (memory_size / PAGE_SIZE)
-#define BITMAP_FULL ((0x100000000 / PAGE_SIZE) / 32)
+#define MBITMAP_FULL ((0x100000000 / PAGE_SIZE) / 32)
+size_t BITMAP_FULL = MBITMAP_FULL;
 #define BITMAP_BASE (MEMORY_BASE / PAGE_SIZE)
 
 typedef struct {
@@ -36,26 +36,9 @@ static const char *e820_type(uint32_t type) {
     }
 }
 
-static volatile uint32_t mem_bitmap[BITMAP_FULL] = {0};
-
-void init_paging(void) {
-    full_identity_map();
-
-    /* get e820 memory map */
-    get_e820(e820_map);
-
-    /* print out memory map */
-    for (size_t i = 0; e820_map[i].type; i++)
-        kprint(KPRN_INFO, "e820: [%X -> %X] : %X  <%s>", e820_map[i].base,
-                                              e820_map[i].base + e820_map[i].length,
-                                              e820_map[i].length,
-                                              e820_type(e820_map[i].type));
-
-    for (size_t i = 0; i < BITMAP_FULL; i++)
-        mem_bitmap[i] = 0;
-
-    return;
-}
+static volatile uint32_t *mem_bitmap;
+static volatile uint32_t initial_bitmap[MBITMAP_FULL];
+static volatile uint32_t *tmp_bitmap;
 
 static int rd_bitmap(size_t i) {
     size_t entry = i / 32;
@@ -76,6 +59,71 @@ static void wr_bitmap(size_t i, int val) {
     return;
 }
 
+void bmrealloc(void) {
+    /* makes the bitmap a bit bigger */
+    if ((tmp_bitmap = kalloc((BITMAP_FULL + 2048) * sizeof(uint32_t))) == 0)
+        panic("", 0);
+
+    kmemcpy(tmp_bitmap, mem_bitmap, BITMAP_FULL * sizeof(uint32_t));
+    for (size_t i = BITMAP_FULL; i < BITMAP_FULL + 2048; i++)
+        tmp_bitmap[i] = 0xffffffff;
+
+    BITMAP_FULL += 2048;
+
+    asm volatile (
+        "xchg rax, rdx;"
+        : "=a" (tmp_bitmap), "=d" (mem_bitmap)
+        : "a" (tmp_bitmap), "d" (mem_bitmap)
+    );
+
+    kfree(tmp_bitmap);
+
+    return;
+}
+
+void init_paging(void) {
+    full_identity_map();
+
+    for (size_t i = 0; i < BITMAP_FULL; i++)
+        initial_bitmap[i] = 0;
+
+    mem_bitmap = initial_bitmap;
+    tmp_bitmap = kalloc(BITMAP_FULL * sizeof(uint32_t));
+    for (size_t i = 0; i < BITMAP_FULL; i++)
+        tmp_bitmap[i] = initial_bitmap[i];
+    mem_bitmap = tmp_bitmap;
+
+    for (size_t i = memory_size / PAGE_SIZE; i < BITMAP_FULL * 32; i++)
+        wr_bitmap(i, 1);
+
+    /* get e820 memory map */
+    get_e820(e820_map);
+
+    /* print out memory map */
+    for (size_t i = 0; e820_map[i].type; i++) {
+        kprint(KPRN_INFO, "e820: [%X -> %X] : %X  <%s>", e820_map[i].base,
+                                              e820_map[i].base + e820_map[i].length,
+                                              e820_map[i].length,
+                                              e820_type(e820_map[i].type));
+
+        if (e820_map[i].base >= memory_size) {
+            for (size_t j = 0; (j * PAGE_SIZE) < e820_map[i].length; j++) {
+                size_t addr = e820_map[i].base + j * PAGE_SIZE;
+                size_t page = addr / PAGE_SIZE;
+                map_page(kernel_pagemap, addr, addr, 0x03);
+                while (page >= BITMAP_FULL * 32)
+                    bmrealloc();
+                if (e820_map[i].type == 1)
+                    wr_bitmap(page, 0);
+                else
+                    wr_bitmap(page, 1);
+            }
+        }
+    }
+
+    return;
+}
+
 void *kmalloc(size_t pages) {
     /* allocate memory pages using a bitmap to track free and used pages */
 
@@ -83,7 +131,7 @@ void *kmalloc(size_t pages) {
     size_t pg_counter = 0;
     size_t i;
     size_t strt_page;
-    for (i = BITMAP_BASE; i < BITMAP_MAX; i++) {
+    for (i = BITMAP_BASE; i < BITMAP_FULL; i++) {
         if (!rd_bitmap(i))
             pg_counter++;
         else

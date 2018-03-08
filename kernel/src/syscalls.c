@@ -120,16 +120,6 @@ int resize_heap(size_t heap_size) {
     return 0;
 }
 
-void enter_iowait_status(char *dev, uint64_t loc, uint8_t payload, int type) {
-    dev = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)dev);
-    kstrcpy(task_table[get_current_task()]->iowait_dev, dev);
-    task_table[get_current_task()]->iowait_loc = loc;
-    task_table[get_current_task()]->status = KRN_STAT_IOWAIT_TASK;
-    task_table[get_current_task()]->iowait_type = type;
-    task_table[get_current_task()]->iowait_payload = payload;
-    return;
-}
-
 void enter_iowait_status1(int handle, uint32_t ptr, int len, int type, int done) {
     task_table[get_current_task()]->status = KRN_STAT_IOWAIT_TASK;
     task_table[get_current_task()]->iowait_type = type;
@@ -144,17 +134,5 @@ void pwd(char *pwd_dump) {
     pwd_dump = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)pwd_dump);
 
     kstrcpy(pwd_dump, task_table[get_current_task()]->pwd);
-    return;
-}
-
-void what_stdin(char *dump) {
-    return;
-}
-
-void what_stdout(char *dump) {
-    return;
-}
-
-void what_stderr(char *dump) {
     return;
 }

@@ -122,9 +122,15 @@ uint64_t power(uint64_t x, uint64_t y) {
     return res;
 }
 
+#ifdef _SERIAL_KERNEL_OUTPUT_
+  extern int serial_kernel_output_ready;
+#endif
+
 void kputs(const char *string) {
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
+      if (!serial_kernel_output_ready)
+          return;
       for (size_t i = 0; string[i]; i++) {
           if (string[i] == '\n') {
               com_io_wrapper(0, 0, 1, 0x0d);
@@ -149,6 +155,8 @@ void tty_kputs(const char *string, int tty) {
 void knputs(const char *string, size_t len) {
 
     #ifdef _SERIAL_KERNEL_OUTPUT_
+      if (!serial_kernel_output_ready)
+          return;
       for (size_t i = 0; i < len; i++)
           com_io_wrapper(0, 0, 1, string[i]);
     #else

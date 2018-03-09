@@ -32,9 +32,14 @@ static com_device devices[MAX_PORTS];
 com_device init_com_device(uint16_t port);
 
 #ifdef _SERIAL_KERNEL_OUTPUT_
+
+  int serial_kernel_output_ready = 0;
+
   void debug_kernel_console_init(void) {
 
       devices[0] = init_com_device(com_ports[0]);
+
+      serial_kernel_output_ready = 1;
 
       return;
 

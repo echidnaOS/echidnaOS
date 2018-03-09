@@ -50,7 +50,8 @@ int main(int argc, char** argv) {
                 printf("heap base: %llu\n"
                        "heap size: %llu\n", OS_get_heap_base(), OS_get_heap_size());
                 size_t sz = OS_get_heap_size();
-                OS_resize_heap(OS_get_heap_size() + 0x10000);
+                if (OS_resize_heap(OS_get_heap_size() + 0x10000) == -1)
+                    break;
                 *((char *)(OS_get_heap_base() + sz)) = 0x00;
             }
         }

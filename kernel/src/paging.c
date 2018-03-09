@@ -131,7 +131,7 @@ void *kmalloc(size_t pages) {
     size_t pg_counter = 0;
     size_t i;
     size_t strt_page;
-    for (i = BITMAP_BASE; i < BITMAP_FULL; i++) {
+    for (i = BITMAP_BASE; i < BITMAP_FULL * 32; i++) {
         if (!rd_bitmap(i))
             pg_counter++;
         else

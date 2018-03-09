@@ -52,7 +52,8 @@ int main(int argc, char** argv) {
                 size_t sz = OS_get_heap_size();
                 if (OS_resize_heap(OS_get_heap_size() + 0x10000) == -1)
                     break;
-                *((char *)(OS_get_heap_base() + sz)) = 0x00;
+                for (size_t i = 0; i < 0x10000; i++)
+                    ((char *)(OS_get_heap_base() + sz))[i] = 0x00;
             }
         }
 

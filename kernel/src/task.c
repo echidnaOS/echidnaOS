@@ -174,21 +174,11 @@ int execve(char *path, char **argv, char **envp) {
         if (p_vaddr % PAGE_SIZE)
             pages++;
         for (size_t i = 0; i < pages; i++) {
-            int dont_load_again = 0;
             void *ptr = kmalloc(1);
             map_page(pd, ((p_vaddr & ~(0xfff)) + i * PAGE_SIZE), ptr, 0x07);
-            vfs_kseek(tmp_handle, p_offset + i * PAGE_SIZE, SEEK_SET);
-            if (p_filesz < PAGE_SIZE) {
-                if (p_filesz)
-                    vfs_kuread(tmp_handle, (char *)get_phys_addr(pd, (p_vaddr & ~(0xfff)) + i * PAGE_SIZE), p_filesz);
-                dont_load_again = 1;
-                continue;
-            }
-            if (!dont_load_again) {
-                vfs_kuread(tmp_handle, (char *)get_phys_addr(pd, (p_vaddr & ~(0xfff)) + i * PAGE_SIZE), PAGE_SIZE);
-                p_filesz -= PAGE_SIZE;
-            }
         }
+        vfs_kseek(tmp_handle, p_offset, SEEK_SET);
+        vfs_kuread(tmp_handle, (char *)get_phys_addr(pd, p_vaddr), p_filesz);
     }
 
 
@@ -200,13 +190,13 @@ int execve(char *path, char **argv, char **envp) {
     /* map stack */
     for (size_t i = 0; i < DEFAULT_STACK / PAGE_SIZE; i++) {
         void *ptr = kmalloc(1);
-        map_page(pd, 0xf0000000 + i * PAGE_SIZE, ptr, 0x07);
+        map_page(pd, DEF_STACK_BASE + i * PAGE_SIZE, ptr, 0x07);
     }
-    task_table[get_current_task()]->cpu.rsp = ((0xf0000000 + DEFAULT_STACK - 1) & ~(0xf)) + 0x08;
+    task_table[get_current_task()]->cpu.rsp = ((DEF_STACK_BASE + DEFAULT_STACK - 1) & ~(0xf)) + 0x08;
 
     task_table[get_current_task()]->cpu.rip = e_entry;
 
-    task_table[get_current_task()]->heap_base = 0x80000000;
+    task_table[get_current_task()]->heap_base = DEF_STACK_BASE + DEFAULT_STACK;
     task_table[get_current_task()]->heap_size = 0;
 
     *((int *)(base + 0x1000)) = argc;

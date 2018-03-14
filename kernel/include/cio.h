@@ -10,7 +10,7 @@
     asm volatile (              \
                     "sti;"      \
                     "1:"        \
-                    "mov esp, 0xeffff0;"    \
+                    "mov rsp, qword ptr fs:[0x8];"    \
                     "hlt;"      \
                     "jmp 1b;"   \
                  )

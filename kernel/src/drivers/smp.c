@@ -5,8 +5,11 @@
 #include <acpi.h>
 #include <system.h>
 #include <paging.h>
+#include <task.h>
 
 #define CPU_STACK_SIZE 4096
+
+static size_t cpu_stack_top = 0xeffff0;
 
 void ap_kernel_entry(void) {
     /* APs jump here after initialisation */
@@ -17,9 +20,10 @@ void ap_kernel_entry(void) {
     /* enable lapic */
     lapic_enable();
 
-    for (;;) {
-        asm volatile ("sti; hlt");
-    }
+    set_ts_enable(1);
+
+    /* call scheduler */
+    task_scheduler();
 
     return;
 }
@@ -27,14 +31,11 @@ void ap_kernel_entry(void) {
 void init_cpu0_local(void *);
 
 void init_cpu0(void) {
-    /* allocate a new stack for CPU 0 */
-    uint8_t *kernel_stack = kalloc(CPU_STACK_SIZE);
-    kernel_stack += CPU_STACK_SIZE - 0x10;
-
     /* create CPU 0 local struct */
     cpu_local_t *cpu_local = kalloc(sizeof(cpu_local_t));
     cpu_local->cpu_number = 0;
-    cpu_local->kernel_stack = kernel_stack;
+    cpu_local->kernel_stack = cpu_stack_top;
+    cpu_stack_top -= CPU_STACK_SIZE;
     cpu_local->current_task = 0;
     cpu_local->idle_cpu = 1;
 
@@ -65,18 +66,16 @@ void *prepare_smp_trampoline(void *, pt_entry_t *, uint8_t *, cpu_local_t *);
 int check_ap_flag(void);
 
 static int start_ap(uint8_t target_apic_id, int cpu_number) {
-    /* allocate a new stack for the CPU */
-    uint8_t *kernel_stack = kalloc(CPU_STACK_SIZE);
-    kernel_stack += CPU_STACK_SIZE - 0x10;
-
     /* create CPU local struct */
     cpu_local_t *cpu_local = kalloc(sizeof(cpu_local_t));
     cpu_local->cpu_number = cpu_number;
-    cpu_local->kernel_stack = kernel_stack;
+    cpu_local->kernel_stack = cpu_stack_top;
     cpu_local->current_task = 0;
     cpu_local->idle_cpu = 1;
 
-    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, kernel_stack, cpu_local);
+    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, cpu_stack_top, cpu_local);
+
+    cpu_stack_top -= CPU_STACK_SIZE;
 
     /* Send the INIT IPI */
     lapic_write(APICREG_ICR1, ((uint32_t)target_apic_id) << 24);

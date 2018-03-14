@@ -9,6 +9,8 @@
 
 #define FAILURE -1
 
+volatile int general_ts_enable = 0;
+
 task_t **task_table;
 
 void task_init(void) {
@@ -272,6 +274,7 @@ int kexec(  char *path, char **argv, char **envp,
     } else {
         do_not_schedule = 0;
         set_current_task(0);
+        task_table[new_pid]->cpu_number = 0;
         return 0;
     }
 }
@@ -282,8 +285,7 @@ void task_fork(cpu_t *cpu_state) {
 
     task_table[get_current_task()]->cpu = *cpu_state;
 
-    for (size_t i = 0; i < 512; i++)
-        task_table[get_current_task()]->fxstate[i] = fxstate[i];
+    dump_fx_state(task_table[get_current_task()]->fxstate);
 
     task_t new_process = *task_table[get_current_task()];
     /* parent */
@@ -331,8 +333,7 @@ void task_switch(cpu_t *cpu_state) {
 
     task_table[get_current_task()]->cpu = *cpu_state;
 
-    for (size_t i = 0; i < 512; i++)
-        task_table[get_current_task()]->fxstate[i] = fxstate[i];
+    dump_fx_state(task_table[get_current_task()]->fxstate);
 
     set_current_task(get_current_task() + 1);
     task_scheduler();
@@ -343,6 +344,8 @@ extern int write_stat;
 
 void task_scheduler(void) {
     int c;
+
+    while (!general_ts_enable);
 
     for (;;) {
         if (!task_table[get_current_task()]) {
@@ -360,7 +363,18 @@ void task_scheduler(void) {
             set_current_task(get_current_task() + 1);
             continue;
         }
+
+        if (!get_cpu_number())
+            goto parser;
+
+        if (task_table[get_current_task()]->cpu_number != get_cpu_number()
+            || task_table[get_current_task()]->status != KRN_STAT_ACTIVE_TASK) {
+            set_current_task(get_current_task() + 1);
+            continue;
+        }
         
+parser:
+        /* only CPU #0 will parse any state other than active */
         switch (task_table[get_current_task()]->status) {
             case KRN_STAT_IOWAIT_TASK:
                 switch (task_table[get_current_task()]->iowait_type) {
@@ -395,6 +409,10 @@ void task_scheduler(void) {
                     panic("unrecognised iowait_type", task_table[get_current_task()]->iowait_type);
                 }
             case KRN_STAT_ACTIVE_TASK:
+                if (task_table[get_current_task()]->cpu_number != get_cpu_number()) {
+                    set_current_task(get_current_task() + 1);
+                    continue;
+                }
                 set_idle_cpu(0);
                 task_spinup((void *)(&(task_table[get_current_task()]->cpu)), task_table[get_current_task()]->page_directory, task_table[get_current_task()]->fxstate);
             case KRN_STAT_ZOMBIE_TASK:

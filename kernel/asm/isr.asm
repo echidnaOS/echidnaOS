@@ -89,7 +89,6 @@
 %endmacro
 
 ; misc global references
-global fxstate
 global read_stat
 global write_stat
 
@@ -179,7 +178,6 @@ extern swait
 section .data
 
 align 16
-fxstate: times 512 db 0
 
 read_stat dd 0
 write_stat dd 0
@@ -442,14 +440,6 @@ handler_security_exception:
         call except_security_exception
 
 extern get_cpu_number
-extern kprint
-
-local_irq0_handler:
-        call eoi
-        pop rax
-        mov cr3, rax    ; restore context
-        popam
-        iretq
 
 irq0_handler:
         ; first execute all the time-based routines (tty refresh...)
@@ -463,8 +453,9 @@ irq0_handler:
         mov cr3, rax
         call get_cpu_number
         test rax, rax
-        jnz local_irq0_handler
+        jnz .skip_timer_interrupt
         call timer_interrupt
+    .skip_timer_interrupt:
         call eoi
         ; check whether we want task switches or not
         cmp dword [fs:0032], 0
@@ -474,7 +465,7 @@ irq0_handler:
         mov ax, 0x10
         mov ss, ax
         mov rdi, rsp
-        fxsave [fxstate]
+        fxsave [fs:0048]
         call task_switch
     .ts_abort:
         pop rax
@@ -564,7 +555,7 @@ read_isr:
         pop rdi
         call enter_iowait_status1
         mov rdi, rsp
-        fxsave [fxstate]
+        fxsave [fs:0048]
         call task_switch
 
 write_isr:
@@ -584,7 +575,7 @@ write_isr:
         pop rdi
         call enter_iowait_status1
         mov rdi, rsp
-        fxsave [fxstate]
+        fxsave [fs:0048]
         call task_switch
 
 wait_isr:
@@ -598,7 +589,7 @@ wait_isr:
         mov rdi, rcx
         call swait
         mov rdi, rsp
-        fxsave [fxstate]
+        fxsave [fs:0048]
         call task_switch
 
 fork_isr:
@@ -610,5 +601,5 @@ fork_isr:
         mov rax, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rax
         mov rdi, rsp
-        fxsave [fxstate]
+        fxsave [fs:0048]
         call task_fork

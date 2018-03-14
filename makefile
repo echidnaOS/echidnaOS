@@ -31,7 +31,7 @@ kernel/initramfs: echidnafs/echfs-utils shell_target
 
 echidna.img: echidnafs/echfs-utils kernel_target
 	nasm bootloader/bootloader.asm -f bin -o echidna.img
-	dd bs=32768 count=16384 if=/dev/zero >> ./echidna.img
+	dd bs=32768 count=32768 if=/dev/zero >> ./echidna.img
 	truncate --size=-4096 echidna.img
 	echidnafs/echfs-utils echidna.img format 32768
 	echidnafs/echfs-utils echidna.img import ./kernel/echidna.bin echidna.bin

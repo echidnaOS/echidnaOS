@@ -10,6 +10,8 @@ typedef struct {
     int current_task;
     int idle_cpu;
     int ts_enable;
+    uint64_t reserved;
+    uint8_t fxstate[512] __attribute__((aligned(16)));
 } cpu_local_t;
 
 int get_cpu_number(void);
@@ -20,6 +22,9 @@ int get_idle_cpu(void);
 void set_idle_cpu(int);
 int get_ts_enable(void);
 void set_ts_enable(int);
+void dump_fx_state(void *);
+
+extern volatile int general_ts_enable;
 
 void map_PIC(uint8_t PIC0Offset, uint8_t PIC1Offset);
 void set_PIC0_mask(uint8_t mask);
@@ -39,8 +44,6 @@ void load_IDT(void);
 
 extern volatile uint64_t uptime_raw;
 extern volatile uint64_t uptime_sec;
-
-extern uint8_t fxstate[512];
 
 
 #endif

@@ -65,13 +65,13 @@ void kernel_init(void) {
 
     /****** END OF EARLY BOOTSTRAP ******/
 
-    init_aps();
-
     /* initialise keyboard driver */
     keyboard_init();
 
     /* initialise scheduler */
     task_init();
+
+    init_aps();
 
     kprint(KPRN_INFO, "INIT: Initialising drivers...");
     /******* DRIVER INITIALISATION CALLS GO HERE *******/
@@ -124,9 +124,10 @@ void kernel_init(void) {
     /* launch scheduler for the first time */
     kprint(KPRN_INFO, "INIT: DISABLE INTERRUPTS");
     DISABLE_INTERRUPTS;
-    kprint(KPRN_INFO, "INIT: ts_enable = 1;");
     set_ts_enable(1);
-    kprint(KPRN_INFO, "INIT: Calling scheduler...");
+    kprint(KPRN_INFO, "INIT: general_ts_enable = 1;");
+    general_ts_enable = 1;
+    //kprint(KPRN_INFO, "INIT: Calling scheduler...");
     task_scheduler();
 
 }

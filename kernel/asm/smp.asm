@@ -9,6 +9,7 @@ global get_idle_cpu
 global set_idle_cpu
 global get_ts_enable
 global set_ts_enable
+global dump_fx_state
 
 extern kalloc
 extern load_tss
@@ -134,4 +135,14 @@ get_ts_enable:
 
 set_ts_enable:
     mov qword [fs:0032], rdi
+    ret
+
+dump_fx_state:
+    mov rcx, 512 / 8
+    mov rsi, 48
+  .loop:
+    mov rax, qword [fs:rsi]
+    add rsi, 8
+    stosq
+    loop .loop
     ret

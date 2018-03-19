@@ -36,6 +36,7 @@ bits 64
 prepare_smp_trampoline:
     ; entry point in rdi, page table in rsi
     ; stack pointer in rdx, cpu number in rcx
+    ; tss buffer in r8
     push rdi
     push rsi
     push rcx
@@ -43,13 +44,11 @@ prepare_smp_trampoline:
 
     ; prepare TSS
     mov dword [TSS.esp], edx
-    mov rdi, TSS.end - TSS
-    call kalloc
-    mov rdi, rax
+    mov rdi, r8
     mov rsi, TSS
     mov rcx, TSS.end - TSS
     rep movsb
-    mov rdi, rax
+    mov rdi, r8
     call load_tss
 
     pop rdx

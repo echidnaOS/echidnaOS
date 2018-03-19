@@ -18,6 +18,9 @@
 #define MAX_MADT 128
 
 
+#define MAX_CPUS 32
+
+
 // tty tunables
 
 #define KB_L1_SIZE 256

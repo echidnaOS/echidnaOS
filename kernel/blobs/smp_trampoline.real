@@ -36,6 +36,7 @@ wrmsr
 
 mov eax, cr0
 or eax, 0x80000001
+and eax, ~(0x60000000)
 mov cr0, eax
 
 jmp 0x08:.mode64

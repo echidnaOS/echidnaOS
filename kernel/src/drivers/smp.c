@@ -9,7 +9,13 @@
 
 #define CPU_STACK_SIZE 8192
 
+typedef struct {
+    uint32_t entries[26];
+} tss_t;
+
 static size_t cpu_stack_top = 0xeffff0;
+static tss_t cpus_tss[MAX_CPUS] __attribute__((aligned(16)));
+static size_t tss_ptr = 0;
 
 void ap_kernel_entry(void) {
     /* APs jump here after initialisation */
@@ -62,10 +68,14 @@ void init_aps(void) {
     return;
 }
 
-void *prepare_smp_trampoline(void *, pt_entry_t *, uint8_t *, cpu_local_t *);
+void *prepare_smp_trampoline(void *, pt_entry_t *, uint8_t *, cpu_local_t *, void *);
 int check_ap_flag(void);
 
 static int start_ap(uint8_t target_apic_id, int cpu_number) {
+    if (tss_ptr + 1 == MAX_CPUS) {
+        panic("CPU limit exceeded", tss_ptr);
+    }
+
     /* create CPU local struct */
     cpu_local_t *cpu_local = kalloc(sizeof(cpu_local_t));
     cpu_local->cpu_number = cpu_number;
@@ -73,7 +83,7 @@ static int start_ap(uint8_t target_apic_id, int cpu_number) {
     cpu_local->current_task = 0;
     cpu_local->idle_cpu = 1;
 
-    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, cpu_stack_top, cpu_local);
+    void *trampoline = prepare_smp_trampoline(ap_kernel_entry, kernel_pagemap, cpu_stack_top, cpu_local, &cpus_tss[tss_ptr++]);
 
     cpu_stack_top -= CPU_STACK_SIZE;
 

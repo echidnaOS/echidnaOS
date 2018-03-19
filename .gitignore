@@ -20,3 +20,4 @@
 /kernel/blobs/*.bin
 /kernel/echidna.bin
 /bochsout.txt
+/bx_enh_dbg.ini

@@ -7,7 +7,7 @@
 #include <paging.h>
 #include <task.h>
 
-#define CPU_STACK_SIZE 4096
+#define CPU_STACK_SIZE 8192
 
 static size_t cpu_stack_top = 0xeffff0;
 

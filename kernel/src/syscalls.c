@@ -120,6 +120,16 @@ int resize_heap(size_t heap_size) {
     return 0;
 }
 
+void enter_defer_status(size_t syscall, size_t arg0, size_t arg1, size_t arg2, size_t arg3) {
+    task_table[get_current_task()]->status = KRN_STAT_DEFER_TASK;
+    task_table[get_current_task()]->defer_syscall = syscall;
+    task_table[get_current_task()]->defer_arg0 = arg0;
+    task_table[get_current_task()]->defer_arg1 = arg1;
+    task_table[get_current_task()]->defer_arg2 = arg2;
+    task_table[get_current_task()]->defer_arg3 = arg3;
+    return;
+}
+
 void enter_iowait_status1(int handle, uint32_t ptr, int len, int type, int done) {
     task_table[get_current_task()]->status = KRN_STAT_IOWAIT_TASK;
     task_table[get_current_task()]->iowait_type = type;

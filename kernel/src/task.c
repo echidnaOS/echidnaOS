@@ -71,44 +71,8 @@ int execve(char *path, char **argv, char **envp) {
     vfs_metadata_t metadata;
     if (vfs_kget_metadata(path, &metadata, FILE_TYPE) == -2) return FAILURE;
 
-    // use the new VFS stack
-    int tmp_handle = vfs_kopen(path, O_RDWR, 0);
-
-    /********** ELF **********/
-    uint32_t e_magicnumber;
-    vfs_kuread(tmp_handle, &e_magicnumber, 4);
-    if (e_magicnumber != 0x464c457f) {
-        kprint(KPRN_ERR, "ELF Loader: ELF magic number invalid. Not a ELF file.");
-        vfs_kclose(tmp_handle);
-        return FAILURE;
-    }
-    vfs_kseek(tmp_handle, 0x10, SEEK_SET);
-    uint16_t e_type;
-    vfs_kuread(tmp_handle, &e_type, 2);
-    if (e_type != 0x0002) {
-        kprint(KPRN_ERR, "ELF Loader: Not a ELF executable.");
-        vfs_kclose(tmp_handle);
-        return FAILURE;
-    }
-    vfs_kseek(tmp_handle, 0x18, SEEK_SET);
-    uint64_t e_entry;
-    vfs_kuread(tmp_handle, &e_entry, 8);
-    uint64_t e_phoff;
-    vfs_kuread(tmp_handle, &e_phoff, 8);
-    uint64_t e_shoff;
-    vfs_kuread(tmp_handle, &e_shoff, 8);
-    vfs_kseek(tmp_handle, 0x36, SEEK_SET);
-    uint16_t e_phentsize;
-    vfs_kuread(tmp_handle, &e_phentsize, 2);
-    uint16_t e_phnum;
-    vfs_kuread(tmp_handle, &e_phnum, 2);
-    uint16_t e_shentsize;
-    vfs_kuread(tmp_handle, &e_shentsize, 2);
-    uint16_t e_shnum;
-    vfs_kuread(tmp_handle, &e_shnum, 2);
-    uint16_t e_shstrndx;
-    vfs_kuread(tmp_handle, &e_shstrndx, 2);
-    /********** END ELF **********/
+    size_t pages = (TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) / PAGE_SIZE;
+    if ((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) % PAGE_SIZE) pages++;
 
     /* copy argv in a tmp buffer */
     for (i = 0; i < 256; i++) {
@@ -140,65 +104,25 @@ int execve(char *path, char **argv, char **envp) {
     for (size_t i = 0; i < 512; i++)
         task_table[get_current_task()]->fxstate[i] = 0;
 
+    // load program into memory
+    size_t base = (size_t)kmalloc(pages);
+
+    // use the new VFS stack
+    int tmp_handle = vfs_kopen(path, O_RDWR, 0);
+    vfs_kuread(tmp_handle, (char *)(base + TASK_RESERVED_SPACE), metadata.size);
+    vfs_kclose(tmp_handle);
+
     // generate the page tables
     pt_entry_t *pd = new_userspace();
     // map the process's memory
+    for (size_t i = 0; i < pages; i++)
+        map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
     task_table[get_current_task()]->page_directory = pd;
 
-    // load program into memory
+    task_table[get_current_task()]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
+    task_table[get_current_task()]->cpu.rip = TASK_BASE + TASK_RESERVED_SPACE;
 
-    for (size_t i = 0; i < 0x10; i++) {
-        void *ptr = kmalloc(1);
-        map_page(pd, 0x1000000 + i * PAGE_SIZE, ptr, 0x07);
-    }
-
-    size_t base = (size_t)get_phys_addr(pd, 0x1000000);
-
-    /********** ELF **********/
-    for (size_t i = 0; i < e_phnum; i++) {
-        vfs_kseek(tmp_handle, e_phoff + i * e_phentsize + 0x08, SEEK_SET);
-        uint64_t p_offset;
-        vfs_kuread(tmp_handle, &p_offset, 8);
-        uint64_t p_vaddr;
-        vfs_kuread(tmp_handle, &p_vaddr, 8);
-        uint64_t p_paddr;
-        vfs_kuread(tmp_handle, &p_paddr, 8);
-        uint64_t p_filesz;
-        vfs_kuread(tmp_handle, &p_filesz, 8);
-        uint64_t p_memsz;
-        vfs_kuread(tmp_handle, &p_memsz, 8);
-        uint64_t p_align;
-        vfs_kuread(tmp_handle, &p_align, 8);
-
-        uint64_t pages = p_memsz / PAGE_SIZE;
-        if (p_memsz % PAGE_SIZE)
-            pages++;
-        if (p_vaddr % PAGE_SIZE)
-            pages++;
-        for (size_t i = 0; i < pages; i++) {
-            void *ptr = kmalloc(1);
-            map_page(pd, ((p_vaddr & ~(0xfff)) + i * PAGE_SIZE), ptr, 0x07);
-        }
-        vfs_kseek(tmp_handle, p_offset, SEEK_SET);
-        vfs_kuread(tmp_handle, (char *)get_phys_addr(pd, p_vaddr), p_filesz);
-    }
-
-
-    /********** END ELF **********/
-
-
-    vfs_kclose(tmp_handle);
-
-    /* map stack */
-    for (size_t i = 0; i < DEFAULT_STACK / PAGE_SIZE; i++) {
-        void *ptr = kmalloc(1);
-        map_page(pd, DEF_STACK_BASE + i * PAGE_SIZE, ptr, 0x07);
-    }
-    task_table[get_current_task()]->cpu.rsp = ((DEF_STACK_BASE + DEFAULT_STACK - 1) & ~(0xf)) + 0x08;
-
-    task_table[get_current_task()]->cpu.rip = e_entry;
-
-    task_table[get_current_task()]->heap_base = DEF_STACK_BASE + DEFAULT_STACK;
+    task_table[get_current_task()]->heap_base = TASK_BASE + pages * PAGE_SIZE;
     task_table[get_current_task()]->heap_size = 0;
 
     *((int *)(base + 0x1000)) = argc;
@@ -342,6 +266,8 @@ void task_switch(cpu_t *cpu_state) {
 extern int read_stat;
 extern int write_stat;
 
+size_t syscall_execute(size_t, size_t, size_t, size_t, size_t);
+
 void task_scheduler(void) {
     int c;
 
@@ -376,37 +302,47 @@ void task_scheduler(void) {
 parser:
         /* only CPU #0 will parse any state other than active */
         switch (task_table[get_current_task()]->status) {
+            case KRN_STAT_DEFER_TASK: ;
+                size_t syscall_ret = syscall_execute(
+                    task_table[get_current_task()]->defer_arg0,
+                    task_table[get_current_task()]->defer_arg1,
+                    task_table[get_current_task()]->defer_arg2,
+                    task_table[get_current_task()]->defer_arg3,
+                    task_table[get_current_task()]->defer_syscall
+                );
+                task_table[get_current_task()]->cpu.rax = (uint64_t)(syscall_ret);
+                task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
+                set_current_task(get_current_task() + 1);
+                continue;
             case KRN_STAT_IOWAIT_TASK:
                 switch (task_table[get_current_task()]->iowait_type) {
-                int done;
-                case 2:
-                    done = read(    task_table[get_current_task()]->iowait_handle,
+                    int done;
+                    case 2:
+                        done = read(task_table[get_current_task()]->iowait_handle,
                                     (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
                                     task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
-                    if (read_stat) {
-                        task_table[get_current_task()]->iowait_done += done;
+                        if (read_stat) {
+                            task_table[get_current_task()]->iowait_done += done;
+                        } else {
+                            task_table[get_current_task()]->cpu.rax = (uint64_t)(task_table[get_current_task()]->iowait_done + done);
+                            task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
+                        }
                         set_current_task(get_current_task() + 1);
                         continue;
-                    } else {
-                        task_table[get_current_task()]->cpu.rax = (uint64_t)(task_table[get_current_task()]->iowait_done + done);
-                        task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
-                    }
-                    break;
-                case 3:
-                    done = write(    task_table[get_current_task()]->iowait_handle,
-                                    (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
-                                    task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
-                    if (write_stat) {
-                        task_table[get_current_task()]->iowait_done += done;
+                    case 3:
+                        done = write(task_table[get_current_task()]->iowait_handle,
+                                     (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
+                                     task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
+                        if (write_stat) {
+                            task_table[get_current_task()]->iowait_done += done;
+                        } else {
+                            task_table[get_current_task()]->cpu.rax = (uint64_t)(task_table[get_current_task()]->iowait_done + done);
+                            task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
+                        }
                         set_current_task(get_current_task() + 1);
                         continue;
-                    } else {
-                        task_table[get_current_task()]->cpu.rax = (uint64_t)(task_table[get_current_task()]->iowait_done + done);
-                        task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
-                    }
-                    break;
-                default:
-                    panic("unrecognised iowait_type", task_table[get_current_task()]->iowait_type);
+                    default:
+                        panic("unrecognised iowait_type", task_table[get_current_task()]->iowait_type);
                 }
             case KRN_STAT_ACTIVE_TASK:
                 if (task_table[get_current_task()]->cpu_number != get_cpu_number()) {
@@ -417,7 +353,11 @@ parser:
                 task_spinup((void *)(&(task_table[get_current_task()]->cpu)), task_table[get_current_task()]->page_directory, task_table[get_current_task()]->fxstate);
             case KRN_STAT_ZOMBIE_TASK:
                 zombie_eval(get_current_task());
+                set_current_task(get_current_task() + 1);
+                continue;
             case KRN_STAT_PROCWAIT_TASK:
+                set_current_task(get_current_task() + 1);
+                continue;
             case KRN_STAT_RES_TASK:
                 set_current_task(get_current_task() + 1);
                 continue;

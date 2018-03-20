@@ -122,6 +122,7 @@ global handler_security_exception
 global irq0_handler
 global keyboard_isr
 global syscall
+global syscall_execute
 
 ; CPU exception handlers
 extern except_div0
@@ -162,6 +163,7 @@ extern signal
 extern task_fork
 extern task_quit_self
 extern enter_iowait_status1
+extern enter_defer_status
 extern pwd
 extern vfs_cd
 extern vfs_remove
@@ -504,39 +506,36 @@ syscall:
         je read_isr
         cmp rax, 0x2d
         je write_isr
-        ; "conventional" syscall
-        pushas
-        mov rbx, cr3        ; save context
-        push rbx
+        ; "conventional" syscall: defer
+        pusham
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
-        mov dword [fs:0032], 0
-        sti
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        mov rbx, 8
-        push rdx
-        mul rbx
-        pop rdx
-        ; push syscall args, and call
+        push rax
         push rcx
         push rdx
         push rdi
         push rsi
+        pop r8
         pop rcx
         pop rdx
         pop rsi
         pop rdi
+        call enter_defer_status
+        mov rdi, rsp
+        fxsave [fs:0048]
+        call task_switch
+
+syscall_execute:
+        mov rbx, 8
+        mov rax, r8
+        push rdx
+        mul rbx
+        pop rdx
         call [routine_list+rax]
-        ; disable all interrupts, reenable task switch
-        cli
-        mov qword [fs:0032], 1
-        pop rbx
-        mov cr3, rbx    ; restore context
-        ; return
-        popas
-        iretq
+        ret
 
 read_isr:
         pusham

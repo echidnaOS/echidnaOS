@@ -29,6 +29,7 @@ extern handler_security_exception
 extern irq0_handler
 extern keyboard_isr
 extern syscall
+extern cpu_abort_execution
 
 section .data
 
@@ -306,6 +307,10 @@ load_IDT:
     call make_entry
 
     inc di
+    call make_entry
+
+    mov di, 0xfe
+    mov rbx, cpu_abort_execution
     call make_entry
 
     mov di, 0xff

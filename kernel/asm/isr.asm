@@ -123,6 +123,7 @@ global irq0_handler
 global keyboard_isr
 global syscall
 global syscall_execute
+global cpu_abort_execution
 
 ; CPU exception handlers
 extern except_div0
@@ -494,6 +495,11 @@ keyboard_isr:
         mov cr3, rax    ; restore context
         popam
         iretq
+
+cpu_abort_execution:
+        cli
+        hlt
+        jmp cpu_abort_execution
 
 syscall:
 ; ARGS in RAX (call code), RCX, RDX, RDI, RSI

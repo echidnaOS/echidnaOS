@@ -3,4 +3,6 @@
 
 void init_aps(void);
 
+extern volatile int cpu_count;
+
 #endif

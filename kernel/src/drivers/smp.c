@@ -9,6 +9,8 @@
 
 #define CPU_STACK_SIZE 8192
 
+volatile int cpu_count = 1;
+
 typedef struct {
     uint32_t entries[26];
 } tss_t;
@@ -57,13 +59,16 @@ void init_aps(void) {
 
     for (size_t i = 1; i < local_apic_ptr; i++) {
         kprint(KPRN_INFO, "SMP: Starting up AP #%u", i);
-        if (start_ap(local_apics[i]->apic_id, i)) {
+        if (start_ap(local_apics[i]->apic_id, cpu_count)) {
             kprint(KPRN_ERR, "SMP: Failed to start AP #%u", i);
             continue;
         }
+        cpu_count++;
         /* wait a bit */
         sleep(10);
     }
+
+    kprint(KPRN_INFO, "SMP: Total CPU count: %u", cpu_count);
 
     return;
 }

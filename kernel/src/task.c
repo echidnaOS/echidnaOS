@@ -6,7 +6,7 @@
 #include <cio.h>
 #include <panic.h>
 #include <system.h>
-#include <acpi.h>
+#include <smp.h>
 
 #define FAILURE -1
 
@@ -128,7 +128,7 @@ int execve(char *path, char **argv, char **envp) {
     task_table[get_current_task()]->heap_base = TASK_BASE + pages * PAGE_SIZE;
     task_table[get_current_task()]->heap_size = 0;
 
-    if (sched_last_cpu == local_apic_ptr)
+    if (sched_last_cpu == cpu_count)
         sched_last_cpu = 0;
     task_table[get_current_task()]->cpu_number = sched_last_cpu++;
 

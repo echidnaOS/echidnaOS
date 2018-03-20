@@ -302,6 +302,13 @@ void task_scheduler(void) {
 parser:
         /* only CPU #0 will parse any state other than active */
         switch (task_table[get_current_task()]->status) {
+            case KRN_STAT_SLEEP_TASK:
+                if (uptime_raw == task_table[get_current_task()]->sleep_target) {
+                    task_table[get_current_task()]->cpu.rax = (uint64_t)0;
+                    task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
+                }
+                set_current_task(get_current_task() + 1);
+                continue;
             case KRN_STAT_DEFER_TASK: ;
                 set_ts_enable(0);
                 ENABLE_INTERRUPTS;

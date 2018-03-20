@@ -13,6 +13,7 @@
 #define KRN_STAT_ZOMBIE_TASK    4
 #define KRN_STAT_PROCWAIT_TASK  5
 #define KRN_STAT_DEFER_TASK     6
+#define KRN_STAT_SLEEP_TASK     7
 
 #define EMPTY_PID               (task_t *)(-1)
 #define TASK_RESERVED_SPACE     0x10000
@@ -79,6 +80,8 @@ typedef struct {
     size_t defer_arg1;
     size_t defer_arg2;
     size_t defer_arg3;
+
+    size_t sleep_target;
 
     char iowait_dev[2048];
     uint64_t iowait_loc;

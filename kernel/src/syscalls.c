@@ -120,6 +120,13 @@ int resize_heap(size_t heap_size) {
     return 0;
 }
 
+void enter_sleep_status(size_t seconds) {
+    task_table[get_current_task()]->status = KRN_STAT_SLEEP_TASK;
+    size_t sleep_target = uptime_raw + seconds * KRNL_PIT_FREQ;
+    task_table[get_current_task()]->sleep_target = sleep_target;
+    return;
+}
+
 void enter_defer_status(size_t syscall, size_t arg0, size_t arg1, size_t arg2, size_t arg3) {
     task_table[get_current_task()]->status = KRN_STAT_DEFER_TASK;
     task_table[get_current_task()]->defer_syscall = syscall;

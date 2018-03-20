@@ -56,6 +56,11 @@ int main(int argc, char** argv) {
                     ((char *)(OS_get_heap_base() + sz))[i] = 0x00;
             }
         }
+        
+        else if (!strcmp("sleep", s_argv[0])) {
+            if (s_argc == 1) continue;
+            sleep(atoi(s_argv[1]));
+        }
 
         else if (!strcmp("col", s_argv[0]))
             puts("\e[40m \e[41m \e[42m \e[43m \e[44m \e[45m \e[46m \e[47m \e[40m");

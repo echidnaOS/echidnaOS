@@ -164,6 +164,7 @@ extern task_fork
 extern task_quit_self
 extern enter_iowait_status1
 extern enter_defer_status
+extern enter_sleep_status
 extern pwd
 extern vfs_cd
 extern vfs_remove
@@ -191,7 +192,7 @@ routine_list:
         dq      execve                  ; 0x03
         dq      0                       ; 0x04 - wait
         dq      0                       ; 0x05 - fork
-        dq      0                       ; 0x06
+        dq      0                       ; 0x06 - sleep
         dq      0                       ; 0x07
         dq      0                       ; 0x08
         dq      0                       ; 0x09
@@ -502,6 +503,8 @@ syscall:
         je fork_isr
         cmp rax, 0x04
         je wait_isr
+        cmp rax, 0x06
+        je sleep_isr
         cmp rax, 0x2c
         je read_isr
         cmp rax, 0x2d
@@ -587,6 +590,20 @@ wait_isr:
         mov cr3, rax
         mov rdi, rcx
         call swait
+        mov rdi, rsp
+        fxsave [fs:0048]
+        call task_switch
+
+sleep_isr:
+        ; save task status
+        pusham
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov rax, qword [kernel_pagemap]   ; context swap to kernel
+        mov cr3, rax
+        mov rdi, rcx
+        call enter_sleep_status
         mov rdi, rsp
         fxsave [fs:0048]
         call task_switch

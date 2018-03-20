@@ -119,7 +119,7 @@ int execve(char *path, char **argv, char **envp) {
         map_page(pd, TASK_BASE + i * PAGE_SIZE, base + i * PAGE_SIZE, 0x07);
     task_table[get_current_task()]->page_directory = pd;
 
-    task_table[get_current_task()]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0);
+    task_table[get_current_task()]->cpu.rsp = TASK_BASE + (((TASK_RESERVED_SPACE + metadata.size + DEFAULT_STACK) - 1) & 0xfffffff0) + 0x08;
     task_table[get_current_task()]->cpu.rip = TASK_BASE + TASK_RESERVED_SPACE;
 
     task_table[get_current_task()]->heap_base = TASK_BASE + pages * PAGE_SIZE;
@@ -303,6 +303,8 @@ parser:
         /* only CPU #0 will parse any state other than active */
         switch (task_table[get_current_task()]->status) {
             case KRN_STAT_DEFER_TASK: ;
+                set_ts_enable(0);
+                ENABLE_INTERRUPTS;
                 size_t syscall_ret = syscall_execute(
                     task_table[get_current_task()]->defer_arg0,
                     task_table[get_current_task()]->defer_arg1,
@@ -310,6 +312,8 @@ parser:
                     task_table[get_current_task()]->defer_arg3,
                     task_table[get_current_task()]->defer_syscall
                 );
+                DISABLE_INTERRUPTS;
+                set_ts_enable(1);
                 task_table[get_current_task()]->cpu.rax = (uint64_t)(syscall_ret);
                 task_table[get_current_task()]->status = KRN_STAT_ACTIVE_TASK;
                 set_current_task(get_current_task() + 1);
@@ -318,9 +322,13 @@ parser:
                 switch (task_table[get_current_task()]->iowait_type) {
                     int done;
                     case 2:
+                        set_ts_enable(0);
+                        ENABLE_INTERRUPTS;
                         done = read(task_table[get_current_task()]->iowait_handle,
                                     (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
                                     task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
+                        DISABLE_INTERRUPTS;
+                        set_ts_enable(1);
                         if (read_stat) {
                             task_table[get_current_task()]->iowait_done += done;
                         } else {
@@ -330,9 +338,13 @@ parser:
                         set_current_task(get_current_task() + 1);
                         continue;
                     case 3:
+                        set_ts_enable(0);
+                        ENABLE_INTERRUPTS;
                         done = write(task_table[get_current_task()]->iowait_handle,
                                      (char *)(task_table[get_current_task()]->iowait_ptr + task_table[get_current_task()]->iowait_done),
                                      task_table[get_current_task()]->iowait_len - task_table[get_current_task()]->iowait_done);
+                        DISABLE_INTERRUPTS;
+                        set_ts_enable(1);
                         if (write_stat) {
                             task_table[get_current_task()]->iowait_done += done;
                         } else {

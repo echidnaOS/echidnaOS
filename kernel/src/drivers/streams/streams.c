@@ -50,11 +50,24 @@ int zero_io_wrapper(uint32_t unused, uint64_t loc, int type, uint8_t payload) {
         return 0;
 }
 
+static uint64_t seed = 0;
+
+int urandom_io_wrapper(uint32_t unused, uint64_t loc, int type, uint8_t payload) {
+    if (type == 0) {
+        if (!seed)
+            seed = uptime_raw;
+        seed = seed * 1103515245 + 12345;
+        return (int)(seed % 255);
+    } else if (type == 1)
+        return 0;
+}
+
 void init_streams(void) {
     kernel_add_device("stdin", 0, 0, &stdin_io_wrapper);
     kernel_add_device("stdout", 0, 0, &stdout_io_wrapper);
     kernel_add_device("stderr", 0, 0, &stderr_io_wrapper);
     kernel_add_device("null", 0, 0, &null_io_wrapper);
     kernel_add_device("zero", 0, 0, &zero_io_wrapper);
+    kernel_add_device("urandom", 0, 0, &urandom_io_wrapper);
     return;
 }

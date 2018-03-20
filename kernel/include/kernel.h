@@ -37,7 +37,7 @@
 
 // vfs tunables
 
-#define MAX_SIMULTANOUS_VFS_ACCESS  4096
+#define MAX_SIMULTANOUS_VFS_ACCESS  (64*1024)
 
 
 #endif

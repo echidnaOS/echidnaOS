@@ -61,7 +61,7 @@ void put_mouse_cursor(int type) {
     for (size_t x = 0; x < 16; x++) {
         for (size_t y = 0; y < 16; y++) {
             if (cursor.bitmap[x * 16 + y])
-                plot_px_direct(mouse_x + x, mouse_y + y, cursor.bitmap[x * 16 + y]);
+                plot_px_direct(mouse_x + x, mouse_y + y, ~(get_px_direct(mouse_x + x, mouse_y + y)) & 0xffffff);
         }
     }
     return;

@@ -7,6 +7,7 @@
 
 /echidna.img
 /echidna.iso
+/echidna.iso.xz
 /initramfs.img
 /echidnafs/echfs-utils
 /kernel/**/*.o

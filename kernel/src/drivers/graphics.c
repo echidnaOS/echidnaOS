@@ -35,6 +35,9 @@ uint8_t vga_font[4096];
 window_t *windows = 0;
 
 void plot_px(int x, int y, uint32_t hex) {
+    if (x > edid_width || y > edid_height || x < 0 || y < 0)
+        return;
+
     size_t fb_i = x + edid_width * y;
 
     antibuffer[fb_i] = hex;
@@ -128,13 +131,14 @@ void window_focus(int window) {
     window_t *last_wptr;
     window_t *req_wptr = get_window_ptr(window);
     window_t *prev_wptr;
-    window_t *next_wptr = req_wptr->next;
 
     if (!windows)
         return;
 
     if (!req_wptr)
         return;
+
+    window_t *next_wptr = req_wptr->next;
 
     if (!(req_wptr == windows))
         for (prev_wptr = windows; prev_wptr->next != req_wptr; prev_wptr = prev_wptr->next);

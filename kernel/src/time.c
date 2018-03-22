@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <kernel.h>
 #include <klib.h>
-#include <tty.h>
+#include <graphics.h>
 #include <apic.h>
 #include <acpi.h>
 
@@ -16,10 +16,10 @@ void timer_interrupt(void) {
     /* raise vector 32 for all APs */
     lapic_write(APICREG_ICR0, 0x20 | (1 << 18) | (1 << 19));
 
-    if (tty_needs_refresh != -1) {
-        if (!(uptime_raw % TTY_REDRAW_LIMIT)) {
-            tty_refresh(tty_needs_refresh);
-            tty_needs_refresh = -1;
+    if (gui_needs_refresh) {
+        if (!(uptime_raw % GUI_REDRAW_LIMIT)) {
+            gui_refresh();
+            gui_needs_refresh = 0;
         }
     }
 

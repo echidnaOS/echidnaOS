@@ -20,7 +20,7 @@ CLINKFLAGS = -nostdlib \
     -static-libgcc -lgcc \
     -T ./linker.ld
 
-CFLAGS = -Wall -O2
+CFLAGS = -O2
 
 echidna.bin: initramfs_obj.o $(BINS) $(OBJ) $(H_FILES)
 	$(CC) $(OBJ) initramfs_obj.o $(CLINKFLAGS) -o $@

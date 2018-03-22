@@ -4,6 +4,7 @@
 #include <klib.h>
 #include <vfs.h>
 #include <tty.h>
+#include <graphics.h>
 
 #define MAX_CODE 0x57
 #define CAPSLOCK 0x3A
@@ -60,10 +61,11 @@ void keyboard_init(void) {
 }
 
 void keyboard_handler(uint8_t input_byte) {
+    window_t *wptr = get_window_ptr(current_window);
     char c = '\0';
 
     // tty switch handling
-    if (shift_active) {
+    /*if (shift_active) {
         switch (input_byte) {
             case 0x58:
                 switch_tty(0);
@@ -99,7 +101,7 @@ void keyboard_handler(uint8_t input_byte) {
             default:
                 break;
         }
-    }
+    }*/
 
     if (input_byte == CAPSLOCK) {
 
@@ -120,7 +122,7 @@ void keyboard_handler(uint8_t input_byte) {
     else if (input_byte == LEFT_CTRL || input_byte == LEFT_CTRL_REL)
         ctrl_active = !ctrl_active;
 
-    else if (tty[current_tty].kb_l1_buffer_index < KB_L1_SIZE) {
+    else if (wptr->kb_l1_buffer_index < KB_L1_SIZE) {
 
         if (input_byte < MAX_CODE) {
             
@@ -136,31 +138,31 @@ void keyboard_handler(uint8_t input_byte) {
             else
                 c = ascii_capslock[input_byte];
             
-            if (tty[current_tty].raw) {
-                tty[current_tty].kb_l2_buffer[tty[current_tty].kb_l2_buffer_index++] = c;
+            if (wptr->raw) {
+                wptr->kb_l2_buffer[wptr->kb_l2_buffer_index++] = c;
                 return;
             }
             
             if (c == '\b') {
-                if (!tty[current_tty].kb_l1_buffer_index) return;
-                text_putchar(c, current_tty);
-                tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index--] = 0;
+                if (!wptr->kb_l1_buffer_index) return;
+                text_putchar(c, current_window);
+                wptr->kb_l1_buffer[wptr->kb_l1_buffer_index--] = 0;
             }
             
             else if (c == '\n') {
-                text_putchar(c, current_tty);
-                tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index++] = c;
-                kmemcpy(&tty[current_tty].kb_l2_buffer[tty[current_tty].kb_l2_buffer_index],
-                        tty[current_tty].kb_l1_buffer,
-                        tty[current_tty].kb_l1_buffer_index + 1);
-                tty[current_tty].kb_l2_buffer_index += tty[current_tty].kb_l1_buffer_index;
-                tty[current_tty].kb_l1_buffer[0] = 0;
-                tty[current_tty].kb_l1_buffer_index = 0;
+                text_putchar(c, current_window);
+                wptr->kb_l1_buffer[wptr->kb_l1_buffer_index++] = c;
+                kmemcpy(&wptr->kb_l2_buffer[wptr->kb_l2_buffer_index],
+                        wptr->kb_l1_buffer,
+                        wptr->kb_l1_buffer_index + 1);
+                wptr->kb_l2_buffer_index += wptr->kb_l1_buffer_index;
+                wptr->kb_l1_buffer[0] = 0;
+                wptr->kb_l1_buffer_index = 0;
             }
             
             else {
-                text_putchar(c, current_tty);
-                tty[current_tty].kb_l1_buffer[tty[current_tty].kb_l1_buffer_index++] = c;
+                text_putchar(c, current_window);
+                wptr->kb_l1_buffer[wptr->kb_l1_buffer_index++] = c;
             }
 
         }
@@ -172,24 +174,25 @@ void keyboard_handler(uint8_t input_byte) {
 
 static int is_eof = 0;
 
-int keyboard_fetch_char(uint8_t which_tty) {
+int keyboard_fetch_char(int window) {
     uint16_t i;
     char c;
+    window_t *wptr = get_window_ptr(window);
 
     if (is_eof) {
         is_eof = 0;
         return -1;
     }
 
-    if (tty[which_tty].kb_l2_buffer_index) {
-        tty[which_tty].kb_l2_buffer_index--;
-        c = tty[which_tty].kb_l2_buffer[0];
+    if (wptr->kb_l2_buffer_index) {
+        wptr->kb_l2_buffer_index--;
+        c = wptr->kb_l2_buffer[0];
         for (i = 0; i < (KB_L2_SIZE - 1); i++)
-            tty[which_tty].kb_l2_buffer[i] = tty[which_tty].kb_l2_buffer[i + 1];
+            wptr->kb_l2_buffer[i] = wptr->kb_l2_buffer[i + 1];
         if (c == '\n') is_eof = 1;
         return (int)c;
     } else {
-        if (tty[which_tty].noblock)
+        if (wptr->noblock)
             return 0;
         return IO_NOT_READY;
     }

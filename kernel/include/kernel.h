@@ -32,7 +32,7 @@
 #define TTY_DEF_TXT_BG_COL 0x00000000
 #define TTY_DEF_TXT_FG_COL 0x00808080
 
-#define TTY_REDRAW_LIMIT 200
+#define GUI_REDRAW_LIMIT 200
 
 
 // vfs tunables

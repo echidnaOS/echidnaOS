@@ -2,6 +2,43 @@
 #define __GRAPHICS_H__
 
 #include <stdint.h>
+#include <stddef.h>
+#include <kernel.h>
+
+typedef struct window_t {
+    int id;
+    char title[2048];
+    size_t x;
+    size_t y;
+    size_t x_size;
+    size_t y_size;
+    uint32_t *framebuffer;
+    char *grid;
+    uint32_t *gridbg;
+    uint32_t *gridfg;
+    int cursor_x;
+    int cursor_y;
+    int cursor_status;
+    uint32_t cursor_bg_col;
+    uint32_t cursor_fg_col;
+    uint32_t text_bg_col;
+    uint32_t text_fg_col;
+    char kb_l1_buffer[KB_L1_SIZE];
+    char kb_l2_buffer[KB_L2_SIZE];
+    uint16_t kb_l1_buffer_index;
+    uint16_t kb_l2_buffer_index;
+    int escape;
+    int *esc_value;
+    int esc_value0;
+    int esc_value1;
+    int *esc_default;
+    int esc_default0;
+    int esc_default1;
+    int raw;
+    int noblock;
+    int noscroll;
+    struct window_t *next;
+} window_t;
 
 typedef struct {
     uint8_t version_min;
@@ -59,13 +96,22 @@ typedef struct {
     uint16_t mode;
 } get_vbe_t;
 
-void plot_px(int x, int y, uint32_t hex, uint8_t which_tty);
+void plot_px(int x, int y, uint32_t hex);
+void plot_px_window(int x, int y, uint32_t hex, int window);
+
+int create_window(char *title, size_t x, size_t y, size_t x_size, size_t y_size);
+void gui_refresh(void);
+window_t *get_window_ptr(int id);
+
 extern uint32_t *framebuffer;
 extern uint8_t vga_font[4096];
 extern int edid_width;
 extern int edid_height;
 
 extern int modeset_done;
+extern int gui_needs_refresh;
+
+extern int current_window;
 
 
 #endif

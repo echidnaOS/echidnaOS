@@ -13,6 +13,7 @@
 #include <smp.h>
 
 size_t memory_size;
+int kernel_log_window = 0;
 
 void kernel_init(void) {
     /* interrupts disabled */
@@ -41,7 +42,14 @@ void kernel_init(void) {
 
     /* initialise graphics mode and TTYs */
     init_graphics();
-    init_tty();
+
+
+    create_window("tty0", 10, 10, 640, 480);
+    kernel_log_window = 1;
+
+    gui_refresh();
+
+
 
     /* set PIT frequency */
     set_pit_freq(KRNL_PIT_FREQ);
@@ -111,14 +119,6 @@ void kernel_init(void) {
     if (kexec("/sys/init", argv, env, "/dev/tty0", "/dev/tty0", "/dev/tty0", "/") == -1)
         panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/stty0", "/dev/stty0", "/dev/stty0", "/") == -1)
-        panic("Unable to start /sys/init", 0);
-    if (kexec("/sys/init", argv, env, "/dev/tty1", "/dev/tty1", "/dev/tty1", "/") == -1)
-        panic("Unable to start /sys/init", 0);
-    if (kexec("/sys/init", argv, env, "/dev/tty2", "/dev/tty2", "/dev/tty2", "/") == -1)
-        panic("Unable to start /sys/init", 0);
-    if (kexec("/sys/init", argv, env, "/dev/tty3", "/dev/tty3", "/dev/tty3", "/") == -1)
-        panic("Unable to start /sys/init", 0);
-    if (kexec("/sys/init", argv, env, "/dev/tty4", "/dev/tty4", "/dev/tty4", "/") == -1)
         panic("Unable to start /sys/init", 0);
 
     /* launch scheduler for the first time */

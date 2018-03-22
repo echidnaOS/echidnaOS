@@ -12,8 +12,12 @@ vbe_mode_info_t vbe_mode_info;
 get_vbe_t get_vbe;
 
 int modeset_done = 0;
+int gui_needs_refresh = 0;
+
+int current_window;
 
 uint32_t *framebuffer;
+uint32_t *antibuffer;
 
 int edid_width = 0;
 int edid_height = 0;
@@ -28,12 +32,158 @@ void dump_vga_font(uint8_t *bitmap);
 
 uint8_t vga_font[4096];
 
-void plot_px(int x, int y, uint32_t hex, uint8_t which_tty) {
+window_t *windows = 0;
+
+void plot_px(int x, int y, uint32_t hex) {
     size_t fb_i = x + edid_width * y;
 
-    if (current_tty == which_tty)
-        framebuffer[fb_i] = hex;
+    antibuffer[fb_i] = hex;
+}
 
+window_t *get_window_ptr(int id) {
+    if (!windows) {
+        return (window_t *)0;
+    } else {
+        window_t *wptr = windows;
+        for (;;) {
+            if (wptr->id == id) {
+                return wptr;
+            }
+            if (!wptr->next) {
+                /* not found */
+                return (window_t *)0;
+            } else {
+                wptr = wptr->next;
+            }
+        }
+    }
+}
+
+/* creates a new window with a title, size */
+/* returns window id */
+int create_window(char *title, size_t x, size_t y, size_t x_size, size_t y_size) {
+    window_t *wptr;
+    int id = 0;
+
+    /* check if no windows were allocated */
+    if (!windows) {
+        /* allocate root window */
+        windows = kalloc(sizeof(window_t));
+        wptr = windows;
+    } else {
+        /* else crawl the linked list to the last entry */
+        wptr = windows;
+        for (;;) {
+            if (wptr->id == id)
+                id++;
+            if (wptr->next) {
+                wptr = wptr->next;
+                continue;
+            } else {
+                wptr->next = kalloc(sizeof(window_t));
+                wptr = wptr->next;
+                break;
+            }
+        }
+    }
+
+    wptr->id = id;
+    kstrcpy(wptr->title, title);
+    wptr->x = x;
+    wptr->y = y;
+    wptr->x_size = x_size;
+    wptr->y_size = y_size;
+    wptr->framebuffer = kalloc(x_size * y_size * sizeof(uint32_t));
+    wptr->grid = kalloc((x_size / 8) * (y_size / 16));
+    wptr->gridbg = kalloc((x_size / 8) * (y_size / 16) * sizeof(uint32_t));
+    wptr->gridfg = kalloc((x_size / 8) * (y_size / 16) * sizeof(uint32_t));
+    wptr->esc_value = &wptr->esc_value0;
+    wptr->esc_value0 = 0;
+    wptr->esc_value1 = 0;
+    wptr->esc_default = &wptr->esc_default0;
+    wptr->esc_default0 = 1;
+    wptr->esc_default1 = 1;
+    wptr->escape = 0;
+    wptr->cursor_x = 0;
+    wptr->cursor_y = 0;
+    wptr->cursor_status = 1;
+    wptr->cursor_bg_col = TTY_DEF_CUR_BG_COL;
+    wptr->cursor_fg_col = TTY_DEF_CUR_FG_COL;
+    wptr->text_bg_col = TTY_DEF_TXT_BG_COL;
+    wptr->text_fg_col = TTY_DEF_TXT_FG_COL;
+    wptr->raw = 0;
+    wptr->noblock = 0;
+    wptr->noscroll = 0;
+    wptr->next = 0;
+
+    gui_needs_refresh = 1;
+
+    return id;
+}
+
+#define BACKGROUND_COLOUR       0x00008888
+#define WINDOW_BORDERS          0x00ffffff
+#define TITLE_BAR_BACKG         0x00003377
+#define TITLE_BAR_FOREG         0x00ffffff
+#define TITLE_BAR_THICKNESS     18
+
+void gui_refresh(void) {
+    /* clear screen */
+    for (size_t i = 0; i < edid_width * edid_height; i++)
+        antibuffer[i] = BACKGROUND_COLOUR;
+
+    /* draw every window */
+    window_t *wptr = windows;
+    for (;;) {
+        if (!wptr)
+            break;
+
+        /* draw the title bar */
+        for (size_t x = 0; x < TITLE_BAR_THICKNESS; x++)
+            for (size_t i = 0; i < wptr->x_size + 2; i++)
+                plot_px(wptr->x + i, wptr->y + x, TITLE_BAR_BACKG);
+
+        /* draw the title */
+        for (size_t i = 0; wptr->title[i]; i++)
+            plot_char(wptr->title[i], wptr->x + 8 + i * 8, wptr->y + 1,
+                TITLE_BAR_FOREG, TITLE_BAR_BACKG);
+
+        /* draw the window border */
+        for (size_t i = 0; i < wptr->x_size + 2; i++)
+            plot_px(wptr->x + i, wptr->y, WINDOW_BORDERS);
+        for (size_t i = 0; i < wptr->x_size + 2; i++)
+            plot_px(wptr->x + i, wptr->y + TITLE_BAR_THICKNESS + wptr->y_size + 1, WINDOW_BORDERS);
+        for (size_t i = 0; i < wptr->y_size + TITLE_BAR_THICKNESS + 1; i++)
+            plot_px(wptr->x, wptr->y + i, WINDOW_BORDERS);
+        for (size_t i = 0; i < wptr->y_size + TITLE_BAR_THICKNESS + 1; i++)
+            plot_px(wptr->x + wptr->x_size + 1, wptr->y + i, WINDOW_BORDERS);
+
+        /* paint the framebuffer */
+        size_t in_x = 1;
+        size_t in_y = TITLE_BAR_THICKNESS;
+        for (size_t i = 0; i < wptr->x_size * wptr->y_size; i++) {
+            plot_px(in_x++ + wptr->x, in_y + wptr->y, wptr->framebuffer[i]);
+            if (in_x - 1 == wptr->x_size) {
+                in_y++;
+                in_x = 1;
+            }
+        }
+
+        wptr = wptr->next;
+    }
+
+    /* copy over the buffer */
+    for (size_t i = 0; i < edid_width * edid_height; i++)
+        framebuffer[i] = antibuffer[i];
+
+    return;
+}
+
+void plot_px_window(int x, int y, uint32_t hex, int window) {
+    window_t *wptr = get_window_ptr(window);
+    size_t fb_i = x + wptr->x_size * y;
+    wptr->framebuffer[fb_i] = hex;
+    gui_needs_refresh = 1;
     return;
 }
 
@@ -91,6 +241,7 @@ retry:
             /* mode found */
             kprint(KPRN_INFO, "VBE found matching mode %x, attempting to set.", get_vbe.mode);
             framebuffer = (uint32_t *)vbe_mode_info.framebuffer;
+            antibuffer = kalloc(edid_width * edid_height * sizeof(uint32_t));
             kprint(KPRN_INFO, "Framebuffer address: %x", vbe_mode_info.framebuffer);
             set_vbe_mode(get_vbe.mode);
             goto success;

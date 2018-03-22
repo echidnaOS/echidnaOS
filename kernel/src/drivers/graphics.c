@@ -5,6 +5,7 @@
 #include <cio.h>
 #include <tty.h>
 #include <panic.h>
+#include <mouse.h>
 
 vbe_info_struct_t vbe_info_struct;
 edid_info_struct_t edid_info_struct;
@@ -41,6 +42,24 @@ void plot_px(int x, int y, uint32_t hex) {
     size_t fb_i = x + edid_width * y;
 
     antibuffer[fb_i] = hex;
+}
+
+void plot_px_direct(int x, int y, uint32_t hex) {
+    if (x > edid_width || y > edid_height || x < 0 || y < 0)
+        return;
+
+    size_t fb_i = x + edid_width * y;
+
+    framebuffer[fb_i] = hex;
+}
+
+uint32_t get_px_direct(int x, int y) {
+    if (x > edid_width || y > edid_height || x < 0 || y < 0)
+        return 0;
+
+    size_t fb_i = x + edid_width * y;
+
+    return framebuffer[fb_i];
 }
 
 window_t *get_window_ptr(int id) {
@@ -234,6 +253,8 @@ void gui_refresh(void) {
     /* copy over the buffer */
     for (size_t i = 0; i < edid_width * edid_height; i++)
         framebuffer[i] = antibuffer[i];
+
+    put_mouse_cursor(0);
 
     return;
 }

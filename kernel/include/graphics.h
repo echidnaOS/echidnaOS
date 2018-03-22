@@ -97,6 +97,8 @@ typedef struct {
 } get_vbe_t;
 
 void plot_px(int x, int y, uint32_t hex);
+void plot_px_direct(int x, int y, uint32_t hex);
+uint32_t get_px_direct(int x, int y);
 void plot_px_window(int x, int y, uint32_t hex, int window);
 
 int create_window(char *title, size_t x, size_t y, size_t x_size, size_t y_size);

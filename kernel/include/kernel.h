@@ -34,6 +34,8 @@
 
 #define GUI_REDRAW_LIMIT 200
 
+#define MOUSE_POLL_LIMIT 10
+
 
 // vfs tunables
 

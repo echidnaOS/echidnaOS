@@ -11,6 +11,7 @@
 #include <panic.h>
 #include <graphics.h>
 #include <smp.h>
+#include <mouse.h>
 
 size_t memory_size;
 int kernel_log_window = 0;
@@ -51,6 +52,8 @@ void kernel_init(void) {
     kernel_log_window = 1;
 
     gui_refresh();
+
+    init_mouse();
 
     /* set PIT frequency */
     set_pit_freq(KRNL_PIT_FREQ);

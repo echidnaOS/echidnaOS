@@ -5,11 +5,13 @@
 #include <stddef.h>
 #include <kernel.h>
 
+#define TITLE_BAR_THICKNESS     18
+
 typedef struct window_t {
     int id;
     char title[2048];
-    size_t x;
-    size_t y;
+    int x;
+    int y;
     size_t x_size;
     size_t y_size;
     uint32_t *framebuffer;
@@ -116,6 +118,8 @@ extern int modeset_done;
 extern int gui_needs_refresh;
 
 extern int current_window;
+
+extern window_t *windows;
 
 
 #endif

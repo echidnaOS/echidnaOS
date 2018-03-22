@@ -45,6 +45,50 @@ cursor_t cursor = {
 
 cursor_t anticursor;
 
+typedef struct {
+    int id;
+    int rel_x;
+    int rel_y;
+    int titlebar;
+} window_click_data_t;
+
+window_click_data_t window_from_coordinates(int x, int y) {
+    window_click_data_t ret = {0};
+    window_t *wptr = windows;
+
+    if (!wptr)
+        goto fail;
+
+    /* get number of nodes */
+    size_t nodes;
+    for (nodes = 1; wptr->next; nodes++, wptr = wptr->next);
+
+    for (;; nodes--) {
+        wptr = windows;
+        for (size_t i = 0; i < nodes; i++)
+            wptr = wptr->next;
+
+        if (x >= wptr->x && x < wptr->x + wptr->x_size + 2 &&
+            y >= wptr->y && y < wptr->y + wptr->y_size + 1 + TITLE_BAR_THICKNESS) {
+            int titlebar = 0;
+            if (y - wptr->y < TITLE_BAR_THICKNESS)
+                titlebar = 1;
+            ret.id = wptr->id;
+            ret.rel_x = x - (wptr->x - 1);
+            ret.rel_y = y - (wptr->y - TITLE_BAR_THICKNESS);
+            ret.titlebar = titlebar;
+            return ret;
+        }
+
+        if (!nodes)
+            break;
+    }
+
+fail:
+    ret.id = -1;
+    return ret;
+}
+
 void put_mouse_cursor(int type) {
     if (type) {
         for (size_t x = 0; x < 16; x++) {
@@ -67,6 +111,9 @@ void put_mouse_cursor(int type) {
     return;
 }
 
+int right_click_pressed = 0;
+int drag_lock = -1;
+
 void poll_mouse(void) {
     uint8_t b;
     mouse_packet_t packet;
@@ -81,14 +128,23 @@ void poll_mouse(void) {
         packet.x_mov = port_in_b(0x60);
         packet.y_mov = port_in_b(0x60);
 
-        if (packet.flags & (1 << 0));
-            //kprint(0, "left click pressed");
+        if (packet.flags & (1 << 0)) {
+            window_click_data_t clicked_window = window_from_coordinates(mouse_x, mouse_y);
+            if (clicked_window.id != -1 && current_window != clicked_window.id)
+                window_focus(clicked_window.id);
+            if (clicked_window.titlebar)
+                drag_lock = clicked_window.id;
+            else
+                drag_lock = -1;
+            right_click_pressed = 1;
+        } else {
+            right_click_pressed = 0;
+            drag_lock = -1;
+        }
 
         if (packet.flags & (1 << 1));
-            //kprint(0, "right click pressed");
 
         if (packet.flags & (1 << 2));
-            //kprint(0, "mid click pressed");
 
         if (packet.flags & (1 << 4))
             x_mov = (int8_t)packet.x_mov;
@@ -111,6 +167,10 @@ void poll_mouse(void) {
         if (!(mouse_y - y_mov < 0) && !(mouse_y - y_mov >= edid_height)) {
             mouse_y -= y_mov;
             //kprint(0, "mouse_y = %u", mouse_y);
+        }
+
+        if (right_click_pressed && drag_lock != -1) {
+            window_move(mouse_x - old_mouse_x, mouse_y - old_mouse_y, drag_lock);
         }
 
         put_mouse_cursor(1);

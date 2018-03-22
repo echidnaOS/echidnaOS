@@ -203,7 +203,6 @@ void window_move(int x, int y, int window) {
 #define WINDOW_BORDERS          0x00ffffff
 #define TITLE_BAR_BACKG         0x00003377
 #define TITLE_BAR_FOREG         0x00ffffff
-#define TITLE_BAR_THICKNESS     18
 
 void gui_refresh(void) {
     /* clear screen */

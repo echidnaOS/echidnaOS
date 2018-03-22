@@ -152,7 +152,7 @@ void gui_refresh(void) {
         for (size_t i = 0; i < wptr->x_size + 2; i++)
             plot_px(wptr->x + i, wptr->y, WINDOW_BORDERS);
         for (size_t i = 0; i < wptr->x_size + 2; i++)
-            plot_px(wptr->x + i, wptr->y + TITLE_BAR_THICKNESS + wptr->y_size + 1, WINDOW_BORDERS);
+            plot_px(wptr->x + i, wptr->y + TITLE_BAR_THICKNESS + wptr->y_size, WINDOW_BORDERS);
         for (size_t i = 0; i < wptr->y_size + TITLE_BAR_THICKNESS + 1; i++)
             plot_px(wptr->x, wptr->y + i, WINDOW_BORDERS);
         for (size_t i = 0; i < wptr->y_size + TITLE_BAR_THICKNESS + 1; i++)

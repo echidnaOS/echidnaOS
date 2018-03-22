@@ -165,6 +165,17 @@ void window_focus(int window) {
     return;
 }
 
+void window_move(int x, int y, int window) {
+    window_t *wptr = get_window_ptr(window);
+
+    wptr->x += x;
+    wptr->y += y;
+
+    gui_needs_refresh = 1;
+
+    return;
+}
+
 #define BACKGROUND_COLOUR       0x00008888
 #define WINDOW_BORDERS          0x00ffffff
 #define TITLE_BAR_BACKG         0x00003377

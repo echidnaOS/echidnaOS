@@ -88,6 +88,18 @@ void keyboard_handler(uint8_t input_byte) {
             case 0x40:
                 window_focus(6);
                 return;
+            case 0x41:
+                window_move(-5, 0, current_window);
+                return;
+            case 0x42:
+                window_move(+5, 0, current_window);
+                return;
+            case 0x43:
+                window_move(0, -5, current_window);
+                return;
+            case 0x44:
+                window_move(0, +5, current_window);
+                return;
             default:
                 break;
         }

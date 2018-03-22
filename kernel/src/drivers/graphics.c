@@ -116,9 +116,53 @@ int create_window(char *title, size_t x, size_t y, size_t x_size, size_t y_size)
     wptr->noscroll = 0;
     wptr->next = 0;
 
+    current_window = id;
+
     gui_needs_refresh = 1;
 
     return id;
+}
+
+void window_focus(int window) {
+    /* moves the requested window to the foreground */
+    window_t *last_wptr;
+    window_t *req_wptr = get_window_ptr(window);
+    window_t *prev_wptr;
+    window_t *next_wptr = req_wptr->next;
+
+    if (!windows)
+        return;
+
+    if (!req_wptr)
+        return;
+
+    if (!(req_wptr == windows))
+        for (prev_wptr = windows; prev_wptr->next != req_wptr; prev_wptr = prev_wptr->next);
+    else
+        prev_wptr = 0;
+
+    for (last_wptr = windows; last_wptr->next; last_wptr = last_wptr->next);
+
+    if (last_wptr == req_wptr)
+        return;
+
+    /* all necessary variables acquired */
+
+    /* the prev should point to the next */
+    if (prev_wptr)
+        prev_wptr->next = next_wptr;
+    else
+        windows = next_wptr;
+    /* the requested one should point to NULL */
+    req_wptr->next = 0;
+    /* the last should point to the requested one */
+    last_wptr->next = req_wptr;
+
+    current_window = window;
+
+    gui_needs_refresh = 1;
+
+    return;
 }
 
 #define BACKGROUND_COLOUR       0x00008888

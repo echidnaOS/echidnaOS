@@ -101,6 +101,7 @@ void plot_px_window(int x, int y, uint32_t hex, int window);
 
 int create_window(char *title, size_t x, size_t y, size_t x_size, size_t y_size);
 void gui_refresh(void);
+void window_focus(int window);
 window_t *get_window_ptr(int id);
 
 extern uint32_t *framebuffer;

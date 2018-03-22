@@ -65,28 +65,28 @@ void keyboard_handler(uint8_t input_byte) {
     char c = '\0';
 
     // tty switch handling
-    /*if (shift_active) {
+    if (shift_active) {
         switch (input_byte) {
             case 0x58:
-                switch_tty(0);
+                window_focus(0);
                 return;
             case 0x3b:
-                switch_tty(1);
+                window_focus(1);
                 return;
             case 0x3c:
-                switch_tty(2);
+                window_focus(2);
                 return;
             case 0x3d:
-                switch_tty(3);
+                window_focus(3);
                 return;
             case 0x3e:
-                switch_tty(4);
+                window_focus(4);
                 return;
             case 0x3f:
-                switch_tty(5);
+                window_focus(5);
                 return;
             case 0x40:
-                switch_tty(6);
+                window_focus(6);
                 return;
             default:
                 break;
@@ -101,7 +101,7 @@ void keyboard_handler(uint8_t input_byte) {
             default:
                 break;
         }
-    }*/
+    }
 
     if (input_byte == CAPSLOCK) {
 

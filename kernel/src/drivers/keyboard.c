@@ -67,37 +67,20 @@ void keyboard_handler(uint8_t input_byte) {
     // tty switch handling
     if (shift_active) {
         switch (input_byte) {
-            case 0x58:
-                window_focus(0);
-                return;
             case 0x3b:
-                window_focus(1);
                 return;
             case 0x3c:
-                window_focus(2);
-                return;
-            case 0x3d:
-                window_focus(3);
-                return;
-            case 0x3e:
-                window_focus(4);
                 return;
             case 0x3f:
-                window_focus(5);
-                return;
-            case 0x40:
-                window_focus(6);
-                return;
-            case 0x41:
                 window_move(-5, 0, current_window);
                 return;
-            case 0x42:
+            case 0x40:
                 window_move(+5, 0, current_window);
                 return;
-            case 0x43:
+            case 0x41:
                 window_move(0, -5, current_window);
                 return;
-            case 0x44:
+            case 0x42:
                 window_move(0, +5, current_window);
                 return;
             default:

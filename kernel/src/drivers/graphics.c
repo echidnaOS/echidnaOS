@@ -19,6 +19,7 @@ int current_window;
 
 uint32_t *framebuffer;
 uint32_t *antibuffer;
+uint32_t *prevbuffer;
 
 int edid_width = 0;
 int edid_height = 0;
@@ -205,6 +206,10 @@ void window_move(int x, int y, int window) {
 #define TITLE_BAR_FOREG         0x00ffffff
 
 void gui_refresh(void) {
+    uint32_t *tmpbufptr = prevbuffer;
+    prevbuffer = antibuffer;
+    antibuffer = tmpbufptr;
+
     /* clear screen */
     for (size_t i = 0; i < edid_width * edid_height; i++)
         antibuffer[i] = BACKGROUND_COLOUR;
@@ -249,11 +254,13 @@ void gui_refresh(void) {
         wptr = wptr->next;
     }
 
-    /* copy over the buffer */
-    for (size_t i = 0; i < edid_width * edid_height; i++)
-        framebuffer[i] = antibuffer[i];
-
     put_mouse_cursor(0);
+
+    /* copy over the buffer */
+    for (size_t i = 0; i < edid_width * edid_height; i++) {
+        if (antibuffer[i] != prevbuffer[i])
+            framebuffer[i] = antibuffer[i];
+    }
 
     return;
 }
@@ -321,6 +328,7 @@ retry:
             kprint(KPRN_INFO, "VBE found matching mode %x, attempting to set.", get_vbe.mode);
             framebuffer = (uint32_t *)vbe_mode_info.framebuffer;
             antibuffer = kalloc(edid_width * edid_height * sizeof(uint32_t));
+            prevbuffer = kalloc(edid_width * edid_height * sizeof(uint32_t));
             kprint(KPRN_INFO, "Framebuffer address: %x", vbe_mode_info.framebuffer);
             set_vbe_mode(get_vbe.mode);
             goto success;

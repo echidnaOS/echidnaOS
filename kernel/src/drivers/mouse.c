@@ -105,7 +105,7 @@ void put_mouse_cursor(int type) {
     for (size_t x = 0; x < 16; x++) {
         for (size_t y = 0; y < 16; y++) {
             if (cursor.bitmap[x * 16 + y])
-                plot_px_direct(mouse_x + x, mouse_y + y, ~(get_px_direct(mouse_x + x, mouse_y + y)) & 0xffffff);
+                plot_px(mouse_x + x, mouse_y + y, cursor.bitmap[x * 16 + y]);
         }
     }
     return;
@@ -173,7 +173,8 @@ void poll_mouse(void) {
             window_move(mouse_x - old_mouse_x, mouse_y - old_mouse_y, drag_lock);
         }
 
-        put_mouse_cursor(1);
+        gui_needs_refresh = 1;
+        //put_mouse_cursor(1);
 
     }
 

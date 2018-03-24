@@ -50,6 +50,10 @@ typedef struct {
     int rel_x;
     int rel_y;
     int titlebar;
+    int top_border;
+    int bottom_border;
+    int right_border;
+    int left_border;
 } window_click_data_t;
 
 window_click_data_t window_from_coordinates(int x, int y) {
@@ -71,12 +75,30 @@ window_click_data_t window_from_coordinates(int x, int y) {
         if (x >= wptr->x && x < wptr->x + wptr->x_size + 2 &&
             y >= wptr->y && y < wptr->y + wptr->y_size + 1 + TITLE_BAR_THICKNESS) {
             int titlebar = 0;
-            if (y - wptr->y < TITLE_BAR_THICKNESS)
+            int top_border = 0;
+            int bottom_border = 0;
+            int right_border = 0;
+            int left_border = 0;
+            if (y - wptr->y < TITLE_BAR_THICKNESS
+                && y - wptr->y > 0 && y - wptr->y < wptr->y_size + TITLE_BAR_THICKNESS
+                && x - wptr->x > 0 && x - wptr->x < wptr->x_size)
                 titlebar = 1;
+            if (y - wptr->y == 0)
+                top_border = 1;
+            else if (y - wptr->y == wptr->y_size + TITLE_BAR_THICKNESS)
+                bottom_border = 1;
+            if (x - wptr->x == 0)
+                left_border = 1;
+            else if (x - wptr->x == wptr->x_size + 1)
+                right_border = 1;
             ret.id = wptr->id;
             ret.rel_x = x - (wptr->x - 1);
             ret.rel_y = y - (wptr->y - TITLE_BAR_THICKNESS);
             ret.titlebar = titlebar;
+            ret.top_border = top_border;
+            ret.bottom_border = bottom_border;
+            ret.right_border = right_border;
+            ret.left_border = left_border;
             return ret;
         }
 
@@ -113,6 +135,8 @@ void put_mouse_cursor(int type) {
 
 int right_click_pressed = 0;
 int drag_lock = -1;
+int vertical_resize_lock = -1;
+int horizontal_resize_lock = -1;
 
 void poll_mouse(void) {
     uint8_t b;
@@ -127,19 +151,29 @@ void poll_mouse(void) {
         packet.flags = port_in_b(0x60);
         packet.x_mov = port_in_b(0x60);
         packet.y_mov = port_in_b(0x60);
+        window_click_data_t clicked_window = window_from_coordinates(mouse_x, mouse_y);
 
         if (packet.flags & (1 << 0)) {
-            window_click_data_t clicked_window = window_from_coordinates(mouse_x, mouse_y);
             if (clicked_window.id != -1 && current_window != clicked_window.id)
                 window_focus(clicked_window.id);
             if (clicked_window.titlebar)
                 drag_lock = clicked_window.id;
             else
                 drag_lock = -1;
+            if (clicked_window.bottom_border)
+                vertical_resize_lock = clicked_window.id;
+            else
+                vertical_resize_lock = -1;
+            if (clicked_window.right_border)
+                horizontal_resize_lock = clicked_window.id;
+            else
+                horizontal_resize_lock = -1;
             right_click_pressed = 1;
         } else {
             right_click_pressed = 0;
             drag_lock = -1;
+            vertical_resize_lock = -1;
+            horizontal_resize_lock = -1;
         }
 
         if (packet.flags & (1 << 1));
@@ -171,6 +205,12 @@ void poll_mouse(void) {
 
         if (right_click_pressed && drag_lock != -1) {
             window_move(mouse_x - old_mouse_x, mouse_y - old_mouse_y, drag_lock);
+        }
+        if (right_click_pressed && vertical_resize_lock != -1) {
+            window_resize(0, mouse_y - old_mouse_y, vertical_resize_lock);
+        }
+        if (right_click_pressed && horizontal_resize_lock != -1) {
+            window_resize(mouse_x - old_mouse_x, 0, horizontal_resize_lock);
         }
 
         gui_needs_refresh = 1;

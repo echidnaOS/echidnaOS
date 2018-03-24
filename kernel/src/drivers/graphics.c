@@ -200,6 +200,29 @@ void window_move(int x, int y, int window) {
     return;
 }
 
+void window_resize(int x_size, int y_size, int window) {
+    window_t *wptr = get_window_ptr(window);
+
+    wptr->x_size += x_size;
+    wptr->y_size += y_size;
+
+    kfree(wptr->grid);
+    kfree(wptr->gridbg);
+    kfree(wptr->gridfg);
+    kfree(wptr->framebuffer);
+    wptr->framebuffer = kalloc(wptr->x_size * wptr->y_size * sizeof(uint32_t));
+    wptr->grid = kalloc((wptr->x_size / 8) * (wptr->y_size / 16));
+    wptr->gridbg = kalloc((wptr->x_size / 8) * (wptr->y_size / 16) * sizeof(uint32_t));
+    wptr->gridfg = kalloc((wptr->x_size / 8) * (wptr->y_size / 16) * sizeof(uint32_t));
+
+    wptr->cursor_x = 0;
+    wptr->cursor_y = 0;
+
+    gui_needs_refresh = 1;
+
+    return;
+}
+
 #define BACKGROUND_COLOUR       0x00008888
 #define WINDOW_BORDERS          0x00ffffff
 #define TITLE_BAR_BACKG         0x00003377

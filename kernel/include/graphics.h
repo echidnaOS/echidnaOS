@@ -12,8 +12,8 @@ typedef struct window_t {
     char title[2048];
     int x;
     int y;
-    size_t x_size;
-    size_t y_size;
+    int x_size;
+    int y_size;
     uint32_t *framebuffer;
     char *grid;
     uint32_t *gridbg;
@@ -107,6 +107,7 @@ int create_window(char *title, size_t x, size_t y, size_t x_size, size_t y_size)
 void gui_refresh(void);
 void window_focus(int window);
 void window_move(int x, int y, int window);
+void window_resize(int x_size, int y_size, int window);
 window_t *get_window_ptr(int id);
 
 extern uint32_t *framebuffer;

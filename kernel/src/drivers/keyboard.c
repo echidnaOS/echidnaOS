@@ -83,6 +83,12 @@ void keyboard_handler(uint8_t input_byte) {
             case 0x42:
                 window_move(0, +5, current_window);
                 return;
+            case 0x43:
+                window_resize(0, -5, current_window);
+                return;
+            case 0x44:
+                window_resize(0, +5, current_window);
+                return;
             default:
                 break;
         }

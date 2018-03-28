@@ -138,6 +138,8 @@ int drag_lock = -1;
 int vertical_resize_lock = -1;
 int horizontal_resize_lock = -1;
 
+static inline void mouse_wait(int type);
+
 void poll_mouse(void) {
     uint8_t b;
     mouse_packet_t packet;
@@ -149,8 +151,15 @@ void poll_mouse(void) {
         /* packet comes from the mouse */
         /* read packet */
         packet.flags = port_in_b(0x60);
+        mouse_wait(0);
+
+        if (!(packet.flags & (1 << 3)))
+            return;
+
         packet.x_mov = port_in_b(0x60);
+        mouse_wait(0);
         packet.y_mov = port_in_b(0x60);
+
         window_click_data_t clicked_window = window_from_coordinates(mouse_x, mouse_y);
 
         if (packet.flags & (1 << 0)) {

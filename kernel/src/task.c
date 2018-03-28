@@ -12,8 +12,6 @@
 
 volatile int sched_last_cpu = 0;
 
-volatile int general_ts_enable = 0;
-
 task_t **task_table;
 
 void task_init(void) {
@@ -128,9 +126,11 @@ int execve(char *path, char **argv, char **envp) {
     task_table[get_current_task()]->heap_base = TASK_BASE + pages * PAGE_SIZE;
     task_table[get_current_task()]->heap_size = 0;
 
-    if (sched_last_cpu == cpu_count)
+    /*if (sched_last_cpu == cpu_count)
         sched_last_cpu = 0;
-    task_table[get_current_task()]->cpu_number = sched_last_cpu++;
+    task_table[get_current_task()]->cpu_number = sched_last_cpu++;*/
+
+    task_table[get_current_task()]->cpu_number = 0;
 
     *((int *)(base + 0x1000)) = argc;
     int argv_limit = 0x4000;
@@ -276,8 +276,6 @@ size_t syscall_execute(size_t, size_t, size_t, size_t, size_t);
 
 void task_scheduler(void) {
     int c;
-
-    while (!general_ts_enable);
 
     for (;;) {
         if (!task_table[get_current_task()]) {

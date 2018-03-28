@@ -7,7 +7,7 @@
 #include <paging.h>
 #include <task.h>
 
-#define CPU_STACK_SIZE 8192
+#define CPU_STACK_SIZE (8192+8192)
 
 volatile int cpu_count = 1;
 

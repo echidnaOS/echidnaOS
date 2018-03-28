@@ -122,7 +122,7 @@ void kernel_init(void) {
     static char *argv[] = { "/sys/init", (char *)0 };
     if (kexec("/sys/init", argv, env, "/dev/tty0", "/dev/tty0", "/dev/tty0", "/") == -1)
         panic("Unable to start /sys/init", 0);
-    if (kexec("/sys/init", argv, env, "/dev/stty0", "/dev/stty0", "/dev/stty0", "/") == -1)
+    if (kexec("/sys/init", argv, env, "/dev/zero", "/dev/null", "/dev/null", "/") == -1)
         panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty1", "/dev/tty1", "/dev/tty1", "/") == -1)
         panic("Unable to start /sys/init", 0);
@@ -135,9 +135,6 @@ void kernel_init(void) {
     kprint(KPRN_INFO, "INIT: DISABLE INTERRUPTS");
     DISABLE_INTERRUPTS;
     set_ts_enable(1);
-    kprint(KPRN_INFO, "INIT: general_ts_enable = 1;");
-    general_ts_enable = 1;
-    //kprint(KPRN_INFO, "INIT: Calling scheduler...");
     task_scheduler();
 
 }

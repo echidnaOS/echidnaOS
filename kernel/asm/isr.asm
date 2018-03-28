@@ -163,7 +163,7 @@ extern getpid
 extern signal
 extern task_fork
 extern task_quit_self
-extern enter_iowait_status1
+extern enter_iowait_status
 extern enter_defer_status
 extern enter_sleep_status
 extern pwd
@@ -515,27 +515,39 @@ syscall:
         je read_isr
         cmp rax, 0x2d
         je write_isr
-        ; "conventional" syscall: defer
-        pusham
+        ; "conventional" syscall
+        pushas
+        mov rbx, cr3        ; save context
+        push rbx
         mov rbx, qword [kernel_pagemap]   ; context swap to kernel
         mov cr3, rbx
+        mov dword [fs:0032], 0
+        sti
         mov bx, 0x10
         mov ds, bx
         mov es, bx
-        push rax
+        mov rbx, 8
+        push rdx
+        mul rbx
+        pop rdx
+        ; push syscall args, and call
         push rcx
         push rdx
         push rdi
         push rsi
-        pop r8
         pop rcx
         pop rdx
         pop rsi
         pop rdi
-        call enter_defer_status
-        mov rdi, rsp
-        fxsave [fs:0048]
-        call task_switch
+        call [routine_list+rax]
+        ; disable all interrupts, reenable task switch
+        cli
+        mov qword [fs:0032], 1
+        pop rbx
+        mov cr3, rbx    ; restore context
+        ; return
+        popas
+        iretq
 
 syscall_execute:
         mov rbx, 8
@@ -561,7 +573,7 @@ read_isr:
         pop rdx
         pop rsi
         pop rdi
-        call enter_iowait_status1
+        call enter_iowait_status
         mov rdi, rsp
         fxsave [fs:0048]
         call task_switch
@@ -581,7 +593,7 @@ write_isr:
         pop rdx
         pop rsi
         pop rdi
-        call enter_iowait_status1
+        call enter_iowait_status
         mov rdi, rsp
         fxsave [fs:0048]
         call task_switch

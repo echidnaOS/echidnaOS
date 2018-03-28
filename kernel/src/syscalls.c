@@ -137,7 +137,7 @@ void enter_defer_status(size_t syscall, size_t arg0, size_t arg1, size_t arg2, s
     return;
 }
 
-void enter_iowait_status1(int handle, uint32_t ptr, int len, int type, int done) {
+void enter_iowait_status(int handle, uint32_t ptr, int len, int type, int done) {
     task_table[get_current_task()]->status = KRN_STAT_IOWAIT_TASK;
     task_table[get_current_task()]->iowait_type = type;
     task_table[get_current_task()]->iowait_handle = handle;

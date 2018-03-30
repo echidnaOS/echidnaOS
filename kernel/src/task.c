@@ -147,7 +147,7 @@ int execve(char *path, char **argv, char **envp) {
     dest_argv[i] = (char *)0;
 
     int envp_limit = 0x8000;
-    char **dest_envp = (char **)(base + 0x1020);
+    char **dest_envp = (char **)(base + 0x2000);
 
     /* prepare environ */
     for (i = 0; tmp_envp[i]; i++) {

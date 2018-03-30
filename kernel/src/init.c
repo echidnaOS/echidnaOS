@@ -122,8 +122,6 @@ void kernel_init(void) {
     static char *argv[] = { "/sys/init", (char *)0 };
     if (kexec("/sys/init", argv, env, "/dev/tty0", "/dev/tty0", "/dev/tty0", "/") == -1)
         panic("Unable to start /sys/init", 0);
-    if (kexec("/sys/init", argv, env, "/dev/zero", "/dev/null", "/dev/null", "/") == -1)
-        panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty1", "/dev/tty1", "/dev/tty1", "/") == -1)
         panic("Unable to start /sys/init", 0);
     if (kexec("/sys/init", argv, env, "/dev/tty2", "/dev/tty2", "/dev/tty2", "/") == -1)

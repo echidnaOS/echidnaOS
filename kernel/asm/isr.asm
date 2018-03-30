@@ -173,6 +173,7 @@ extern vfs_mkdir
 extern vfs_create
 extern vfs_list
 extern vfs_get_metadata
+extern vfs_getpath
 extern execve
 extern get_heap_base
 extern get_heap_size
@@ -214,7 +215,7 @@ routine_list:
         dq      0                       ; 0x18
         dq      0                       ; 0x19
         dq      pwd                     ; 0x1a
-        dq      0                       ; 0x1b
+        dq      vfs_getpath             ; 0x1b
         dq      0                       ; 0x1c
         dq      0                       ; 0x1d
         dq      0                       ; 0x1e

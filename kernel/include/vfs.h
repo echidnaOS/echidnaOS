@@ -30,6 +30,7 @@ typedef struct {
     int free;
     int mountpoint;
     int internal_handle;
+    char path[2048];
 } file_handle_t;
 
 typedef struct {
@@ -87,6 +88,7 @@ int vfs_kmkdir(char *path, uint16_t perms);
 int vfs_create(char *path, uint16_t perms);
 int vfs_kcreate(char *path, uint16_t perms);
 int vfs_cd(char *path);
+int vfs_getpath(int handle, char *path);
 
 int vfs_open(char *path, int flags, int mode);
 int vfs_kopen(char *path, int flags, int mode);

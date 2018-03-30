@@ -61,6 +61,22 @@ int main(int argc, char** argv) {
             if (s_argc == 1) continue;
             sleep(atoi(s_argv[1]));
         }
+        
+        else if (!strcmp("getpath", s_argv[0])) {
+            if (s_argc == 1) continue;
+            char getpath[2048];
+            asm volatile (
+                "movq $0x1b, %%rax\n\t"
+                "movq %0, %%rcx\n\t"
+                "movq %1, %%rdx\n\t"
+                "int $0x80\n\t"
+                :
+                : "r" ((uint64_t)atoi(s_argv[1])),
+                  "r" ((uint64_t)getpath)
+                : "rax"
+            );
+            puts(getpath);
+        }
 
         else if (!strcmp("col", s_argv[0]))
             puts("\e[40m \e[41m \e[42m \e[43m \e[44m \e[45m \e[46m \e[47m \e[40m");

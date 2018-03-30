@@ -304,6 +304,7 @@ int vfs_open(char *path, int flags, int mode) {
     handle.free = 0;
     handle.mountpoint = mountpoint;
     handle.internal_handle = internal_handle;
+    kstrcpy(handle.path, path);
 
     return create_file_handle(get_current_task(), handle);
 }
@@ -335,6 +336,7 @@ int vfs_kopen(char *path, int flags, int mode) {
     handle.free = 0;
     handle.mountpoint = mountpoint;
     handle.internal_handle = internal_handle;
+    kstrcpy(handle.path, path);
 
     return create_file_handle(0, handle);
 }
@@ -505,6 +507,14 @@ int vfs_kclose(int handle) {
     
     task_table[0]->file_handles[handle].free = 1;
     
+    return 0;
+}
+
+int vfs_getpath(int handle, char *path) {
+    path = (char *)get_phys_addr(task_table[get_current_task()]->page_directory, (size_t)path);
+
+    kstrcpy(path, task_table[get_current_task()]->file_handles[handle].path);
+
     return 0;
 }
 
